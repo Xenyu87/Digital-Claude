@@ -1,5 +1,17 @@
 # Release Notes
 
+## v0.21.0 - 2026-04-29
+
+- Added cross-agent handoff support for projects worked on by Codex and Claude Code.
+- Added `AI_HANDOFF.md` guidance and `references/cross-agent-handoff-template.md`.
+- Updated project context routing so active work can pass between agents without relying on hidden memory.
+
+## v0.20.0 - 2026-04-29
+
+- Tightened response economy: routine fixes should be reported as done, not explained.
+- Added explicit precision rule for only the items the user must do, choose, configure, pay for, or test manually.
+- Simplified final answer templates around `Fatto`, `Verifica`, and optional `Da fare per te`.
+
 ## v0.19.0 - 2026-04-29
 
 - Added event-based agent autolog guidance for real mistakes, token waste, user corrections, stale context, and repeated process failures.

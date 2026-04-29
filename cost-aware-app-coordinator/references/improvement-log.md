@@ -23,8 +23,26 @@ Approved on 2026-04-29:
 - v0.10: maintenance and compaction rules to prevent prompt debt.
 - v0.11: skill sync protocol to avoid drift between repo source and installed copies.
 - v0.19: event-based `AI_AGENT_LOG.md` for real mistakes and token waste, loaded only when useful.
+- v0.20: shorter routine output; precision reserved for user actions, risks, choices, and blockers.
+- v0.21: `AI_HANDOFF.md` bridge for Codex, Claude Code, and other agents on the same project.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-04-29
+Problema osservato: L'utente vuole lavorare sulla stessa app con Codex e Claude Code senza incasinare contesto, decisioni e prossimo passo.
+Miglioramento proposto: Aggiungere cross-agent handoff con `AI_HANDOFF.md` e template dedicato.
+Motivazione: Permette passaggio controllato tra agenti usando file condivisi, senza memoria nascosta o diario.
+Impatto token: basso
+Decisione utente: approvato con richiesta diretta del 2026-04-29
+
+Status: done
+Date: 2026-04-29
+Problema osservato: Durante test reali sulla app, gli output erano ancora troppo lunghi e spiegavano routine fix come "ho sistemato X perche Y".
+Miglioramento proposto: Rendere default il formato fatto/verifica e usare dettaglio solo per azioni utente, rischi, scelte o blocchi.
+Motivazione: Riduce token e rumore senza perdere precisione dove serve davvero.
+Impatto token: basso
+Decisione utente: approvato con feedback diretto del 2026-04-29
 
 Status: done
 Date: 2026-04-29
@@ -82,34 +100,4 @@ Motivazione: Permette coordinamento reale tra slice frontend/backend/data/review
 Impatto token: basso
 Decisione utente: approvato con richiesta "voglio che gli agenti sotto parlino tra di loro" del 2026-04-29
 
-Status: done
-Date: 2026-04-29
-Problema osservato: La skill poteva diventare costosa da usare se tutte le reference venivano lette a ogni task.
-Miglioramento proposto: Progressive loading con trigger espliciti per ogni reference.
-Motivazione: Mantiene il core disponibile e carica dettagli solo quando servono.
-Impatto token: basso
-Decisione utente: approvato con "continua" del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: La skill rischiava prompt debt dopo molte iterazioni.
-Miglioramento proposto: Maintenance and compaction con criteri di keep, move, compress, merge e stop.
-Motivazione: Mantiene la skill sostenibile e limita nuove regole inutili.
-Impatto token: basso
-Decisione utente: approvato con "continua fino a quando pensi di essere arrivata al limite" del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: La repo source poteva divergere dalla copia installata.
-Miglioramento proposto: Skill sync protocol.
-Motivazione: Evita false certezze sulla versione usata in sessioni future.
-Impatto token: basso
-Decisione utente: approvato con "continua fino a quando pensi di essere arrivata al limite" del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: Autotest locale e ricerca GitHub hanno evidenziato log lungo, heading duplicato, dettagli duplicati e bisogno di memoria decisionale durevole.
-Miglioramento proposto: Compattare log, template e core; aggiungere second brain `AI_DECISIONS.md` come reference modulare; chiarire piccole incoerenze.
-Motivazione: Riduce token e ambiguita, mantiene le decisioni approvate e segue il pattern GitHub di SKILL.md snello con reference on-demand.
-Impatto token: basso
-Decisione utente: approvato con richiesta di autotest del 2026-04-29
+Older entries compacted into Current Behavior Summary.

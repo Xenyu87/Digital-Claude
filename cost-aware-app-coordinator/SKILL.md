@@ -44,6 +44,7 @@ Keep the main skill as the core operating system. Load reference files only when
 - `structure-memory-template.md`: project needs `AI_STRUCTURE.md` or structure memory maintenance.
 - `second-brain-template.md`: project needs durable decision memory or repeated tradeoff context.
 - `agent-autolog-template.md`: repeated waste, wrong routing, missed risk, unnecessary rereads, or user-corrected behavior.
+- `cross-agent-handoff-template.md`: switching between Codex, Claude Code, or another coding agent on the same project.
 - `improvement-log.md`: only for skill improvement or recording an approved behavior change.
 - `release-notes.md`: only when summarizing or updating skill versions.
 
@@ -93,9 +94,10 @@ Use `references/decision-risk-gates.md` for full risk and quality gates.
 
 Default to the shortest answer that still lets the user trust and use the result. Expand only when the user asks, the task is risky, or missing detail would cause rework.
 
-- Updates: one or two short sentences only when something important changed.
+- Updates: one short sentence only when something important changed; avoid explaining routine fixes.
 - Plans: three to six bullets only when they reduce risk or coordinate work.
-- Finals: small tasks get one short paragraph plus checks; medium tasks use `Outcome`, `Changed`, `Checked`, `Risk/Next`.
+- Finals: say what was done and what was checked. Do not add "because/why" for routine edits.
+- User action: be precise and explicit only for what the user must do, choose, confirm, configure, pay for, or test manually.
 - Avoid dumping file contents, diffs, inspected files, or tool output unless requested.
 - Use `references/response-economy.md` when output shape needs more guidance.
 Use `references/compression-pass.md` for aggressive compression of prompts, handoffs, commit/PR text, or context docs.
@@ -204,9 +206,20 @@ For a new app, create or propose a small context system before deep implementati
 - `AI_CONTEXT.md` for the routing table and current decisions.
 - `AI_STRUCTURE.md` for the app structure memory when the project has enough files to benefit.
 - `AI_DECISIONS.md` for durable decisions, tradeoffs, constraints, and "do not repeat" notes.
+- `AI_HANDOFF.md` for switching between Codex, Claude Code, or another coding agent.
 - `docs/ai/*.md` only for areas that actually exist.
 
 Use `references/project-context-template.md` as the base. Keep project context as an index, not a full code dump.
+
+## Cross-Agent Handoff Protocol
+
+When the user may switch between Codex, Claude Code, or another coding agent, communicate through project files, not hidden memory.
+
+- Read `AI_HANDOFF.md` after `AI_CONTEXT.md` when sub-entering an active task from another agent.
+- Update it after non-trivial changes, before pausing, or before suggesting a switch.
+- Keep it compact: current goal, state, changed files, decisions, risks, next step, and do-not-repeat notes.
+- Put durable decisions in `AI_DECISIONS.md`, structure in `AI_STRUCTURE.md`, and mistakes in `AI_AGENT_LOG.md`.
+- Use `references/cross-agent-handoff-template.md` when creating or compacting it.
 
 ## Structure Memory Protocol
 
@@ -311,6 +324,7 @@ When editing this skill in a project repo, remember there may be a separate inst
 - `references/structure-memory-template.md`: compact app structure memory template.
 - `references/second-brain-template.md`: compact project decision memory template.
 - `references/agent-autolog-template.md`: compact mistake and token-waste log template.
+- `references/cross-agent-handoff-template.md`: compact handoff template for Codex, Claude Code, and other agents.
 - `references/maintenance-compaction.md`: keep the skill small, deduplicated, and worth reading.
 - `references/skill-sync.md`: avoid drift between repo source and installed skill copies.
 - `references/improvement-log.md`: approved or pending skill improvement notes.

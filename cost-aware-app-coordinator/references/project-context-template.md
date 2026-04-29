@@ -7,7 +7,7 @@ Use this when a project lacks lightweight AI context. Adapt it; do not copy irre
 ```markdown
 # Agent Instructions
 
-Read `AI_CONTEXT.md` before non-trivial changes. Read `AI_STRUCTURE.md` when route, module, or data-flow orientation matters. Read `AI_DECISIONS.md` when architecture, stack, auth, data, design, deployment, cost, or past tradeoffs matter. Read `AI_AGENT_LOG.md` only when similar mistakes or token waste may repeat.
+Read `AI_CONTEXT.md` before non-trivial changes. Read `AI_HANDOFF.md` when taking over active work from Codex, Claude Code, or another agent. Read `AI_STRUCTURE.md` when route, module, or data-flow orientation matters. Read `AI_DECISIONS.md` when architecture, stack, auth, data, design, deployment, cost, or past tradeoffs matter. Read `AI_AGENT_LOG.md` only when similar mistakes or token waste may repeat.
 
 Working rules:
 
@@ -35,6 +35,7 @@ Working rules:
 | If the task touches... | Read... |
 | --- | --- |
 | app layout/routes/modules | AI_STRUCTURE.md |
+| active handoff from another agent | AI_HANDOFF.md |
 | durable decisions/tradeoffs | AI_DECISIONS.md |
 | repeated agent mistakes/token waste | AI_AGENT_LOG.md |
 | full-stack workflow contracts | docs/ai/app-contract.md |
@@ -75,6 +76,10 @@ Update the relevant doc when architecture, APIs, data shapes, setup, deploy, wor
 ## AI_STRUCTURE.md
 
 Use `references/structure-memory-template.md` as the source template. Create it only when repeated structure discovery is wasting time or tokens.
+
+## AI_HANDOFF.md
+
+Use `references/cross-agent-handoff-template.md` as the source template. Create it when Codex, Claude Code, or another coding agent may continue the same active task.
 
 ## AI_DECISIONS.md
 

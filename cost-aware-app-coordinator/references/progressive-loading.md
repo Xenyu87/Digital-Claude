@@ -35,6 +35,7 @@ Load a reference only when its trigger appears:
 | `structure-memory-template.md` | app structure memory needed |
 | `second-brain-template.md` | durable decision memory, tradeoffs, constraints, or revisit triggers needed |
 | `agent-autolog-template.md` | actual agent mistake, token waste, user correction, stale context, or repeated process failure |
+| `cross-agent-handoff-template.md` | switching between Codex, Claude Code, or another coding agent on the same project |
 | `maintenance-compaction.md` | cleanup pass, version consolidation, or stop/diminishing-return decision |
 | `skill-sync.md` | install, sync, release, publish, or future-session version question |
 | `improvement-log.md` | recording behavior changes |
