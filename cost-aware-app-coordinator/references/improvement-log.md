@@ -1,148 +1,115 @@
 # Improvement Log
 
-Purpose: record only useful, approved, or pending improvements to this skill. Do not load this file during normal app work.
+Purpose: record only useful approved improvements. Do not load this file during normal app work.
 
 ## Rules
 
-- Add an entry only when it changes future behavior or prevents repeated waste.
+- Add entries only for behavior changes.
 - Keep entries short.
-- Mark entries as `pending`, `approved`, `rejected`, or `done`.
-- Remove or compress obsolete entries during maintenance.
+- Compress old entries by theme when the log becomes noisy.
+- Preserve user approval and current behavior.
 
-## Proposal Template
+## Current Behavior Summary
 
-```text
-Status: pending
-Date:
-Problema osservato:
-Miglioramento proposto:
-Motivazione:
-Pro:
-Contro:
-Impatto token: basso|medio|alto
-File della skill da modificare:
-Decisione utente:
-```
+Approved on 2026-04-29:
 
-## Entries
+- v0.1-v0.3: coordinator-first workflow, budget modes, task routing, working loop, definition of done, sub-agent dispatch, and approval-based improvement loop.
+- v0.4: app creation blueprint with frontend/backend/data/security contracts and first usable slice.
+- v0.5: response economy protocol for shorter updates, plans, final answers, and audit reports.
+- v0.6: structure memory with `AI_STRUCTURE.md` to reduce repeated project scans.
+- v0.7: internal role profiles for frontend, backend, full-stack, review/audit, and skill maintenance.
+- v0.8: decision, risk, and quality gates for acting, asking, planning, delegating, stopping, and verifying.
+- v0.9: progressive loading so references are read only when triggered.
+- v0.10: maintenance and compaction rules to prevent prompt debt.
+- v0.11: skill sync protocol to avoid drift between repo source and installed copies.
+- v0.19: event-based `AI_AGENT_LOG.md` for real mistakes and token waste, loaded only when useful.
+
+## Latest Entries
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill deve nascere con un processo di miglioramento controllato.
-Miglioramento proposto: Richiedere sempre approvazione prima di modificare la skill e registrare solo lezioni utili.
-Motivazione: Permette evoluzione reale senza perdere controllo o aumentare rumore.
-Pro: Migliora nel tempo; resta comprensibile; protegge dai cambi automatici.
-Contro: Richiede una conferma quando si vuole cambiare comportamento.
+Problema osservato: Mancava un autolog operativo per capire quando coordinator o agenti sprecano token, rileggono troppo, scelgono agenti sbagliati o ricevono correzioni ripetute.
+Miglioramento proposto: Aggiungere `AI_AGENT_LOG.md` event-based con template compatto e trigger stretti.
+Motivazione: Permette miglioramento empirico senza creare diario o costo fisso.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/improvement-log.md
-Decisione utente: approvato nella v0.1.0
+Decisione utente: approvato con richiesta "fallo e pusha" del 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill controllava budget e sub-agent, ma non decideva il modello in base al tipo di lavoro.
-Miglioramento proposto: Aggiungere un protocollo di selezione modello per task semplici, lavoro normale, coding pesante e rischi alti.
-Motivazione: Riduce costi sui task semplici e migliora sicurezza quando il lavoro e ambiguo o rischioso.
-Pro: Scelta piu economica per default; upgrade motivato; migliore uso dei sub-agent.
-Contro: Dipende dai modelli esposti dal runtime; non sempre il coordinator attivo puo cambiare modello.
+Problema osservato: Caveman e skills.sh evidenziano valore in compressione aggressiva, ma serve evitare perdita di contesto critico.
+Miglioramento proposto: Aggiungere compression pass sicura con preserve rules per sicurezza, breaking change, migrazioni, auth, deploy e debug futuro.
+Motivazione: Riduce token su output/handoff/docs senza sacrificare informazioni che evitano errori costosi.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/budget-modes.md, references/release-notes.md, references/improvement-log.md
-Decisione utente: approvato nella richiesta del 2026-04-29
+Decisione utente: approvato con richiesta su Caveman e skills.sh del 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill spiegava bene l'avvio, ma guidava meno bene il lavoro dopo la classificazione iniziale.
-Miglioramento proposto: Aggiungere routing operativo, working loop, definition of done, dispatch sub-agent piu esplicito e una reference compatta per task comuni.
-Motivazione: Riduce letture inutili, migliora continuita operativa e rende piu chiaro quando un task e davvero finito.
-Pro: Meno domande superflue; verifiche piu mirate; finali piu utili; migliore gestione di richieste miste; sub-agent piu economici e controllabili.
-Contro: Aggiunge qualche regola da mantenere.
+Problema osservato: Gli autotest erano manuali e ripetuti in shell, quindi facili da dimenticare o variare.
+Miglioramento proposto: Aggiungere `scripts/validate_skill.py` per validare frontmatter, reference, progressive loading, heading duplicati, sezioni obbligatorie e line limit.
+Motivazione: Repo GitHub di skill utili usano validazione deterministica per mantenere qualita e coerenza.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/task-routing.md, references/release-notes.md, references/improvement-log.md
-Decisione utente: approvato nella richiesta "studiati e migliorati ora" del 2026-04-29
+Decisione utente: approvato con richiesta di ricerca GitHub approfondita del 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill coordinava bene il processo, ma per creare app non obbligava abbastanza a definire il contratto tra frontend, backend, dati, sicurezza e verifiche.
-Miglioramento proposto: Aggiungere un app creation blueprint, un riferimento dedicato, un template `app-contract.md` e campi nel project context template per il first usable slice.
-Motivazione: Le app falliscono spesso quando UI, API, dati e stati di errore vengono progettati separatamente o troppo tardi.
-Pro: Migliore coerenza full-stack; meno feature placeholder; verifiche piu vicine al flusso reale; migliore gestione di auth, dati e stati UI.
-Contro: Richiede qualche decisione iniziale in piu nei progetti nuovi.
-Impatto token: medio
-File della skill da modificare: SKILL.md, references/app-creation-blueprint.md, references/task-routing.md, references/project-context-template.md, references/release-notes.md, references/improvement-log.md
-Decisione utente: approvato nella richiesta su frontend e backend del 2026-04-29
+Problema osservato: Il coordinator puo sbagliare classificazione, specialisti, contesto o verifiche.
+Miglioramento proposto: Aggiungere self-check gate, decision confidence e Red Team opzionale per rischio alto/bassa confidenza; poi comprimere core e role profiles.
+Motivazione: Riduce errori costosi senza attivare agenti extra per default e abbassa il costo fisso della skill.
+Impatto token: basso di default, medio solo quando Red Team viene attivato
+Decisione utente: approvato se non mangia token, 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill poteva ancora spendere troppi token in aggiornamenti, finali, riepiloghi di output e spiegazioni non richieste.
-Miglioramento proposto: Aggiungere un response economy protocol, template di risposta breve e regole anti-verbosita.
-Motivazione: Le fonti consultate raccomandano istruzioni chiare su formato, lunghezza, vincoli e rimozione di dettagli irrilevanti.
-Pro: Risposte piu corte; meno ripetizioni; finali piu leggibili; costo token piu basso.
-Contro: Richiede espansione consapevole nei task ad alto rischio o didattici.
+Problema osservato: Alcuni rischi importanti erano ancora impliciti invece di avere specialisti opzionali con trigger chiari.
+Miglioramento proposto: Aggiungere specialisti Security/Auth, UX/Product, Data/Migration, DevOps/Release e Performance con regole di attivazione strette.
+Motivazione: Il coordinator puo usarli solo quando servono, evitando costo fisso ma coprendo rischi costosi.
+Impatto token: medio quando attivati, basso quando non attivati
+Decisione utente: approvato con richiesta di avere tutti gli specialisti se usati bene dal coordinator del 2026-04-29
+
+Status: done
+Date: 2026-04-29
+Problema osservato: QA era implicito in review/verification, ma mancava un ruolo tester dedicato.
+Miglioramento proposto: Aggiungere QA/Test agent opzionale con trigger, checklist e output compatto.
+Motivazione: Le app full-stack hanno bisogno di una passata specifica su flussi, stati UI, contratti API, auth e regressioni.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/response-economy.md, references/budget-modes.md, references/task-routing.md, references/release-notes.md, references/improvement-log.md
-Decisione utente: approvato nella richiesta di ridurre token e cercare online soluzioni migliori del 2026-04-29
+Decisione utente: approvato con richiesta "procedi" sul tester del 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill poteva rileggere spesso la struttura dell'app per orientarsi tra route, moduli, backend, dati e test.
-Miglioramento proposto: Aggiungere un protocollo di structure memory e un template `AI_STRUCTURE.md` compatto.
-Motivazione: Una mappa aggiornata riduce token e tempo, ma deve restare un indice e non sostituire la lettura del codice quando serve.
-Pro: Meno scansioni ripetute; orientamento piu rapido; migliore memoria di flow e invarianti; aggiornabile quando cambia l'architettura.
-Contro: Rischio di mappa stantia se non aggiornata; richiede fiducia limitata e controllo contro il codice.
+Problema osservato: L'utente voleva che gli agenti sotto parlassero tra loro, ma senza perdere il controllo del coordinator.
+Miglioramento proposto: Aggiungere handoff strutturati tra sub-agent, mediati dal coordinator, con template e regole anti-loop.
+Motivazione: Permette coordinamento reale tra slice frontend/backend/data/review senza chat libera costosa o conflittuale.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/project-context-template.md, references/structure-memory-template.md, references/release-notes.md, references/improvement-log.md
-Decisione utente: approvato nella richiesta di procedere sui miglioramenti del 2026-04-29
+Decisione utente: approvato con richiesta "voglio che gli agenti sotto parlino tra di loro" del 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill non definiva profili di ruolo mirati per frontend, backend, full-stack, review e manutenzione skill.
-Miglioramento proposto: Aggiungere role profiles interni e una reference compatta.
-Motivazione: Un ruolo mirato aiuta a prendere decisioni migliori senza ripetere formule generiche come "programmatore esperto".
-Pro: Migliori checklist mentali per UI, API, dati, sicurezza e review; poco rumore nelle risposte.
-Contro: Va usato come guida interna, non come testo da ripetere.
+Problema osservato: La skill poteva diventare costosa da usare se tutte le reference venivano lette a ogni task.
+Miglioramento proposto: Progressive loading con trigger espliciti per ogni reference.
+Motivazione: Mantiene il core disponibile e carica dettagli solo quando servono.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/role-profiles.md, references/release-notes.md, references/improvement-log.md
-Decisione utente: approvato con "procedi" del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: La skill aveva buoni protocolli separati, ma mancava un controllo centrale per decidere quando agire, chiedere, pianificare, delegare, fermarsi o verificare di piu.
-Miglioramento proposto: Aggiungere decision gate, risk gate, quality gate e una reference operativa dedicata.
-Motivazione: Riduce errori di autonomia, evita domande inutili, aumenta sicurezza sui lavori ad alto rischio e collega meglio budget, ruoli, modelli e verifiche.
-Pro: Decisioni piu coerenti; meno spreco token; migliore sicurezza; controlli piu proporzionati al rischio.
-Contro: Aggiunge un passaggio mentale in piu prima dei lavori grandi.
-Impatto token: basso
-File della skill da modificare: SKILL.md, references/decision-risk-gates.md, references/task-routing.md, references/release-notes.md, references/improvement-log.md
-Decisione utente: approvato nella richiesta "ragionamento intenso, massima forza per migliorarti" del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: La skill accumulava reference utili, ma poteva diventare costosa se lette tutte a ogni task.
-Miglioramento proposto: Aggiungere progressive loading con trigger espliciti per ogni reference.
-Motivazione: Mantiene la skill scalabile: core sempre disponibile, dettagli caricati solo quando servono.
-Pro: Meno token; meno distrazione; migliore manutenzione; reference piu modulari.
-Contro: Se un trigger viene ignorato, una reference utile potrebbe non essere letta.
-Impatto token: basso
-File della skill da modificare: SKILL.md, references/progressive-loading.md, references/release-notes.md, references/improvement-log.md
 Decisione utente: approvato con "continua" del 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill stava migliorando rapidamente, ma rischiava prompt debt: troppe regole, log lunghi e versioni difficili da mantenere.
-Miglioramento proposto: Aggiungere un protocollo di maintenance and compaction con criteri per tenere, spostare, comprimere, unire o fermarsi.
-Motivazione: Una skill cost-aware deve anche limitare la propria crescita e restare leggibile.
-Pro: Migliore sostenibilita; meno duplicazioni future; stop criteria chiari; manutenzione piu sicura.
-Contro: Richiede disciplina quando si fanno molte iterazioni di miglioramento.
+Problema osservato: La skill rischiava prompt debt dopo molte iterazioni.
+Miglioramento proposto: Maintenance and compaction con criteri di keep, move, compress, merge e stop.
+Motivazione: Mantiene la skill sostenibile e limita nuove regole inutili.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/maintenance-compaction.md, references/progressive-loading.md, references/release-notes.md, references/improvement-log.md
 Decisione utente: approvato con "continua fino a quando pensi di essere arrivata al limite" del 2026-04-29
 
 Status: done
 Date: 2026-04-29
-Problema osservato: La skill poteva essere modificata nel repo ma caricata in futuro da una copia installata diversa.
-Miglioramento proposto: Aggiungere un protocollo di skill sync con regole per controllare path, segnalare divergenza e non sovrascrivere senza approvazione.
-Motivazione: Evita falsa sicurezza sulle versioni usate nelle sessioni future.
-Pro: Versioni piu chiare; meno drift; protezione delle copie installate; release piu affidabili.
-Contro: Aggiunge un controllo quando si prepara una release o sincronizzazione.
+Problema osservato: La repo source poteva divergere dalla copia installata.
+Miglioramento proposto: Skill sync protocol.
+Motivazione: Evita false certezze sulla versione usata in sessioni future.
 Impatto token: basso
-File della skill da modificare: SKILL.md, references/skill-sync.md, references/progressive-loading.md, references/release-notes.md, references/improvement-log.md
 Decisione utente: approvato con "continua fino a quando pensi di essere arrivata al limite" del 2026-04-29
+
+Status: done
+Date: 2026-04-29
+Problema osservato: Autotest locale e ricerca GitHub hanno evidenziato log lungo, heading duplicato, dettagli duplicati e bisogno di memoria decisionale durevole.
+Miglioramento proposto: Compattare log, template e core; aggiungere second brain `AI_DECISIONS.md` come reference modulare; chiarire piccole incoerenze.
+Motivazione: Riduce token e ambiguita, mantiene le decisioni approvate e segue il pattern GitHub di SKILL.md snello con reference on-demand.
+Impatto token: basso
+Decisione utente: approvato con richiesta di autotest del 2026-04-29

@@ -1,6 +1,6 @@
 ---
 name: cost-aware-app-coordinator
-description: Use when planning, creating, modifying, auditing, or rescuing an app project with controlled token cost, a coordinator-first workflow, optional sub-agents, simple budget modes, project context templates, and approval-based skill improvement.
+description: Use when planning, creating, modifying, auditing, or rescuing an app project with controlled token cost, coordinator-first workflow, optional sub-agents, budget modes, project context and decision memory, and approval-based skill improvement.
 ---
 
 # Cost Aware App Coordinator
@@ -32,15 +32,24 @@ Keep the main skill as the core operating system. Load reference files only when
 - `budget-modes.md`: large, ambiguous, risky, or user changes budget.
 - `decision-risk-gates.md`: next step is unclear, costly, risky, broad, destructive, or external.
 - `response-economy.md`: answers, updates, plans, or agent prompts are getting too long.
-- `role-profiles.md`: task needs frontend, backend, full-stack, review, audit, or skill-maintenance perspective.
+- `compression-pass.md`: prompt, final answer, handoff, commit/PR text, or context doc needs aggressive safe compression.
+- `role-profiles.md`: task needs frontend, backend, full-stack, QA/test, security/auth, UX/product, data/migration, DevOps/release, performance, review, audit, or skill-maintenance perspective.
+- `coordinator-safety.md`: coordinator confidence is medium/low, task is high risk, or a red-team pass may catch costly mistakes.
+- `qa-test-agent.md`: workflow crosses frontend/backend, changes contracts/auth/data, fixes non-trivial bugs, or prepares push/PR validation.
+- `specialist-agents.md`: specialist agent selection for security/auth, UX/product, data/migration, DevOps/release, or performance.
+- `agent-handoff.md`: multiple sub-agents need to share decisions, contracts, blockers, or integration notes.
 - `task-routing.md`: request is broad, mixed, or easy to over-read.
 - `app-creation-blueprint.md`: new app, full-stack feature, rebuild, or UI/backend contract.
 - `project-context-template.md`: project lacks `AI_CONTEXT.md`, `AGENTS.md`, or lightweight docs.
 - `structure-memory-template.md`: project needs `AI_STRUCTURE.md` or structure memory maintenance.
+- `second-brain-template.md`: project needs durable decision memory or repeated tradeoff context.
+- `agent-autolog-template.md`: repeated waste, wrong routing, missed risk, unnecessary rereads, or user-corrected behavior.
 - `improvement-log.md`: only for skill improvement or recording an approved behavior change.
 - `release-notes.md`: only when summarizing or updating skill versions.
 
 Do not load every reference by default. If a reference was just read in the same turn, reuse that understanding instead of rereading it.
+
+Use `python scripts/validate_skill.py` after changing the skill structure, references, release notes, or progressive loading rules.
 
 ## Task Routing
 
@@ -71,49 +80,25 @@ Do not keep planning after the next useful action is obvious. Move the work forw
 
 Before spending significant context, changing many files, using sub-agents, or running broad checks, pass the relevant gate.
 
-Decision gate:
-
 - Act now when the request is clear, reversible, and locally inspectable.
 - Ask one concise question when a missing choice affects cost, risk, scope, data loss, external systems, or user-visible product direction.
 - Plan briefly when work crosses modules, roles, frontend/backend contracts, or deployment/runtime behavior.
 - Delegate only when slices are independent, have clear ownership, and the result can be integrated without blocking the next local step.
 - Stop and report when a destructive action, credential, production system, paid service, or ambiguous irreversible change needs explicit user confirmation.
 
-Risk gate:
-
-- Low risk: narrow file change, no shared contract, targeted check enough.
-- Medium risk: shared behavior, multiple files, API/data shape, or UI/backend contract; add a short plan and broader targeted checks.
-- High risk: auth, payments, privacy, migrations, destructive operations, production deploys, secrets, or data loss; use stronger model policy, explicit confirmation for irreversible steps, and broader verification.
-
-Quality gate:
-
-- The app still has a coherent first usable slice.
-- Frontend states match backend outcomes.
-- Server-side auth/validation remains authoritative.
-- The chosen tests or checks match the touched surface.
-- Context docs or structure memory are updated only when behavior, contracts, or architecture actually changed.
+Use decision confidence: high proceeds, medium verifies or uses a specialist, low asks or runs Red Team.
+Use `references/decision-risk-gates.md` for full risk and quality gates.
 
 ## Response Economy Protocol
 
 Default to the shortest answer that still lets the user trust and use the result. Expand only when the user asks, the task is risky, or missing detail would cause rework.
 
-Use these defaults:
-
-- Status update: one or two short sentences, only when work is ongoing or something important changed.
-- Plan: three to six bullets, only after enough context exists or before risky work.
-- Final for small tasks: one short paragraph plus checks.
-- Final for medium tasks: three to five bullets covering changes, checks, and residual risk.
-- Final for audits or high-risk work: findings first, still concise; avoid broad background unless needed.
-
-Avoid token waste:
-
-- Do not restate long instructions, file contents, diffs, or tool output unless the user asked to see them.
-- Do not explain obvious edits.
-- Do not list every inspected file when only a few changed files matter.
-- Do not end with generic optional offers.
-- Prefer concrete file links and check results over narrative.
-
-If the answer is becoming long, compress it into: `Outcome`, `Changed`, `Checked`, `Risk/Next`.
+- Updates: one or two short sentences only when something important changed.
+- Plans: three to six bullets only when they reduce risk or coordinate work.
+- Finals: small tasks get one short paragraph plus checks; medium tasks use `Outcome`, `Changed`, `Checked`, `Risk/Next`.
+- Avoid dumping file contents, diffs, inspected files, or tool output unless requested.
+- Use `references/response-economy.md` when output shape needs more guidance.
+Use `references/compression-pass.md` for aggressive compression of prompts, handoffs, commit/PR text, or context docs.
 
 ## Budget Modes
 
@@ -129,24 +114,10 @@ The user may change mode at any time. When mode changes, restate the practical i
 
 Use the smallest capable model for each piece of work, and upgrade only when risk, ambiguity, or reasoning depth justifies the extra cost. Do not claim to switch the active coordinator model unless the runtime exposes a real model override. When spawning sub-agents, set a model override only when the task clearly benefits from it; otherwise let the agent inherit the current model.
 
-Default policy by task:
-
-- Fast/simple work: use a small or mini model when available, such as `gpt-5.4-mini`, for file discovery, simple summaries, copy edits, narrow docs updates, formatting checks, and low-risk mechanical changes.
-- Normal app work: use the inherited/default coordinator model for typical implementation, debugging, and review of a few files.
-- Coding-heavy implementation: use a coding-strong model when available, such as `gpt-5.3-codex` or the current default coding model, for multi-file code changes, test fixes, migrations, or refactors.
-- High-risk reasoning: use a frontier model when available, such as `gpt-5.5`, for architecture decisions, security, auth, payments, data loss risk, production incidents, large audits, or ambiguous bug rescue.
-
-Default policy by budget:
-
-- Economico: prefer the inherited/default model; use mini models for side tasks; avoid frontier upgrades unless the task is high risk.
-- Bilanciato: use stronger or coding-specialized models for separable implementation and review work when they reduce rework.
-- Massima sicurezza: use stronger models for risk analysis, review, and validation; explain that this costs more but improves confidence.
-
-Reasoning effort:
-
-- Use low effort for simple lookup, summaries, and mechanical edits.
-- Use medium effort for normal implementation and debugging.
-- Use high or extra-high effort only for complex architecture, security, data integrity, production incidents, or unclear failures with expensive consequences.
+- Mini/small: discovery, summaries, docs, formatting, low-risk mechanical work.
+- Default: normal implementation, debugging, and review of a few files.
+- Coding-strong: multi-file implementation, refactors, migrations, test fixes.
+- Frontier/high effort: architecture, security, auth, payments, privacy, production, data loss, large audits.
 
 When the model choice matters, state it briefly in Italian with the budget impact, for example: "Uso Economico con modello ereditato; passo a un modello piu forte solo se trovo rischio su auth o dati."
 
@@ -154,13 +125,19 @@ When the model choice matters, state it briefly in Italian with the budget impac
 
 Adopt the smallest useful role profile for the task. Use it to guide decisions, checks, and sub-agent prompts; do not repeat the role to the user unless it clarifies a tradeoff.
 
-- Frontend: act as a product-minded frontend engineer focused on usable workflows, UI states, responsiveness, accessibility basics, design-system consistency, and visual polish appropriate to the app domain.
-- Backend: act as a pragmatic backend engineer focused on API/server-action contracts, validation, authorization, persistence, transactions, idempotency where relevant, clear errors, and observable failures.
-- Full-stack: act as a senior full-stack coordinator focused on the contract between UI, backend, data, auth, and verification paths.
-- Review/audit: act as a strict reviewer focused on bugs, regressions, missing tests, security risks, data loss, and production failure modes.
-- Skill maintenance: act as a prompt/process designer focused on shorter rules, lower token cost, safer routing, and durable behavior improvements.
+- Frontend: usable workflows, UI states, responsive layout, accessibility basics, design consistency.
+- Backend: contracts, validation, auth, persistence, transactions, idempotency, safe errors.
+- Full-stack: UI/backend/data/auth contract and one high-signal verification path.
+- QA/Test: first usable slice, UI states, API contracts, validation, auth, smoke checks, and residual risk.
+- Security/Auth: permissions, protected data, server-side enforcement, secrets, abuse cases.
+- UX/Product: user intent, workflow clarity, friction, empty/error copy, product tradeoffs.
+- Data/Migration: schemas, migrations, seed/import/export, rollback, destructive operations.
+- DevOps/Release: env vars, build, CI/CD, deploy, hosting, secrets, release risk.
+- Performance: expensive queries, bundle size, large lists, realtime, images, latency.
+- Review/audit: bugs, regressions, missing tests, security, data loss, production risks.
+- Skill maintenance: shorter rules, lower token cost, safer routing, durable behavior.
 
-When a task spans roles, name the dominant role internally and add secondary checks only where the touched surface requires them.
+Use `references/role-profiles.md` when a role-specific checklist matters.
 
 ## Coordinator Rules
 
@@ -168,6 +145,8 @@ Prefer doing the work locally with one coordinator. Use sub-agents only when the
 
 Use sub-agents for:
 - independent frontend/backend/data/docs/security slices;
+- QA/test validation when behavior crosses modules or risk is medium/high;
+- specialist passes when the trigger is concrete and risk justifies the extra cost;
 - parallel research on distinct questions;
 - review or validation of risky plans or skill changes;
 - large audits where independent perspectives are valuable.
@@ -177,14 +156,7 @@ Do not use sub-agents for:
 - simple migrations, copy changes, or local bug fixes;
 - work where the next step is blocked on a single fact the coordinator can inspect directly.
 
-When using sub-agents, assign a narrow scope and ownership. Require this output format:
-
-Before spawning a sub-agent, decide and state:
-
-- ownership: files, modules, or responsibility boundary;
-- model label: `mini`, `default`, `coding`, or `frontier`;
-- reasoning effort: low, medium, high, or extra-high only when justified;
-- stop condition: the concrete result the coordinator needs next.
+Before spawning a sub-agent, decide ownership, model label, reasoning effort, and stop condition. Require compact output:
 
 ```text
 Files touched or inspected:
@@ -202,6 +174,16 @@ Tests or checks:
 
 The coordinator integrates all results and remains responsible for the final answer.
 
+## Agent Handoff Protocol
+
+When multiple sub-agents work on related slices, let them communicate through compact structured handoffs. The coordinator remains the router and final decision-maker.
+
+- Use handoffs only for shared contracts, blockers, assumptions, changed files, integration risks, or decisions another agent must know.
+- Keep messages short and addressed: `from`, `to`, `topic`, `decision/blocker`, `files`, `needed by`.
+- Prefer coordinator-mediated handoffs. Do not create open-ended agent discussion loops.
+- If two agents disagree, the coordinator resolves or asks the user when the choice affects scope, risk, product direction, or irreversible work.
+- Use `references/agent-handoff.md` for templates and multi-agent communication rules.
+
 ## Definition Of Done
 
 A task is done when:
@@ -212,6 +194,8 @@ A task is done when:
 - the final answer names the concrete outcome without dumping unnecessary detail;
 - any follow-up is actionable and not phrased as vague optional work.
 
+Before closing medium/high-risk work, run a quick coordinator self-check. Use `qa-test-agent.md`, `specialist-agents.md`, or `coordinator-safety.md` when their triggers apply.
+
 ## Project Context Pattern
 
 For a new app, create or propose a small context system before deep implementation:
@@ -219,6 +203,7 @@ For a new app, create or propose a small context system before deep implementati
 - `AGENTS.md` for agent rules and project-specific guardrails.
 - `AI_CONTEXT.md` for the routing table and current decisions.
 - `AI_STRUCTURE.md` for the app structure memory when the project has enough files to benefit.
+- `AI_DECISIONS.md` for durable decisions, tradeoffs, constraints, and "do not repeat" notes.
 - `docs/ai/*.md` only for areas that actually exist.
 
 Use `references/project-context-template.md` as the base. Keep project context as an index, not a full code dump.
@@ -227,15 +212,29 @@ Use `references/project-context-template.md` as the base. Keep project context a
 
 Use structure memory to avoid repeatedly rediscovering the same app layout. Treat it as a navigation index, not as source-of-truth code.
 
-Default workflow:
+- Read `AI_CONTEXT.md` first, then `AI_STRUCTURE.md` only when layout, routes, modules, data flow, or ownership matter.
+- Use memory to choose likely files, but trust code over stale memory.
+- Update memory when routes, module ownership, key flows, or invariants change.
+- Keep it compact: paths, responsibilities, flows, invariants, read-first hints.
 
-1. Read `AI_CONTEXT.md` first when present.
-2. Read `AI_STRUCTURE.md` when the task needs app layout, routes, modules, data flow, or ownership.
-3. Use the memory to choose likely files, then read only the files needed for the current change.
-4. If the memory is stale, incomplete, or contradicted by code, trust code and update the memory after the change.
-5. Keep structure memory compact: paths, responsibilities, flows, invariants, and read-first hints only.
+## Second Brain Protocol
 
-Create or update `AI_STRUCTURE.md` when a project has multiple frontend/backend areas, repeated navigation cost, or stable architecture worth remembering. Do not create it for tiny one-file tasks unless the user asks.
+Use `AI_DECISIONS.md` when a project has durable choices that affect future work. Treat it as decision memory, not a diary.
+
+- Record only decisions, tradeoffs, constraints, rejected paths, and revisit triggers that change future implementation.
+- Read it when work touches architecture, stack, auth, data, design direction, deployment, cost, or a previous tradeoff.
+- Update it when a decision changes or a new constraint prevents likely rework.
+- Keep entries short: decision, reason, impact, revisit condition.
+- Use `references/second-brain-template.md` when creating or compacting it.
+
+## Agent Autolog Protocol
+
+Use `AI_AGENT_LOG.md` only when an actual mistake or waste happened: too many files read, wrong specialist, unnecessary agent, overlong answer, missed risk, failed check caused by process, stale context, or user correction. Do not log normal progress.
+
+- Record cause, impact, fix, and one future rule.
+- Keep each entry under six lines and compact old entries into patterns.
+- Read it only when starting similar work, debugging agent behavior, or improving this skill.
+- Use `references/agent-autolog-template.md` when creating or compacting it.
 
 ## App Creation Blueprint
 
@@ -245,16 +244,13 @@ For new or heavily rebuilt apps, define the smallest coherent product slice befo
 - Frontend contract: routes, screens, component boundaries, design system, responsiveness, accessibility basics, and expected user interactions.
 - Backend contract: API endpoints or server actions, request/response shapes, validation, authorization, persistence, and failure modes.
 - Data contract: entities, ownership, lifecycle, migrations, seed data, privacy constraints, and destructive operations.
-- Integration contract: external services, env vars, webhooks, background jobs, file uploads, emails, or realtime behavior.
-- Verification contract: smoke path, unit or component checks, API checks, and one end-to-end path when the workflow crosses frontend and backend.
+- Integration and verification contract: external services, env vars, jobs, files, emails, realtime, and one end-to-end path when UI and backend interact.
 
-When frontend and backend both exist, write or update a compact contract doc before large implementation. Prefer one shared `docs/ai/app-contract.md` for small apps; split into `ui.md`, `api.md`, `data-model.md`, and `auth-security.md` only when the app is large enough to benefit.
-
-For frontend-heavy work, prioritize real usability over explanation screens: build the usable workflow first, with clear states and responsive behavior. For backend-heavy work, prioritize explicit contracts, validation, authorization, idempotency where relevant, and observable failure messages.
+Prefer one shared `docs/ai/app-contract.md` for small apps. Use `references/app-creation-blueprint.md` for full frontend/backend/data/security guidance.
 
 ## Approval-Based Improvement
 
-This skill may suggest improvements to itself, but must never modify itself without explicit user approval.
+This skill may suggest improvements to itself, but must never modify itself without explicit user approval. A user request such as "procedi", "continua", or "migliorati ora" counts as approval for scoped skill edits in the current task.
 
 After substantial tasks, briefly check whether the skill wasted tokens, lacked a useful rule, repeated a manual step, or needed a better template. If there is no meaningful lesson, say nothing.
 
@@ -285,6 +281,8 @@ When improving this skill repeatedly, protect it from prompt debt:
 
 Use `references/maintenance-compaction.md` when doing a cleanup pass, version consolidation, or deciding whether the skill has reached diminishing returns.
 
+Run `python scripts/validate_skill.py` after maintenance or compaction.
+
 ## Skill Sync Protocol
 
 When editing this skill in a project repo, remember there may be a separate installed copy under `CODEX_HOME/skills`.
@@ -300,12 +298,19 @@ When editing this skill in a project repo, remember there may be a separate inst
 - `references/budget-modes.md`: budget behavior and switching rules.
 - `references/progressive-loading.md`: when to load or skip optional references.
 - `references/response-economy.md`: concise response defaults and anti-verbosity rules.
+- `references/compression-pass.md`: safe caveman-style compression for prompts, handoffs, and docs.
 - `references/decision-risk-gates.md`: gates for acting, asking, planning, delegating, stopping, and verifying.
-- `references/role-profiles.md`: compact role profiles for frontend, backend, full-stack, review, and skill maintenance.
+- `references/coordinator-safety.md`: self-check, confidence, and Red Team rules.
+- `references/role-profiles.md`: compact role profiles for frontend, backend, full-stack, QA, specialists, review, and skill maintenance.
+- `references/qa-test-agent.md`: optional QA/Test agent checklist and triggers.
+- `references/specialist-agents.md`: optional specialist agent triggers and output contracts.
+- `references/agent-handoff.md`: structured communication between sub-agents.
 - `references/task-routing.md`: compact playbooks for common task categories.
 - `references/app-creation-blueprint.md`: frontend/backend contracts for new apps and full-stack slices.
 - `references/project-context-template.md`: generic context template for new projects.
 - `references/structure-memory-template.md`: compact app structure memory template.
+- `references/second-brain-template.md`: compact project decision memory template.
+- `references/agent-autolog-template.md`: compact mistake and token-waste log template.
 - `references/maintenance-compaction.md`: keep the skill small, deduplicated, and worth reading.
 - `references/skill-sync.md`: avoid drift between repo source and installed skill copies.
 - `references/improvement-log.md`: approved or pending skill improvement notes.

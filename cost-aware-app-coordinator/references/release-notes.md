@@ -1,78 +1,103 @@
 # Release Notes
 
+## v0.19.0 - 2026-04-29
+
+- Added event-based agent autolog guidance for real mistakes, token waste, user corrections, stale context, and repeated process failures.
+- Added `references/agent-autolog-template.md`.
+- Connected `AI_AGENT_LOG.md` to project context without making it part of normal startup.
+
+## v0.18.0 - 2026-04-29
+
+- Added caveman-inspired compression pass for prompts, handoffs, docs, commit/PR text, and final answers.
+- Added `references/compression-pass.md`.
+- Added explicit preserve rules for security, breaking changes, migrations, auth, deploy risk, irreversible actions, and future-debug context.
+
+## v0.17.0 - 2026-04-29
+
+- Added deterministic skill validator script.
+- Validator checks frontmatter, reference coverage, progressive loading coverage, duplicate headings, required sections, and line limits.
+- Connected validation to maintenance and compaction workflow.
+
+## v0.16.0 - 2026-04-29
+
+- Added coordinator self-check gate, decision confidence, and optional Red Team rules.
+- Added `references/coordinator-safety.md`.
+- Connected coordinator safety to definition of done, progressive loading, and risk gates.
+- Cleaned up core formatting/reference wording during self-improvement.
+- Compressed role profiles and core sections to reduce prompt length without removing behavior.
+
+## v0.15.0 - 2026-04-29
+
+- Added optional specialist agents for Security/Auth, UX/Product, Data/Migration, DevOps/Release, and Performance.
+- Added `references/specialist-agents.md` with strict triggers and compact output contract.
+- Updated role profiles, progressive loading, coordinator rules, and definition of done specialist routing.
+
+## v0.14.0 - 2026-04-29
+
+- Added optional QA/Test role and `references/qa-test-agent.md`.
+- Added QA/Test trigger for frontend/backend workflows, contract/auth/data changes, bug fixes, and push/PR validation.
+- Connected QA/Test to definition of done and sub-agent usage.
+
+## v0.13.0 - 2026-04-29
+
+- Added structured sub-agent handoff protocol.
+- Added `references/agent-handoff.md` for compact communication, conflict handling, and final integration.
+- Updated progressive loading and delegation gates for multi-agent coordination.
+
+## v0.12.0 - 2026-04-29
+
+- Added `AI_DECISIONS.md` second brain guidance and `references/second-brain-template.md`.
+- Updated project context routing for durable decisions, tradeoffs, constraints, and revisit triggers.
+- Updated skill description to include project context and decision memory.
+
+## v0.11.1 - 2026-04-29
+
+- Compacted improvement log after local self-tests.
+- Renamed a duplicate template heading to reduce ambiguity.
+- Clarified scoped approval wording and progressive-loading self-reference after deeper self-tests.
+- Compacted `SKILL.md` and `project-context-template.md` by relying on existing references.
+- No new behavior added.
+
 ## v0.11.0 - 2026-04-29
 
 - Added skill sync protocol to avoid drift between repo source and installed skill copies.
-- Added `references/skill-sync.md` with check, report, sync rules, and release checklist.
-- Clarified not to claim future sessions use repo changes unless the installed path is known.
+- Added `references/skill-sync.md`.
 
 ## v0.10.0 - 2026-04-29
 
 - Added maintenance and compaction protocol to prevent prompt debt.
-- Added `references/maintenance-compaction.md` with keep, move, compress, merge, and stop criteria.
-- Added a stop rule for when further improvements are cosmetic or cost more tokens than they save.
+- Added `references/maintenance-compaction.md`.
 
 ## v0.9.0 - 2026-04-29
 
-- Added progressive loading rules so references are read only when triggered.
-- Added `references/progressive-loading.md` with core-first and reference trigger guidance.
-- Reduced expected token use as the skill grows by avoiding default full-reference loading.
+- Added progressive loading so references are read only when triggered.
+- Added `references/progressive-loading.md`.
 
 ## v0.8.0 - 2026-04-29
 
-- Added decision and risk gates for acting, asking, planning, delegating, stopping, and verifying.
-- Added quality gate for first usable slice, frontend/backend consistency, server-side authority, checks, and docs updates.
-- Added `references/decision-risk-gates.md` for compact operational rules.
+- Added decision, risk, and quality gates.
+- Added `references/decision-risk-gates.md`.
 
 ## v0.7.0 - 2026-04-29
 
-- Added role profiles for frontend, backend, full-stack, review/audit, and skill maintenance work.
-- Added `references/role-profiles.md` for compact internal role guidance.
-- Clarified that role profiles should guide behavior without repeated user-facing narration.
+- Added role profiles for frontend, backend, full-stack, review/audit, and skill maintenance.
+- Added `references/role-profiles.md`.
 
 ## v0.6.0 - 2026-04-29
 
-- Added structure memory protocol for remembering app layout without repeatedly scanning files.
-- Added `AI_STRUCTURE.md` guidance to project context and doc reading protocol.
-- Added `references/structure-memory-template.md` with compact map, flows, invariants, and read-first hints.
+- Added structure memory protocol and `AI_STRUCTURE.md` guidance.
+- Added `references/structure-memory-template.md`.
 
 ## v0.5.0 - 2026-04-29
 
-- Added response economy protocol to reduce unnecessary token use.
-- Added concise default shapes for status updates, plans, final answers, and audits.
-- Added anti-verbosity rules for tool output, diffs, inspected files, and generic follow-ups.
-- Added `references/response-economy.md` with compact answer templates.
+- Added response economy protocol and compact answer templates.
+- Added `references/response-economy.md`.
 
 ## v0.4.0 - 2026-04-29
 
 - Added app creation blueprint for frontend/backend planning.
-- Added first usable slice guidance for new apps and full-stack features.
-- Added frontend, backend, data/security, and full-stack verification contracts.
-- Updated project context template with `app-contract.md` and first usable slice fields.
-- Added an `app-contract.md` template and delivery slice order for full-stack app creation.
+- Updated project context template with `app-contract.md`.
 
-## v0.3.0 - 2026-04-29
+## v0.1.0-v0.3.0 - 2026-04-29
 
-- Added task routing for new projects, existing changes, audits, bug rescue, and skill improvement.
-- Added a practical working loop from budget/model choice through verification and final response.
-- Added a definition of done for scoped edits, checks, and concise outcomes.
-- Added a task routing reference for broad or mixed requests.
-- Added sub-agent dispatch fields for ownership, model label, reasoning effort, and stop condition.
-
-## v0.2.0 - 2026-04-29
-
-- Added model selection protocol by task risk and budget mode.
-- Added guidance for mini/default/coding/frontier model labels.
-- Added reasoning effort guidance for simple, normal, and high-risk work.
-
-## v0.1.0 - 2026-04-29
-
-Initial local version.
-
-- Added coordinator-first workflow.
-- Added budget modes: Economico, Bilanciato, Massima sicurezza.
-- Added simple cost estimate: basso, medio, alto.
-- Added sub-agent rules and compact output format.
-- Added generic project context template.
-- Added approval-based skill improvement loop.
-- Added lightweight improvement log.
+- Initial coordinator workflow, budget modes, model policy, task routing, working loop, definition of done, sub-agent dispatch, project context template, and improvement loop.

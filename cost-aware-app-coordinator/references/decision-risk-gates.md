@@ -46,6 +46,8 @@ Delegate only when:
 - the coordinator can keep working locally without waiting immediately;
 - integration risk is lower than doing everything in one pass.
 
+When delegated slices depend on each other, require structured handoffs instead of free-form discussion.
+
 ## Stop
 
 Stop and report when:
@@ -64,3 +66,8 @@ Match verification to risk:
 - Medium: targeted tests around touched modules and contracts.
 - High: broader tests, migration/auth/security checks, and explicit residual risk.
 
+## Confidence
+
+- High: proceed with normal checks.
+- Medium: verify assumptions, use a specialist, or run a targeted check before implementation/closure.
+- Low: ask the user, reduce scope, or run Red Team before proceeding.
