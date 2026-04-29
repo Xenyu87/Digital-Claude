@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cost-Aware App Coordinator"
+  short_description: "Coordina app con controllo token"
+  default_prompt: "Use $cost-aware-app-coordinator to plan and build my app with a clear budget mode and controlled agent usage."
