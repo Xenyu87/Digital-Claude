@@ -1,5 +1,15 @@
 # Release Notes
 
+## v0.24.0 - 2026-04-30
+
+- Restricted progress updates to only sub-agent usage, errors, blockers, risks, explicit status requests, and user actions.
+- Removed long-wait status as a default reason to speak.
+
+## v0.23.0 - 2026-04-30
+
+- Suppressed routine announcements of skill name, budget mode, model policy, role/design lens, file intent, checks, and commit preparation.
+- Added forbidden routine update examples from real app testing.
+
 ## v0.22.0 - 2026-04-30
 
 - Made progress updates silent by default during routine work.
@@ -67,54 +77,6 @@
 - Updated project context routing for durable decisions, tradeoffs, constraints, and revisit triggers.
 - Updated skill description to include project context and decision memory.
 
-## v0.11.1 - 2026-04-29
+## v0.1.0-v0.11.1 - 2026-04-29
 
-- Compacted improvement log after local self-tests.
-- Renamed a duplicate template heading to reduce ambiguity.
-- Clarified scoped approval wording and progressive-loading self-reference after deeper self-tests.
-- Compacted `SKILL.md` and `project-context-template.md` by relying on existing references.
-- No new behavior added.
-
-## v0.11.0 - 2026-04-29
-
-- Added skill sync protocol to avoid drift between repo source and installed skill copies.
-- Added `references/skill-sync.md`.
-
-## v0.10.0 - 2026-04-29
-
-- Added maintenance and compaction protocol to prevent prompt debt.
-- Added `references/maintenance-compaction.md`.
-
-## v0.9.0 - 2026-04-29
-
-- Added progressive loading so references are read only when triggered.
-- Added `references/progressive-loading.md`.
-
-## v0.8.0 - 2026-04-29
-
-- Added decision, risk, and quality gates.
-- Added `references/decision-risk-gates.md`.
-
-## v0.7.0 - 2026-04-29
-
-- Added role profiles for frontend, backend, full-stack, review/audit, and skill maintenance.
-- Added `references/role-profiles.md`.
-
-## v0.6.0 - 2026-04-29
-
-- Added structure memory protocol and `AI_STRUCTURE.md` guidance.
-- Added `references/structure-memory-template.md`.
-
-## v0.5.0 - 2026-04-29
-
-- Added response economy protocol and compact answer templates.
-- Added `references/response-economy.md`.
-
-## v0.4.0 - 2026-04-29
-
-- Added app creation blueprint for frontend/backend planning.
-- Updated project context template with `app-contract.md`.
-
-## v0.1.0-v0.3.0 - 2026-04-29
-
-- Initial coordinator workflow, budget modes, model policy, task routing, working loop, definition of done, sub-agent dispatch, project context template, and improvement loop.
+- Initial coordinator, budget/model policy, routing, app blueprint, response economy, structure memory, roles, gates, progressive loading, maintenance, skill sync, and compaction.

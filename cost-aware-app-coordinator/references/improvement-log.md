@@ -26,8 +26,26 @@ Approved on 2026-04-29:
 - v0.20: shorter routine output; precision reserved for user actions, risks, choices, and blockers.
 - v0.21: `AI_HANDOFF.md` bridge for Codex, Claude Code, and other agents on the same project.
 - v0.22: silent-by-default progress updates; extra detail only on request, risk, blocker, or user action.
+- v0.23: suppress skill/mode/role/design/file/check/commit narration unless the user must decide.
+- v0.24: progress updates only for agents used, errors, blockers, risks, status requests, and user actions.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-04-30
+Problema osservato: L'utente vuole vedere solo uso agenti, errori e cose importanti da fare, non stati intermedi.
+Miglioramento proposto: Limitare gli update a agenti usati, errori, blocchi, rischi, status richiesto e azioni utente.
+Motivazione: Riduce token e mostra solo informazioni operative importanti.
+Impatto token: basso
+Decisione utente: approvato con feedback diretto del 2026-04-30
+
+Status: done
+Date: 2026-04-30
+Problema osservato: Screenshot reale mostra ancora update troppo lunghi: skill/mode, cappello UX/UI, scelta struttura, file intent, doc update, controlli e commit preparation.
+Miglioramento proposto: Vietare esplicitamente queste routine updates e tenere skill, mode, role, model, intent e checks interni.
+Motivazione: Taglia token durante il lavoro senza ridurre precisione su blocchi o azioni utente.
+Impatto token: basso
+Decisione utente: approvato con screenshot e feedback del 2026-04-30
 
 Status: done
 Date: 2026-04-30
@@ -76,37 +94,5 @@ Miglioramento proposto: Aggiungere `scripts/validate_skill.py` per validare fron
 Motivazione: Repo GitHub di skill utili usano validazione deterministica per mantenere qualita e coerenza.
 Impatto token: basso
 Decisione utente: approvato con richiesta di ricerca GitHub approfondita del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: Il coordinator puo sbagliare classificazione, specialisti, contesto o verifiche.
-Miglioramento proposto: Aggiungere self-check gate, decision confidence e Red Team opzionale per rischio alto/bassa confidenza; poi comprimere core e role profiles.
-Motivazione: Riduce errori costosi senza attivare agenti extra per default e abbassa il costo fisso della skill.
-Impatto token: basso di default, medio solo quando Red Team viene attivato
-Decisione utente: approvato se non mangia token, 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: Alcuni rischi importanti erano ancora impliciti invece di avere specialisti opzionali con trigger chiari.
-Miglioramento proposto: Aggiungere specialisti Security/Auth, UX/Product, Data/Migration, DevOps/Release e Performance con regole di attivazione strette.
-Motivazione: Il coordinator puo usarli solo quando servono, evitando costo fisso ma coprendo rischi costosi.
-Impatto token: medio quando attivati, basso quando non attivati
-Decisione utente: approvato con richiesta di avere tutti gli specialisti se usati bene dal coordinator del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: QA era implicito in review/verification, ma mancava un ruolo tester dedicato.
-Miglioramento proposto: Aggiungere QA/Test agent opzionale con trigger, checklist e output compatto.
-Motivazione: Le app full-stack hanno bisogno di una passata specifica su flussi, stati UI, contratti API, auth e regressioni.
-Impatto token: basso
-Decisione utente: approvato con richiesta "procedi" sul tester del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: L'utente voleva che gli agenti sotto parlassero tra loro, ma senza perdere il controllo del coordinator.
-Miglioramento proposto: Aggiungere handoff strutturati tra sub-agent, mediati dal coordinator, con template e regole anti-loop.
-Motivazione: Permette coordinamento reale tra slice frontend/backend/data/review senza chat libera costosa o conflittuale.
-Impatto token: basso
-Decisione utente: approvato con richiesta "voglio che gli agenti sotto parlino tra di loro" del 2026-04-29
 
 Older entries compacted into Current Behavior Summary.

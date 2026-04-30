@@ -68,7 +68,7 @@ If the request mixes categories, handle the blocking category first and name the
 
 Use this loop for non-trivial tasks:
 
-1. State budget mode, rough cost estimate, and model policy when it matters.
+1. Choose budget mode, rough cost estimate, and model policy internally. State them only when the user asks or a real cost/risk choice changes.
 2. Gather only the context needed for the next decision.
 3. Make a short plan once the task shape is clear.
 4. Implement in small patches that preserve existing project style.
@@ -94,10 +94,11 @@ Use `references/decision-risk-gates.md` for full risk and quality gates.
 
 Default to the shortest answer that still lets the user trust and use the result. Expand only when the user asks, the task is risky, or missing detail would cause rework.
 
-- Updates: silent by default while working. Send one short sentence only for blockers, user decisions, risky actions, long waits, or explicit status requests.
+- Updates: silent by default while working. Speak only to report sub-agents used, errors, blockers, risks, or user actions needed.
 - Plans: three to six bullets only when they reduce risk or coordinate work.
 - Finals: say what was done and what was checked. Do not add "because/why" for routine edits.
 - User action: be precise and explicit only for what the user must do, choose, confirm, configure, pay for, or test manually.
+- Never announce skill name, budget mode, model policy, role, design lens, file-by-file intent, routine next step, checks, or commit prep unless requested or required for an important user action.
 - Avoid dumping file contents, diffs, inspected files, or tool output unless requested.
 - Use `references/response-economy.md` when output shape needs more guidance.
 Use `references/compression-pass.md` for aggressive compression of prompts, handoffs, commit/PR text, or context docs.
@@ -121,7 +122,7 @@ Use the smallest capable model for each piece of work, and upgrade only when ris
 - Coding-strong: multi-file implementation, refactors, migrations, test fixes.
 - Frontier/high effort: architecture, security, auth, payments, privacy, production, data loss, large audits.
 
-When the model choice matters, state it briefly in Italian with the budget impact, for example: "Uso Economico con modello ereditato; passo a un modello piu forte solo se trovo rischio su auth o dati."
+Keep model choice internal unless the user asks, cost changes, or a stronger model/sub-agent needs a user-visible tradeoff.
 
 ## Role Profiles
 
