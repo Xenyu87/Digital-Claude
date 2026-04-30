@@ -94,7 +94,7 @@ Use `references/decision-risk-gates.md` for full risk and quality gates.
 
 Default to the shortest answer that still lets the user trust and use the result. Expand only when the user asks, the task is risky, or missing detail would cause rework.
 
-- Updates: one short sentence only when something important changed; avoid explaining routine fixes.
+- Updates: silent by default while working. Send one short sentence only for blockers, user decisions, risky actions, long waits, or explicit status requests.
 - Plans: three to six bullets only when they reduce risk or coordinate work.
 - Finals: say what was done and what was checked. Do not add "because/why" for routine edits.
 - User action: be precise and explicit only for what the user must do, choose, confirm, configure, pay for, or test manually.

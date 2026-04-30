@@ -25,8 +25,17 @@ Approved on 2026-04-29:
 - v0.19: event-based `AI_AGENT_LOG.md` for real mistakes and token waste, loaded only when useful.
 - v0.20: shorter routine output; precision reserved for user actions, risks, choices, and blockers.
 - v0.21: `AI_HANDOFF.md` bridge for Codex, Claude Code, and other agents on the same project.
+- v0.22: silent-by-default progress updates; extra detail only on request, risk, blocker, or user action.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-04-30
+Problema osservato: Gli update durante il lavoro consumavano troppi token e davano informazioni aggiuntive non richieste.
+Miglioramento proposto: Rendere gli update silenziosi di default con gate esplicito per parlare solo se serve.
+Motivazione: Riduce rumore e token mantenendo precisione su blocchi, rischi e azioni utente.
+Impatto token: basso
+Decisione utente: approvato con feedback diretto del 2026-04-30
 
 Status: done
 Date: 2026-04-29

@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.22.0 - 2026-04-30
+
+- Made progress updates silent by default during routine work.
+- Added a progress update gate: speak only for blockers, user decisions, risky actions, long waits, or explicit status requests.
+
 ## v0.21.0 - 2026-04-29
 
 - Added cross-agent handoff support for projects worked on by Codex and Claude Code.
