@@ -12,6 +12,7 @@ Use this reference when answers, updates, or agent prompts are getting longer th
 - Prefer one precise file link over a list of every related file.
 - Do not explain routine edits as "I changed X because Y"; reserve reasons for risk, tradeoffs, blockers, or user decisions.
 - Be most precise in `Da fare per te` items: commands to run, env vars to set, accounts to connect, manual checks, or choices needed.
+- For non-programmer users, prefer `Come provarlo` over code details when the change is visual or functional.
 - Do not announce design lens, implementation intent, files you are about to edit, checks you are about to run, or commit/push preparation unless the user must decide something.
 
 ## Progress Update Gate
@@ -59,6 +60,9 @@ Fatto:
 
 Verifica:
 - ...
+
+Come provarlo:
+- ... [1-3 plain steps only for user-facing behavior]
 
 Da fare per te:
 - ... [only if needed]

@@ -50,3 +50,14 @@ Stop improving when the next idea is:
 - likely to increase token cost more than it saves;
 - better handled by using the skill on real projects first.
 
+## Auto-Improvement Runs
+
+When the user asks to auto-improve until no improvements remain:
+
+1. List candidates internally.
+2. Keep only candidates that change behavior, reduce repeated error, reduce token cost, or improve safety.
+3. Merge related candidates into one compact version.
+4. Validate, sync, release, then reassess once.
+5. Stop and report when remaining ideas fail the stop criteria.
+
+Do not create endless version bumps. One or two compact releases are usually enough before real project usage should provide new evidence.

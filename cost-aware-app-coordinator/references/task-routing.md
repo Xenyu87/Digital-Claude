@@ -77,3 +77,5 @@ For these cases, consider Playwright when it can confirm visual layout or workfl
 Skip it for purely internal docs, mechanical refactors, small type/lint fixes, or changes already fully covered by automated checks.
 
 If the user reports a mismatch, treat it as useful product feedback first. Log it in `AI_AGENT_LOG.md` only if it was caused by a missed instruction, wrong assumption, weak verification, or repeated process problem.
+
+For user-facing work, include 1-3 plain `Come provarlo` steps in the final answer unless automated checks fully cover the outcome or there is nothing useful for the user to click/see.

@@ -33,8 +33,17 @@ Approved on 2026-04-29:
 - v0.27: universal plan gates, domain question bank, and cost checkpoints for non-UI work too.
 - v0.28: plain-language plan contract and final visual/functional acceptance feedback with autolog on missed intent.
 - v0.29: conditional Playwright UI checks with cost checkpoint before expensive browser setup.
+- v0.30: bounded auto-improvement runs and plain `Come provarlo` steps for user-facing changes.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: La richiesta di auto-migliorarsi fino a esaurimento rischia version bump infiniti o regole speculative.
+Miglioramento proposto: Limitare gli auto-update approvati al run corrente e fermarsi quando le idee residue non cambiano comportamento; aggiungere `Come provarlo` per utenti non tecnici.
+Motivazione: Mantiene la skill utile, controllata e verificabile senza prompt debt.
+Impatto token: basso
+Decisione utente: auto-approvato con richiesta del 2026-05-01
 
 Status: done
 Date: 2026-05-01

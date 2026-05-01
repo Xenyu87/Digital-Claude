@@ -101,6 +101,7 @@ Default to the shortest answer that still lets the user trust and use the result
 - Updates: silent by default while working. Speak only to report sub-agents used, errors, blockers, risks, or user actions needed.
 - Plans: three to six bullets only when they reduce risk or coordinate work.
 - Finals: say what was done and what was checked. Do not add "because/why" for routine edits.
+- For user-facing changes, include 1-3 plain manual verification steps when automated checks cannot prove visual or functional fit.
 - User action: be precise and explicit only for what the user must do, choose, confirm, configure, pay for, or test manually.
 - Never announce skill name, budget mode, model policy, role, design lens, file-by-file intent, routine next step, checks, or commit prep unless requested or required for an important user action.
 - Avoid dumping file contents, diffs, inspected files, or tool output unless requested.
@@ -273,6 +274,7 @@ Prefer one shared `docs/ai/app-contract.md` for small apps. Use `references/app-
 ## Approval-Based Improvement
 
 This skill may suggest improvements to itself, but must never modify itself without explicit user approval. A user request such as "procedi", "continua", or "migliorati ora" counts as approval for scoped skill edits in the current task.
+If the user explicitly asks to auto-improve and auto-accept, treat that as approval for the current improvement run only. Implement only durable, behavior-changing improvements; stop when remaining ideas are cosmetic, speculative, duplicate, or likely to add prompt cost.
 
 After substantial tasks, briefly check whether the skill wasted tokens, lacked a useful rule, repeated a manual step, or needed a better template. If there is no meaningful lesson, say nothing.
 

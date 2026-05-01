@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.30.0 - 2026-05-01
+
+- Added auto-improvement run rules: auto-accepted edits are scoped to the current run, must change behavior, and stop when remaining ideas are cosmetic, speculative, duplicate, or prompt-costly.
+- Added plain `Come provarlo` final-answer guidance for user-facing changes so non-programmer users can verify visual or functional behavior without reading code.
+
 ## v0.29.0 - 2026-05-01
 
 - Added conditional Playwright UI checks for new pages, redesigns, screenshot fidelity, responsive layouts, forms, charts, dashboards, and navigation.
