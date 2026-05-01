@@ -18,6 +18,7 @@ Use this reference when the user request is broad, mixed, or easy to over-read.
 - Read `AI_CONTEXT.md`, `AGENTS.md`, or `README.md` first when present.
 - Search for the feature, route, component, command, or error message tied to the request.
 - If the change has multiple valid technical routes, give a short recommended route before editing.
+- For medium/high-risk user-facing changes, define success in terms the user can judge without reading code.
 - Use risk gates before changing shared contracts, auth, data, migrations, or production config.
 - Avoid whole-repo scans unless local context is missing or the change crosses architecture boundaries.
 - Run the narrowest check that can catch the likely regression.
@@ -62,3 +63,15 @@ Use a short plan before implementation when the request touches:
 - multi-step features crossing UI, backend, and data.
 
 Use the question bank in `decision-risk-gates.md` when one missing answer would change the route.
+
+## User-Facing Acceptance
+
+Use a final acceptance prompt when the task changes what the user sees or a workflow they manually use:
+
+- screens, forms, dashboards, reports, charts, navigation, copy, or layout;
+- important business behavior where the user knows the intended result better than the code;
+- screenshot/mockup fidelity or feature behavior requested in natural language.
+
+Skip it for purely internal docs, mechanical refactors, small type/lint fixes, or changes already fully covered by automated checks.
+
+If the user reports a mismatch, treat it as useful product feedback first. Log it in `AI_AGENT_LOG.md` only if it was caused by a missed instruction, wrong assumption, weak verification, or repeated process problem.

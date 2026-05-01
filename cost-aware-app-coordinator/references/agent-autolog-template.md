@@ -35,6 +35,7 @@ Log when:
 - an unnecessary agent, specialist, or broad test was used;
 - a required QA/security/data/deploy check was missed;
 - the user corrected a repeated assumption or verbosity problem;
+- the user says the result does not match the requested visual or functional intent because Codex missed, assumed, or failed to verify something;
 - stale context caused wrong work;
 - final answers or handoffs became longer than useful.
 

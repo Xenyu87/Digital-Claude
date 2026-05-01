@@ -31,8 +31,17 @@ Approved on 2026-04-29:
 - v0.25: flexible local UI consistency check for new screens and redesigns across any app.
 - v0.26: plan-first questions for ambiguous/high-impact work and stronger visual fidelity handling for screenshots/mockups.
 - v0.27: universal plan gates, domain question bank, and cost checkpoints for non-UI work too.
+- v0.28: plain-language plan contract and final visual/functional acceptance feedback with autolog on missed intent.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: L'utente non e programmatore e deve poter approvare il risultato da lato visivo/funzionale, non leggendo codice.
+Miglioramento proposto: Aggiungere plan contract in linguaggio semplice e domanda finale di accettazione per lavori visuali/funzionali medi o rischiosi.
+Motivazione: Se il risultato non rispecchia l'intento, la correzione utile va trasformata in lezione nel log operativo.
+Impatto token: basso
+Decisione utente: approvato con richiesta del 2026-05-01 su feedback finale e automiglioramento
 
 Status: done
 Date: 2026-05-01
@@ -57,61 +66,5 @@ Miglioramento proposto: Richiedere un controllo generale di coerenza UI contro 2
 Motivazione: Ogni app ha linguaggio visivo diverso; la skill deve imparare quello locale, non imporre regole specifiche di X Manager.
 Impatto token: basso
 Decisione utente: approvato con richiesta "procedi, pusha e attiva" del 2026-05-01
-
-Status: done
-Date: 2026-04-30
-Problema osservato: L'utente vuole vedere solo uso agenti, errori e cose importanti da fare, non stati intermedi.
-Miglioramento proposto: Limitare gli update a agenti usati, errori, blocchi, rischi, status richiesto e azioni utente.
-Motivazione: Riduce token e mostra solo informazioni operative importanti.
-Impatto token: basso
-Decisione utente: approvato con feedback diretto del 2026-04-30
-
-Status: done
-Date: 2026-04-30
-Problema osservato: Screenshot reale mostra ancora update troppo lunghi: skill/mode, cappello UX/UI, scelta struttura, file intent, doc update, controlli e commit preparation.
-Miglioramento proposto: Vietare esplicitamente queste routine updates e tenere skill, mode, role, model, intent e checks interni.
-Motivazione: Taglia token durante il lavoro senza ridurre precisione su blocchi o azioni utente.
-Impatto token: basso
-Decisione utente: approvato con screenshot e feedback del 2026-04-30
-
-Status: done
-Date: 2026-04-30
-Problema osservato: Gli update durante il lavoro consumavano troppi token e davano informazioni aggiuntive non richieste.
-Miglioramento proposto: Rendere gli update silenziosi di default con gate esplicito per parlare solo se serve.
-Motivazione: Riduce rumore e token mantenendo precisione su blocchi, rischi e azioni utente.
-Impatto token: basso
-Decisione utente: approvato con feedback diretto del 2026-04-30
-
-Status: done
-Date: 2026-04-29
-Problema osservato: L'utente vuole lavorare sulla stessa app con Codex e Claude Code senza incasinare contesto, decisioni e prossimo passo.
-Miglioramento proposto: Aggiungere cross-agent handoff con `AI_HANDOFF.md` e template dedicato.
-Motivazione: Permette passaggio controllato tra agenti usando file condivisi, senza memoria nascosta o diario.
-Impatto token: basso
-Decisione utente: approvato con richiesta diretta del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: Durante test reali sulla app, gli output erano ancora troppo lunghi e spiegavano routine fix come "ho sistemato X perche Y".
-Miglioramento proposto: Rendere default il formato fatto/verifica e usare dettaglio solo per azioni utente, rischi, scelte o blocchi.
-Motivazione: Riduce token e rumore senza perdere precisione dove serve davvero.
-Impatto token: basso
-Decisione utente: approvato con feedback diretto del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: Mancava un autolog operativo per capire quando coordinator o agenti sprecano token, rileggono troppo, scelgono agenti sbagliati o ricevono correzioni ripetute.
-Miglioramento proposto: Aggiungere `AI_AGENT_LOG.md` event-based con template compatto e trigger stretti.
-Motivazione: Permette miglioramento empirico senza creare diario o costo fisso.
-Impatto token: basso
-Decisione utente: approvato con richiesta "fallo e pusha" del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: Caveman e skills.sh evidenziano valore in compressione aggressiva, ma serve evitare perdita di contesto critico.
-Miglioramento proposto: Aggiungere compression pass sicura con preserve rules per sicurezza, breaking change, migrazioni, auth, deploy e debug futuro.
-Motivazione: Riduce token su output/handoff/docs senza sacrificare informazioni che evitano errori costosi.
-Impatto token: basso
-Decisione utente: approvato con richiesta su Caveman e skills.sh del 2026-04-29
 
 Older entries compacted into Current Behavior Summary.

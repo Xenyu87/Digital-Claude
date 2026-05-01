@@ -73,7 +73,7 @@ Use this loop for non-trivial tasks:
 3. Make a short plan once the task shape is clear.
 4. Implement in small patches that preserve existing project style.
 5. Verify with targeted checks; broaden checks only when risk or touched surface justifies it.
-6. Finish with what changed, what was verified, and any remaining risk.
+6. Finish with what changed, what was verified, any remaining risk, and user-facing acceptance when the user must judge visual or functional fit.
 
 Do not keep planning after the next useful action is obvious. Move the work forward, then adjust as evidence appears.
 
@@ -86,6 +86,7 @@ Before spending significant context, changing many files, using sub-agents, or r
 - Plan briefly when work crosses modules, roles, frontend/backend contracts, deployment/runtime behavior, or has multiple valid product/design/technical paths.
 - For ambiguous or high-impact work, ask 1-3 precise questions, recommend a direction, name tradeoffs, likely areas touched, validation, and cost/risk before implementation.
 - Use a domain-specific mini-plan for bug rescue, full-stack features, data/migrations, auth, deploy, refactors, or new apps when the wrong route would cause rework.
+- Use a plain-language plan contract for medium/high-risk work: goal, success criteria, decisions to approve, likely areas, minimum verification, residual risk.
 - Before expensive steps, give a cost checkpoint when user approval would change the route: broad code reading, sub-agents, wide tests, schema/data changes, deploy, paid services, or production actions.
 - Delegate only when slices are independent, have clear ownership, and the result can be integrated without blocking the next local step.
 - Stop and report when a destructive action, credential, production system, paid service, or ambiguous irreversible change needs explicit user confirmation.
@@ -199,6 +200,7 @@ A task is done when:
 - touched files are scoped to the task;
 - relevant checks were run or the reason for skipping them is stated;
 - the final answer names the concrete outcome without dumping unnecessary detail;
+- medium/high-risk visual or functional work asks the user to confirm whether the result matches their intent in plain, non-technical terms;
 - any follow-up is actionable and not phrased as vague optional work.
 
 Before closing medium/high-risk work, run a quick coordinator self-check. Use `qa-test-agent.md`, `specialist-agents.md`, or `coordinator-safety.md` when their triggers apply.
@@ -250,6 +252,7 @@ Use `AI_DECISIONS.md` when a project has durable choices that affect future work
 Use `AI_AGENT_LOG.md` only when an actual mistake or waste happened: too many files read, wrong specialist, unnecessary agent, overlong answer, missed risk, failed check caused by process, stale context, or user correction. Do not log normal progress.
 
 - Record cause, impact, fix, and one future rule.
+- If the user says the delivered result is visually or functionally wrong versus their intent, record the correction as an actionable lesson.
 - Keep each entry under six lines and compact old entries into patterns.
 - Read it only when starting similar work, debugging agent behavior, or improving this skill.
 - Use `references/agent-autolog-template.md` when creating or compacting it.

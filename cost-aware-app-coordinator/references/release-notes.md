@@ -1,5 +1,11 @@
 # Release Notes
 
+## v0.28.0 - 2026-05-01
+
+- Added a plain-language plan contract for non-programmer users: goal, success criteria, decisions, likely areas, minimum verification, and residual risk.
+- Added final user-facing acceptance feedback for medium/high-risk visual or functional work.
+- Added autolog guidance to record missed visual or functional intent only when it reveals a repeatable agent mistake.
+
 ## v0.27.0 - 2026-05-01
 
 - Added universal plan gates for bug fixes, full-stack features, migrations, auth, deploy, refactors, and new apps.
