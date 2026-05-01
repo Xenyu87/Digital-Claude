@@ -16,6 +16,7 @@ Useful domain questions:
 
 - Bug: fix rapido della causa visibile, o diagnosi piu profonda?
 - Feature: MVP minimo, o base piu scalabile?
+- UI/design: fedelta allo screen, coerenza con app esistente, o redesign piu deciso?
 - Data/migration: solo nuovi dati, o anche dati esistenti?
 - Auth: chi puo vedere, creare, modificare, eliminare, esportare?
 - Deploy: locale, staging, o produzione? Serve rollback?
@@ -41,6 +42,7 @@ Domain mini-plan hints:
 
 - Bug/fix: symptom, suspected cause, smallest fix, verification, residual risk.
 - Full-stack: user flow, UI contract, backend/data contract, validation path, rollout risk.
+- UI/design: intent mode, user job, must-keep elements, flexible elements, visual verification.
 - Data/migration: schema/data effect, retroactivity, rollback, verification, data-loss risk.
 - Auth: actors, allowed actions, server-side enforcement, abuse cases, tests.
 - Deploy: environment, config/secrets, rollout, rollback, monitoring check.

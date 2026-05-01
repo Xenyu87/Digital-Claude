@@ -23,6 +23,19 @@ For specialist triggers and output contracts, use `specialist-agents.md`.
 
 For new screens, panels, dashboards, forms, or redesigns, first identify 2-4 existing screens/components in the same app. Match the local design language: layout density, spacing, card radius, typography hierarchy, palette, controls, CTA style, empty/error/loading states, mobile behavior, and copy tone. Do not impose a generic style across apps.
 
+## Design Intent Brief
+
+For medium/high-risk UI work, define the design direction before coding:
+
+- Mode: close screenshot fidelity, local app consistency, or intentional redesign.
+- Audience/job: who uses it and what they need to do first.
+- Tone: utilitarian, premium, playful, editorial, dense operational, etc.
+- Must keep: elements, data, layout, or behavior that cannot change.
+- Flexible: elements that may be improved if it helps usability.
+- Verification: screenshot, viewport, or workflow check that proves the intent.
+
+Ask only when the answer changes the route. Otherwise choose the safest mode from context and state it briefly in the plan.
+
 ## High-Fidelity Visual Work
 
 When the user provides a screenshot, mockup, or design reference and asks for close fidelity, treat the task as at least medium UI risk. Before coding, clarify only priorities that change the path: pixel-like fidelity vs local app consistency, mobile vs desktop priority, mandatory vs flexible elements, and speed vs maintainability. Use stronger visual checks when possible, such as before/after screenshots and mobile/desktop review. Consider UX/design or QA visual sub-agents when the layout is complex, responsive states matter, or a second pass is likely to catch meaningful differences.

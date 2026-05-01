@@ -35,8 +35,17 @@ Approved on 2026-04-29:
 - v0.29: conditional Playwright UI checks with cost checkpoint before expensive browser setup.
 - v0.30: bounded auto-improvement runs and plain `Come provarlo` steps for user-facing changes.
 - v0.31: memory hygiene write filters for decisions and agent logs.
+- v0.32: Design Intent Brief for important UI work.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Le migliori skill design distinguono prima l'intento visivo, altrimenti l'agente puo oscillare tra fedelta, coerenza locale e redesign creativo.
+Miglioramento proposto: Aggiungere Design Intent Brief compatto per UI medie o rischiose.
+Motivazione: Riduce rework e rende il risultato valutabile anche senza leggere codice.
+Impatto token: basso
+Decisione utente: approvato con richiesta di arrivare fino a v0.35
 
 Status: done
 Date: 2026-05-01

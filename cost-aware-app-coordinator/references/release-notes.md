@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.32.0 - 2026-05-01
+
+- Added a Design Intent Brief for medium/high-risk UI work: fidelity mode, audience/job, tone, must-keep elements, flexible elements, and visual verification.
+- Added a UI/design routing question to distinguish screenshot fidelity, local app consistency, and intentional redesign.
+
 ## v0.31.0 - 2026-05-01
 
 - Added memory hygiene write filters for `AI_DECISIONS.md` and `AI_AGENT_LOG.md`: memory must be verified, durable, actionable, and safe.
