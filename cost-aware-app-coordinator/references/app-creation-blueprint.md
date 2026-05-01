@@ -45,6 +45,19 @@ Capture the behavior the UI and tests can rely on:
 
 Backend checks should cover validation, auth, data changes, and failure modes before broad refactors.
 
+## Backend Contract Gate
+
+Before implementing medium/high-risk backend, API, RPC, server action, job, or integration work, define:
+
+- caller: which UI, job, command, or external service uses it;
+- input/output: required fields, optional fields, and user-safe error shape;
+- permission: who may read/write and where enforcement happens;
+- data effect: create/update/delete/archive, transaction boundary, and idempotency;
+- compatibility: existing callers, existing data, migration or rollback needs;
+- verification: one success path, one invalid input, one permission/failure path.
+
+If any item is unknown and changes behavior or risk, ask before editing.
+
 ## Data And Security
 
 Before implementing persistence, identify:

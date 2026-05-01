@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.33.0 - 2026-05-01
+
+- Added a Backend Contract Gate for medium/high-risk backend, API, RPC, server action, job, and integration work.
+- The gate requires caller, input/output, permissions, data effect, compatibility, and verification before risky backend edits.
+
 ## v0.32.0 - 2026-05-01
 
 - Added a Design Intent Brief for medium/high-risk UI work: fidelity mode, audience/job, tone, must-keep elements, flexible elements, and visual verification.

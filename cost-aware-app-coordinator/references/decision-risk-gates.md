@@ -19,6 +19,7 @@ Useful domain questions:
 - UI/design: fedelta allo screen, coerenza con app esistente, o redesign piu deciso?
 - Data/migration: solo nuovi dati, o anche dati esistenti?
 - Auth: chi puo vedere, creare, modificare, eliminare, esportare?
+- Backend: quale chiamante usa il contratto e quali errori deve vedere l'utente?
 - Deploy: locale, staging, o produzione? Serve rollback?
 - Refactor: comportamento identico, o si puo migliorare?
 - External service: servizio gia presente, o nuovo servizio?
@@ -45,6 +46,7 @@ Domain mini-plan hints:
 - UI/design: intent mode, user job, must-keep elements, flexible elements, visual verification.
 - Data/migration: schema/data effect, retroactivity, rollback, verification, data-loss risk.
 - Auth: actors, allowed actions, server-side enforcement, abuse cases, tests.
+- Backend/API: caller, input/output, permissions, data effect, compatibility, verification.
 - Deploy: environment, config/secrets, rollout, rollback, monitoring check.
 - Refactor: invariant behavior, modules, compatibility, tests proving no drift.
 - New app: target user, first workflow, stack constraints, context docs, first slice.

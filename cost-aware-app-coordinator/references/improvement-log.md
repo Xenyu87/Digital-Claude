@@ -36,8 +36,17 @@ Approved on 2026-04-29:
 - v0.30: bounded auto-improvement runs and plain `Come provarlo` steps for user-facing changes.
 - v0.31: memory hygiene write filters for decisions and agent logs.
 - v0.32: Design Intent Brief for important UI work.
+- v0.33: Backend Contract Gate for risky backend/API/data-facing work.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Backend e database falliscono spesso per contratti impliciti: input, output, permessi, dati esistenti o errori non chiariti.
+Miglioramento proposto: Aggiungere Backend Contract Gate prima di API/RPC/server action/job rischiosi.
+Motivazione: Riduce regressioni e rende verificabile il comportamento anche da UI.
+Impatto token: basso
+Decisione utente: approvato con richiesta di arrivare fino a v0.35
 
 Status: done
 Date: 2026-05-01
