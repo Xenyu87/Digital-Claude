@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.34.0 - 2026-05-01
+
+- Added a concrete Playwright Browser Check: targeted desktop/mobile screenshots, console errors, primary workflow, touched UI states, and useful artifacts only.
+- Added guidance to stop after targeted UI confidence instead of expanding into broad E2E by default.
+
 ## v0.33.0 - 2026-05-01
 
 - Added a Backend Contract Gate for medium/high-risk backend, API, RPC, server action, job, and integration work.

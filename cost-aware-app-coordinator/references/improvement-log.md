@@ -37,8 +37,17 @@ Approved on 2026-04-29:
 - v0.31: memory hygiene write filters for decisions and agent logs.
 - v0.32: Design Intent Brief for important UI work.
 - v0.33: Backend Contract Gate for risky backend/API/data-facing work.
+- v0.34: concrete targeted Playwright Browser Check.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: La regola Playwright era utile ma ancora generica su cosa controllare concretamente.
+Miglioramento proposto: Aggiungere Browser Check mirato: screenshot, console, workflow principale, stati toccati e artifact utili.
+Motivazione: Aumenta sicurezza UI senza trasformare ogni task in E2E ampio.
+Impatto token: basso-medio
+Decisione utente: approvato con richiesta di arrivare fino a v0.35
 
 Status: done
 Date: 2026-05-01
@@ -63,53 +72,5 @@ Miglioramento proposto: Aggiungere filtro di scrittura per memorie: verificate, 
 Motivazione: Migliora memoria senza aumentare contesto fisso.
 Impatto token: basso
 Decisione utente: approvato con richiesta di arrivare fino a v0.35
-
-Status: done
-Date: 2026-05-01
-Problema osservato: La richiesta di auto-migliorarsi fino a esaurimento rischia version bump infiniti o regole speculative.
-Miglioramento proposto: Limitare gli auto-update approvati al run corrente e fermarsi quando le idee residue non cambiano comportamento; aggiungere `Come provarlo` per utenti non tecnici.
-Motivazione: Mantiene la skill utile, controllata e verificabile senza prompt debt.
-Impatto token: basso
-Decisione utente: auto-approvato con richiesta del 2026-05-01
-
-Status: done
-Date: 2026-05-01
-Problema osservato: Per UI importanti, lint/typecheck non bastano a vedere layout rotto, responsive errato o differenze da screenshot.
-Miglioramento proposto: Considerare Playwright automaticamente per nuove pagine, redesign, screenshot fidelity, form, grafici, dashboard e navigazione.
-Motivazione: Verifica visiva prima del feedback utente, mantenendo checkpoint costo quando serve setup browser/server.
-Impatto token: basso-medio
-Decisione utente: approvato con richiesta del 2026-05-01 di procedere e attivare subito
-
-Status: done
-Date: 2026-05-01
-Problema osservato: L'utente non e programmatore e deve poter approvare il risultato da lato visivo/funzionale, non leggendo codice.
-Miglioramento proposto: Aggiungere plan contract in linguaggio semplice e domanda finale di accettazione per lavori visuali/funzionali medi o rischiosi.
-Motivazione: Se il risultato non rispecchia l'intento, la correzione utile va trasformata in lezione nel log operativo.
-Impatto token: basso
-Decisione utente: approvato con richiesta del 2026-05-01 su feedback finale e automiglioramento
-
-Status: done
-Date: 2026-05-01
-Problema osservato: Il plan era utile ma troppo generico fuori dalla UI e non fermava sempre le fasi costose prima di broad read, agenti, test larghi, dati o deploy.
-Miglioramento proposto: Aggiungere plan gate universale, domande mirate per dominio e checkpoint costo prima di passi costosi.
-Motivazione: Riduce errori e token anche su backend, dati, auth, deploy, refactor, bug e nuove app.
-Impatto token: basso
-Decisione utente: approvato con richiesta "procedi con tutte e 3" del 2026-05-01
-
-Status: done
-Date: 2026-05-01
-Problema osservato: Su task visuali o di prodotto con piu strade valide, procedere subito puo creare rework e non riflettere bene l'idea dell'utente.
-Miglioramento proposto: Aggiungere mini-plan con 1-3 domande precise e una regola per screenshot/mockup ad alta fedelta con verifica visuale e sub-agenti quando portano valore.
-Motivazione: Riduce errori prima del codice e mantiene flessibilita per qualunque app.
-Impatto token: basso-medio
-Decisione utente: approvato con richiesta "ok procedi con tutto" del 2026-05-01
-
-Status: done
-Date: 2026-05-01
-Problema osservato: Una nuova pagina UI puo funzionare ma sembrare scollegata dal prodotto se non confrontata con il design locale.
-Miglioramento proposto: Richiedere un controllo generale di coerenza UI contro 2-4 schermate/componenti esistenti della stessa app.
-Motivazione: Ogni app ha linguaggio visivo diverso; la skill deve imparare quello locale, non imporre regole specifiche di X Manager.
-Impatto token: basso
-Decisione utente: approvato con richiesta "procedi, pusha e attiva" del 2026-05-01
 
 Older entries compacted into Current Behavior Summary.

@@ -43,6 +43,18 @@ It should inspect:
 - Check desktop and mobile when responsive behavior matters.
 - Use a cost checkpoint before installing browsers, creating test data, logging into external services, or running broad visual suites.
 
+## Browser Check
+
+For important UI changes, verify the smallest useful set:
+
+- screenshot: one desktop viewport and one mobile viewport when responsive matters;
+- console: no new obvious runtime errors on load or primary interaction;
+- workflow: load target route, perform the main action or navigation, confirm visible result;
+- state: check empty/loading/error/success only when touched by the change;
+- artifact: save or mention screenshot/trace path only when useful for review.
+
+Stop after the targeted confidence goal is met. Do not expand into full E2E unless the risk justifies it.
+
 ## Output
 
 ```text

@@ -45,3 +45,5 @@ When the user provides a screenshot, mockup, or design reference and asks for cl
 Consider Playwright automatically for new pages, redesigns, important forms, dashboards, charts, navigation, responsive layout, or screenshot/mockup fidelity. Prefer screenshots at the most relevant desktop/mobile viewport plus a small interaction smoke check when behavior matters.
 
 Skip Playwright for tiny copy changes, backend-only work, mechanical refactors, or CSS tweaks that can be checked locally without a browser. If Playwright requires starting a server, installing browsers, logging in, seeded data, or broad viewport coverage, use a cost checkpoint first.
+
+When Playwright is used, keep it targeted: screenshot, console errors, one primary workflow, and only states affected by the change.
