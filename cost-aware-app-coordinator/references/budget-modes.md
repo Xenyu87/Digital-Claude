@@ -68,6 +68,29 @@ Use only:
 
 Never invent exact token counts.
 
+## Cost Checkpoints
+
+Use a cost checkpoint before a step that may noticeably increase token use, runtime, or external risk:
+
+- broad repository exploration instead of targeted files;
+- sub-agents or specialist review;
+- wide test suites instead of targeted checks;
+- schema, migration, import/export, or retroactive data changes;
+- deploy, production, paid services, or external account changes.
+
+Format:
+
+```text
+Checkpoint costo:
+Sto per fare: ...
+Costo stimato: basso|medio|alto
+Perche serve: ...
+Alternativa economica: ...
+Serve approvazione: si|no
+```
+
+If the user has already explicitly chosen the higher-cost route, keep the checkpoint internal unless risk or approval changes.
+
 ## Model Choice Labels
 
 When useful, describe model choice with simple labels instead of over-explaining internals:

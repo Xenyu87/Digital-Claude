@@ -1,5 +1,11 @@
 # Release Notes
 
+## v0.27.0 - 2026-05-01
+
+- Added universal plan gates for bug fixes, full-stack features, migrations, auth, deploy, refactors, and new apps.
+- Added a compact domain question bank for decisions that affect direction, cost, risk, or rework.
+- Added cost checkpoints before broad reads, sub-agents, wide tests, schema/data changes, deploys, paid services, or production actions.
+
 ## v0.26.0 - 2026-05-01
 
 - Added plan-first behavior for ambiguous, product/design, or high-impact tasks.

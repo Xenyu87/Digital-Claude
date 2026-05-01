@@ -5,6 +5,7 @@ Use this reference when the user request is broad, mixed, or easy to over-read.
 ## New Project
 
 - Clarify the app goal, target user, primary workflow, and budget mode.
+- Plan the first usable workflow before choosing detailed architecture.
 - Define the smallest frontend/backend contract that can support the first usable workflow.
 - Use the decision and risk gates before choosing stack, auth, database, payments, or deployment.
 - Prefer building the usable first screen over a marketing page unless the user asks for a landing page.
@@ -16,6 +17,7 @@ Use this reference when the user request is broad, mixed, or easy to over-read.
 
 - Read `AI_CONTEXT.md`, `AGENTS.md`, or `README.md` first when present.
 - Search for the feature, route, component, command, or error message tied to the request.
+- If the change has multiple valid technical routes, give a short recommended route before editing.
 - Use risk gates before changing shared contracts, auth, data, migrations, or production config.
 - Avoid whole-repo scans unless local context is missing or the change crosses architecture boundaries.
 - Run the narrowest check that can catch the likely regression.
@@ -33,6 +35,7 @@ Use this reference when the user request is broad, mixed, or easy to over-read.
 ## Bug Rescue
 
 - Capture the symptom, expected behavior, and likely entry point.
+- Ask whether to prioritize a fast fix or a root-cause pass when the tradeoff matters.
 - Prefer reproducing the failure or locating the failing path before editing.
 - Patch the smallest cause that explains the symptom.
 - Verify the original failure path, then add broader checks only if shared behavior changed.
@@ -46,3 +49,16 @@ Use this reference when the user request is broad, mixed, or easy to over-read.
 - Prefer behavior rules and compact templates over long explanations.
 - Update release notes and the improvement log when behavior changes.
 - Prefer shorter rules that change behavior over long explanatory prose.
+
+## Universal Plan Triggers
+
+Use a short plan before implementation when the request touches:
+
+- data model, migrations, imports, exports, or retroactivity;
+- auth, roles, permissions, privacy, or protected data;
+- deploy, env vars, CI/CD, hosting, or production services;
+- refactors where behavior must remain stable;
+- external APIs, paid services, or irreversible actions;
+- multi-step features crossing UI, backend, and data.
+
+Use the question bank in `decision-risk-gates.md` when one missing answer would change the route.

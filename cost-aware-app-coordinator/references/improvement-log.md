@@ -30,8 +30,17 @@ Approved on 2026-04-29:
 - v0.24: progress updates only for agents used, errors, blockers, risks, status requests, and user actions.
 - v0.25: flexible local UI consistency check for new screens and redesigns across any app.
 - v0.26: plan-first questions for ambiguous/high-impact work and stronger visual fidelity handling for screenshots/mockups.
+- v0.27: universal plan gates, domain question bank, and cost checkpoints for non-UI work too.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Il plan era utile ma troppo generico fuori dalla UI e non fermava sempre le fasi costose prima di broad read, agenti, test larghi, dati o deploy.
+Miglioramento proposto: Aggiungere plan gate universale, domande mirate per dominio e checkpoint costo prima di passi costosi.
+Motivazione: Riduce errori e token anche su backend, dati, auth, deploy, refactor, bug e nuove app.
+Impatto token: basso
+Decisione utente: approvato con richiesta "procedi con tutte e 3" del 2026-05-01
 
 Status: done
 Date: 2026-05-01
@@ -104,13 +113,5 @@ Miglioramento proposto: Aggiungere compression pass sicura con preserve rules pe
 Motivazione: Riduce token su output/handoff/docs senza sacrificare informazioni che evitano errori costosi.
 Impatto token: basso
 Decisione utente: approvato con richiesta su Caveman e skills.sh del 2026-04-29
-
-Status: done
-Date: 2026-04-29
-Problema osservato: Gli autotest erano manuali e ripetuti in shell, quindi facili da dimenticare o variare.
-Miglioramento proposto: Aggiungere `scripts/validate_skill.py` per validare frontmatter, reference, progressive loading, heading duplicati, sezioni obbligatorie e line limit.
-Motivazione: Repo GitHub di skill utili usano validazione deterministica per mantenere qualita e coerenza.
-Impatto token: basso
-Decisione utente: approvato con richiesta di ricerca GitHub approfondita del 2026-04-29
 
 Older entries compacted into Current Behavior Summary.

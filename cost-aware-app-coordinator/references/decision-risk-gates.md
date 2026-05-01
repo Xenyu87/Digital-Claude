@@ -27,6 +27,16 @@ Ask 1-3 precise questions when the answer changes direction, cost, risk, or rewo
 
 Do not ask broad questions. Prefer choices like pixel-like fidelity vs local app consistency, speed vs maintainability, or mandatory vs optional elements.
 
+Use domain questions when they fit:
+
+- Bug: fix rapido della causa visibile, o diagnosi piu profonda prima del codice?
+- Feature: MVP minimo, o base piu scalabile anche se costa di piu?
+- Data/migration: effetto solo sui nuovi dati, o anche retroattivo sui dati esistenti?
+- Auth/permissions: chi puo vedere, creare, modificare, eliminare, esportare?
+- Deploy/production: locale, staging, o produzione? Serve rollback?
+- Refactor: mantenere identico il comportamento, o e permesso migliorarlo?
+- External service: usare servizio gia presente, o introdurne uno nuovo?
+
 ## Plan
 
 Plan briefly when:
@@ -40,6 +50,30 @@ Plan briefly when:
 - a wrong choice would cause rework.
 
 Use three to six bullets: goal, recommended route, tradeoffs, likely areas touched, validation, and cost/risk. After approval, implement.
+
+Use a domain-specific mini-plan:
+
+- Bug/fix: symptom, suspected cause, smallest fix, verification, residual risk.
+- Full-stack feature: user flow, UI contract, backend/data contract, validation path, rollout risk.
+- Data/migration: schema/data effect, retroactivity, rollback, verification, data-loss risk.
+- Auth/permissions: actors, allowed actions, server-side enforcement, abuse cases, tests.
+- Deploy/production: environment, config/secrets, rollout, rollback, monitoring check.
+- Refactor: invariant behavior, files/modules, compatibility, tests proving no behavior drift.
+- New app: target user, first usable workflow, stack constraints, context docs, first slice.
+
+Keep the plan short. If implementation can start safely after one recommended route, do not over-plan.
+
+## Cost Checkpoint
+
+Before moving from targeted work to a higher-cost route, state:
+
+- next expensive step;
+- cost estimate: basso, medio, or alto;
+- why it is useful;
+- cheaper alternative and tradeoff;
+- whether approval is needed.
+
+Use a checkpoint before broad code reading, sub-agents, wide tests, schema/data changes, production deploys, paid services, or long-running external operations. Skip it for cheap, local, reversible actions.
 
 ## Delegate
 

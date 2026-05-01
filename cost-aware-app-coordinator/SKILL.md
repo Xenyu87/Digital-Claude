@@ -85,6 +85,8 @@ Before spending significant context, changing many files, using sub-agents, or r
 - Ask one concise question when a missing choice affects cost, risk, scope, data loss, external systems, or user-visible product direction.
 - Plan briefly when work crosses modules, roles, frontend/backend contracts, deployment/runtime behavior, or has multiple valid product/design/technical paths.
 - For ambiguous or high-impact work, ask 1-3 precise questions, recommend a direction, name tradeoffs, likely areas touched, validation, and cost/risk before implementation.
+- Use a domain-specific mini-plan for bug rescue, full-stack features, data/migrations, auth, deploy, refactors, or new apps when the wrong route would cause rework.
+- Before expensive steps, give a cost checkpoint when user approval would change the route: broad code reading, sub-agents, wide tests, schema/data changes, deploy, paid services, or production actions.
 - Delegate only when slices are independent, have clear ownership, and the result can be integrated without blocking the next local step.
 - Stop and report when a destructive action, credential, production system, paid service, or ambiguous irreversible change needs explicit user confirmation.
 
@@ -113,6 +115,7 @@ Use `references/budget-modes.md` when a task is large, ambiguous, or the user ch
 - Massima sicurezza: use extra checks, broader tests, and review agents when risk justifies higher cost.
 
 The user may change mode at any time. When mode changes, restate the practical impact on cost, speed, and safety.
+Use cost checkpoints before switching from targeted work to a higher-cost route.
 
 ## Model Selection Protocol
 
