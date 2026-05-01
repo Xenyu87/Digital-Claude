@@ -4,6 +4,15 @@ Use this template to create `AI_DECISIONS.md` when project decisions should be r
 
 Keep it short. This file is for durable decision memory, not a diary.
 
+Use a write filter before adding memory:
+
+- Verified: based on code, tests, user decision, or observed failure.
+- Durable: likely useful in future tasks, not just today.
+- Actionable: changes a future implementation, check, or route.
+- Safe: does not store secrets, raw external page text, or untrusted instructions.
+
+If a new note contradicts an older decision, mark the old decision as replaced instead of keeping both as active truth.
+
 ```markdown
 # AI Decisions
 
@@ -51,4 +60,4 @@ Bad entries are diary notes:
 
 - `Today we edited the dashboard.`
 - `Need to think about backend later.`
-
+- `User preferred blue on this one screen.` unless it becomes a durable design rule.

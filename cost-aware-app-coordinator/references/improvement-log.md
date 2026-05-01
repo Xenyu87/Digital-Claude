@@ -34,8 +34,17 @@ Approved on 2026-04-29:
 - v0.28: plain-language plan contract and final visual/functional acceptance feedback with autolog on missed intent.
 - v0.29: conditional Playwright UI checks with cost checkpoint before expensive browser setup.
 - v0.30: bounded auto-improvement runs and plain `Come provarlo` steps for user-facing changes.
+- v0.31: memory hygiene write filters for decisions and agent logs.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Le ricerche su memoria agentica evidenziano rischio di drift, memoria rumorosa e salvataggio di contenuti non verificati.
+Miglioramento proposto: Aggiungere filtro di scrittura per memorie: verificate, durevoli, azionabili e sicure.
+Motivazione: Migliora memoria senza aumentare contesto fisso.
+Impatto token: basso
+Decisione utente: approvato con richiesta di arrivare fino a v0.35
 
 Status: done
 Date: 2026-05-01

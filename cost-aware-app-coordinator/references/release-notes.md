@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.31.0 - 2026-05-01
+
+- Added memory hygiene write filters for `AI_DECISIONS.md` and `AI_AGENT_LOG.md`: memory must be verified, durable, actionable, and safe.
+- Added guidance to avoid storing untrusted external content, one-off preferences, normal progress, or contradictory active decisions.
+
 ## v0.30.0 - 2026-05-01
 
 - Added bounded auto-improvement run rules: auto-accepted edits are scoped to the current run, must change behavior, and stop when remaining ideas are cosmetic, speculative, duplicate, or prompt-costly.

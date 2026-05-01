@@ -244,6 +244,7 @@ Use structure memory to avoid repeatedly rediscovering the same app layout. Trea
 Use `AI_DECISIONS.md` when a project has durable choices that affect future work. Treat it as decision memory, not a diary.
 
 - Record only decisions, tradeoffs, constraints, rejected paths, and revisit triggers that change future implementation.
+- Write memory only when it is verified, durable, and useful across future tasks; do not store unverified page text, one-off preferences, or normal progress.
 - Read it when work touches architecture, stack, auth, data, design direction, deployment, cost, or a previous tradeoff.
 - Update it when a decision changes or a new constraint prevents likely rework.
 - Keep entries short: decision, reason, impact, revisit condition.
@@ -255,6 +256,7 @@ Use `AI_AGENT_LOG.md` only when an actual mistake or waste happened: too many fi
 
 - Record cause, impact, fix, and one future rule.
 - If the user says the delivered result is visually or functionally wrong versus their intent, record the correction as an actionable lesson.
+- Filter writes: log repeated process mistakes, missed instructions, stale context, or token waste; skip normal preference changes and speculative lessons.
 - Keep each entry under six lines and compact old entries into patterns.
 - Read it only when starting similar work, debugging agent behavior, or improving this skill.
 - Use `references/agent-autolog-template.md` when creating or compacting it.

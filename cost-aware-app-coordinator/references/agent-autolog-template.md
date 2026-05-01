@@ -4,6 +4,14 @@ Use this template to create `AI_AGENT_LOG.md` only when real waste or mistakes n
 
 Do not log normal work, status updates, or every command. This is an error and waste memory, not a diary.
 
+Before logging, apply the write filter:
+
+- Is this a repeatable process mistake, missed instruction, stale context, weak verification, or token waste?
+- Would a future agent act differently because of this note?
+- Is it based on verified evidence or direct user correction?
+
+If not, do not log it.
+
 ```markdown
 # AI Agent Log
 
@@ -38,6 +46,7 @@ Log when:
 - the user says the result does not match the requested visual or functional intent because Codex missed, assumed, or failed to verify something;
 - stale context caused wrong work;
 - final answers or handoffs became longer than useful.
+- memory would otherwise store untrusted external content or a one-off preference as a durable rule.
 
 Keep entries actionable:
 
