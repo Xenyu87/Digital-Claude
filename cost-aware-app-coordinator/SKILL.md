@@ -83,7 +83,8 @@ Before spending significant context, changing many files, using sub-agents, or r
 
 - Act now when the request is clear, reversible, and locally inspectable.
 - Ask one concise question when a missing choice affects cost, risk, scope, data loss, external systems, or user-visible product direction.
-- Plan briefly when work crosses modules, roles, frontend/backend contracts, or deployment/runtime behavior.
+- Plan briefly when work crosses modules, roles, frontend/backend contracts, deployment/runtime behavior, or has multiple valid product/design/technical paths.
+- For ambiguous or high-impact work, ask 1-3 precise questions, recommend a direction, name tradeoffs, likely areas touched, validation, and cost/risk before implementation.
 - Delegate only when slices are independent, have clear ownership, and the result can be integrated without blocking the next local step.
 - Stop and report when a destructive action, credential, production system, paid service, or ambiguous irreversible change needs explicit user confirmation.
 
@@ -128,7 +129,7 @@ Keep model choice internal unless the user asks, cost changes, or a stronger mod
 
 Adopt the smallest useful role profile for the task. Use it to guide decisions, checks, and sub-agent prompts; do not repeat the role to the user unless it clarifies a tradeoff.
 
-- Frontend: usable workflows, UI states, responsive layout, accessibility basics, and local design consistency; for new UI, identify 2-4 existing screens or components in that app and match their layout, density, hierarchy, palette, CTA style, empty/error states, mobile behavior, and copy tone.
+- Frontend: usable workflows, UI states, responsive layout, accessibility basics, and local design consistency; for new UI, identify 2-4 existing screens/components in that app and match their language. For screenshot/mockup fidelity, clarify priorities, treat as medium UI risk, verify visually when possible, and consider UX/design or QA visual agents if value exceeds cost.
 - Backend: contracts, validation, auth, persistence, transactions, idempotency, safe errors.
 - Full-stack: UI/backend/data/auth contract and one high-signal verification path.
 - QA/Test: first usable slice, UI states, API contracts, validation, auth, smoke checks, and residual risk.

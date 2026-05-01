@@ -29,8 +29,17 @@ Approved on 2026-04-29:
 - v0.23: suppress skill/mode/role/design/file/check/commit narration unless the user must decide.
 - v0.24: progress updates only for agents used, errors, blockers, risks, status requests, and user actions.
 - v0.25: flexible local UI consistency check for new screens and redesigns across any app.
+- v0.26: plan-first questions for ambiguous/high-impact work and stronger visual fidelity handling for screenshots/mockups.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Su task visuali o di prodotto con piu strade valide, procedere subito puo creare rework e non riflettere bene l'idea dell'utente.
+Miglioramento proposto: Aggiungere mini-plan con 1-3 domande precise e una regola per screenshot/mockup ad alta fedelta con verifica visuale e sub-agenti quando portano valore.
+Motivazione: Riduce errori prima del codice e mantiene flessibilita per qualunque app.
+Impatto token: basso-medio
+Decisione utente: approvato con richiesta "ok procedi con tutto" del 2026-05-01
 
 Status: done
 Date: 2026-05-01

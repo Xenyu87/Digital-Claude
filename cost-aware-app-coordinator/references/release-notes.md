@@ -1,5 +1,11 @@
 # Release Notes
 
+## v0.26.0 - 2026-05-01
+
+- Added plan-first behavior for ambiguous, product/design, or high-impact tasks.
+- Added 1-3 precise question guidance before implementation when answers change direction, cost, or rework.
+- Added high-fidelity screenshot/mockup handling with stronger visual verification and optional UX/design or QA visual agents when useful.
+
 ## v0.25.0 - 2026-05-01
 
 - Added a flexible local UI consistency rule for new screens and redesigns.

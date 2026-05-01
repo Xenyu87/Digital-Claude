@@ -13,9 +13,10 @@ Act without asking when:
 
 ## Ask
 
-Ask one concise question when the answer changes:
+Ask 1-3 precise questions when the answer changes direction, cost, risk, or rework:
 
 - product direction;
+- UX/design priority or fidelity target;
 - budget mode;
 - data model;
 - auth or permission behavior;
@@ -23,6 +24,8 @@ Ask one concise question when the answer changes:
 - external service choice;
 - deployment target;
 - paid resource usage.
+
+Do not ask broad questions. Prefer choices like pixel-like fidelity vs local app consistency, speed vs maintainability, or mandatory vs optional elements.
 
 ## Plan
 
@@ -32,9 +35,11 @@ Plan briefly when:
 - the change crosses modules;
 - tests or migrations are involved;
 - the implementation path has multiple viable approaches;
+- product/design/UX tradeoffs are ambiguous;
+- the user asks to lower errors, work by plan, or approve the route first;
 - a wrong choice would cause rework.
 
-Use three to six bullets.
+Use three to six bullets: goal, recommended route, tradeoffs, likely areas touched, validation, and cost/risk. After approval, implement.
 
 ## Delegate
 
