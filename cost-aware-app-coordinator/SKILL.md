@@ -35,7 +35,7 @@ Keep the main skill as the core operating system. Load reference files only when
 - `compression-pass.md`: prompt, final answer, handoff, commit/PR text, or context doc needs aggressive safe compression.
 - `role-profiles.md`: task needs frontend, backend, full-stack, QA/test, security/auth, UX/product, data/migration, DevOps/release, performance, review, audit, or skill-maintenance perspective.
 - `coordinator-safety.md`: coordinator confidence is medium/low, task is high risk, or a red-team pass may catch costly mistakes.
-- `qa-test-agent.md`: workflow crosses frontend/backend, changes contracts/auth/data, fixes non-trivial bugs, or prepares push/PR validation.
+- `qa-test-agent.md`: workflow crosses frontend/backend, changes contracts/auth/data, fixes non-trivial bugs, prepares push/PR validation, or needs Playwright UI checks.
 - `specialist-agents.md`: specialist agent selection for security/auth, UX/product, data/migration, DevOps/release, or performance.
 - `agent-handoff.md`: multiple sub-agents need to share decisions, contracts, blockers, or integration notes.
 - `task-routing.md`: request is broad, mixed, or easy to over-read.
@@ -204,6 +204,7 @@ A task is done when:
 - any follow-up is actionable and not phrased as vague optional work.
 
 Before closing medium/high-risk work, run a quick coordinator self-check. Use `qa-test-agent.md`, `specialist-agents.md`, or `coordinator-safety.md` when their triggers apply.
+For medium/high-risk UI work, consider Playwright screenshots or smoke checks automatically; use a cost checkpoint if server/setup/wide browser checks make it non-trivial.
 
 ## Project Context Pattern
 

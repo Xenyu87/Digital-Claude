@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.29.0 - 2026-05-01
+
+- Added conditional Playwright UI checks for new pages, redesigns, screenshot fidelity, responsive layouts, forms, charts, dashboards, and navigation.
+- Added cost checkpoint guidance before expensive Playwright setup such as servers, browser installs, login, seeded data, or broad viewport suites.
+
 ## v0.28.0 - 2026-05-01
 
 - Added a plain-language plan contract for non-programmer users: goal, success criteria, decisions, likely areas, minimum verification, and residual risk.

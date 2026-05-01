@@ -26,3 +26,9 @@ For new screens, panels, dashboards, forms, or redesigns, first identify 2-4 exi
 ## High-Fidelity Visual Work
 
 When the user provides a screenshot, mockup, or design reference and asks for close fidelity, treat the task as at least medium UI risk. Before coding, clarify only priorities that change the path: pixel-like fidelity vs local app consistency, mobile vs desktop priority, mandatory vs flexible elements, and speed vs maintainability. Use stronger visual checks when possible, such as before/after screenshots and mobile/desktop review. Consider UX/design or QA visual sub-agents when the layout is complex, responsive states matter, or a second pass is likely to catch meaningful differences.
+
+## Playwright UI Check
+
+Consider Playwright automatically for new pages, redesigns, important forms, dashboards, charts, navigation, responsive layout, or screenshot/mockup fidelity. Prefer screenshots at the most relevant desktop/mobile viewport plus a small interaction smoke check when behavior matters.
+
+Skip Playwright for tiny copy changes, backend-only work, mechanical refactors, or CSS tweaks that can be checked locally without a browser. If Playwright requires starting a server, installing browsers, logging in, seeded data, or broad viewport coverage, use a cost checkpoint first.

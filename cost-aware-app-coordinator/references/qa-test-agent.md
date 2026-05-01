@@ -9,6 +9,7 @@ Use this reference when a dedicated QA/Test pass would reduce regression risk.
 - a non-trivial bug was fixed;
 - a first usable slice is being completed;
 - push, PR, release, or deploy validation is needed.
+- UI changes need real-browser confidence: new page, redesign, screenshot fidelity, responsive layout, form, chart, dashboard, or navigation.
 
 Do not activate for tiny copy edits, isolated docs, or one-file changes with no behavior impact.
 
@@ -33,6 +34,14 @@ It should inspect:
 - API or server-action response shape matches the UI.
 - Refresh/retry/repeated action behavior is acceptable.
 - Tests or smoke checks match touched surface and risk.
+- Playwright screenshot or smoke check covers important UI changes when cost/setup is justified.
+
+## Playwright Guidance
+
+- Use existing project Playwright config when present.
+- Prefer targeted screenshots and one or two meaningful interactions over broad browser matrices.
+- Check desktop and mobile when responsive behavior matters.
+- Use a cost checkpoint before installing browsers, creating test data, logging into external services, or running broad visual suites.
 
 ## Output
 
@@ -51,4 +60,3 @@ Residual risk:
 ```
 
 Keep output short. Report only actionable findings and meaningful gaps.
-

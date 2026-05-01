@@ -21,7 +21,7 @@ Use this reference when the user request is broad, mixed, or easy to over-read.
 - For medium/high-risk user-facing changes, define success in terms the user can judge without reading code.
 - Use risk gates before changing shared contracts, auth, data, migrations, or production config.
 - Avoid whole-repo scans unless local context is missing or the change crosses architecture boundaries.
-- Run the narrowest check that can catch the likely regression.
+- Run the narrowest check that can catch the likely regression; for important UI, consider Playwright screenshots or smoke checks automatically.
 - Use sub-agents only for separable slices with clear ownership and model labels.
 - When a change crosses UI and backend, identify the shared contract first: route, endpoint, data shape, auth rule, and error behavior.
 
@@ -71,6 +71,8 @@ Use a final acceptance prompt when the task changes what the user sees or a work
 - screens, forms, dashboards, reports, charts, navigation, copy, or layout;
 - important business behavior where the user knows the intended result better than the code;
 - screenshot/mockup fidelity or feature behavior requested in natural language.
+
+For these cases, consider Playwright when it can confirm visual layout or workflow behavior before asking the user for final acceptance.
 
 Skip it for purely internal docs, mechanical refactors, small type/lint fixes, or changes already fully covered by automated checks.
 

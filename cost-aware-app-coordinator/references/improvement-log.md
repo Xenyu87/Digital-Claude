@@ -32,8 +32,17 @@ Approved on 2026-04-29:
 - v0.26: plan-first questions for ambiguous/high-impact work and stronger visual fidelity handling for screenshots/mockups.
 - v0.27: universal plan gates, domain question bank, and cost checkpoints for non-UI work too.
 - v0.28: plain-language plan contract and final visual/functional acceptance feedback with autolog on missed intent.
+- v0.29: conditional Playwright UI checks with cost checkpoint before expensive browser setup.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Per UI importanti, lint/typecheck non bastano a vedere layout rotto, responsive errato o differenze da screenshot.
+Miglioramento proposto: Considerare Playwright automaticamente per nuove pagine, redesign, screenshot fidelity, form, grafici, dashboard e navigazione.
+Motivazione: Verifica visiva prima del feedback utente, mantenendo checkpoint costo quando serve setup browser/server.
+Impatto token: basso-medio
+Decisione utente: approvato con richiesta del 2026-05-01 di procedere e attivare subito
 
 Status: done
 Date: 2026-05-01
