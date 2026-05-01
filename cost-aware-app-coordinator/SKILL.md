@@ -166,6 +166,7 @@ Do not use sub-agents for:
 - work where the next step is blocked on a single fact the coordinator can inspect directly.
 
 Before spawning a sub-agent, decide ownership, model label, reasoning effort, and stop condition. Require compact output:
+Pass only filtered context: objective, relevant files/contracts, constraints, recent decisions, and requested output. Do not pass full chat history, broad diffs, or unrelated logs.
 
 ```text
 Files touched or inspected:

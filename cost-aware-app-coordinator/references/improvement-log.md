@@ -38,8 +38,17 @@ Approved on 2026-04-29:
 - v0.32: Design Intent Brief for important UI work.
 - v0.33: Backend Contract Gate for risky backend/API/data-facing work.
 - v0.34: concrete targeted Playwright Browser Check.
+- v0.35: filtered compact handoffs for sub-agents.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Ricerche su handoff/input filters indicano che passare troppa storia agli agenti aumenta costo e confusione.
+Miglioramento proposto: Aggiungere handoff filtrato con solo obiettivo, ownership, vincoli, decisioni, rischi, verifica e output.
+Motivazione: Riduce token e migliora integrazione tra agenti.
+Impatto token: basso
+Decisione utente: approvato con richiesta di arrivare fino a v0.35
 
 Status: done
 Date: 2026-05-01

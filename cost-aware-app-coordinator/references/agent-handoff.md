@@ -21,6 +21,18 @@ Needed by:
 Risk:
 ```
 
+## Filtered Context
+
+Before delegating or handing off, include only:
+
+- objective and stop condition;
+- owned files, modules, routes, contracts, or commands;
+- relevant constraints and user-approved decisions;
+- known blockers, risks, and validation expected;
+- exact output format needed by the coordinator.
+
+Do not pass full chat history, broad diffs, unrelated logs, large command output, or speculative background. Summarize long evidence and include file paths or commands the next agent can inspect if needed.
+
 ## When To Send
 
 Send a handoff when:
@@ -58,4 +70,3 @@ Coordinator summarizes:
 - unresolved blockers;
 - files/contracts changed;
 - verification needed across slices.
-

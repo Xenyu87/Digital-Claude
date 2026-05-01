@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.35.0 - 2026-05-01
+
+- Added filtered sub-agent handoff guidance: pass only objective, owned files/contracts, constraints, decisions, blockers, validation, stop condition, and output format.
+- Added explicit avoidance of full chat history, broad diffs, unrelated logs, large command output, and speculative background in handoffs.
+
 ## v0.34.0 - 2026-05-01
 
 - Added a concrete Playwright Browser Check: targeted desktop/mobile screenshots, console errors, primary workflow, touched UI states, and useful artifacts only.
