@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.25.0 - 2026-05-01
+
+- Added a flexible local UI consistency rule for new screens and redesigns.
+- New UI should compare against 2-4 existing screens/components in the same app instead of using app-specific or generic design rules.
+
 ## v0.24.0 - 2026-04-30
 
 - Restricted progress updates to only sub-agent usage, errors, blockers, risks, explicit status requests, and user actions.

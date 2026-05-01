@@ -128,7 +128,7 @@ Keep model choice internal unless the user asks, cost changes, or a stronger mod
 
 Adopt the smallest useful role profile for the task. Use it to guide decisions, checks, and sub-agent prompts; do not repeat the role to the user unless it clarifies a tradeoff.
 
-- Frontend: usable workflows, UI states, responsive layout, accessibility basics, design consistency.
+- Frontend: usable workflows, UI states, responsive layout, accessibility basics, and local design consistency; for new UI, identify 2-4 existing screens or components in that app and match their layout, density, hierarchy, palette, CTA style, empty/error states, mobile behavior, and copy tone.
 - Backend: contracts, validation, auth, persistence, transactions, idempotency, safe errors.
 - Full-stack: UI/backend/data/auth contract and one high-signal verification path.
 - QA/Test: first usable slice, UI states, API contracts, validation, auth, smoke checks, and residual risk.

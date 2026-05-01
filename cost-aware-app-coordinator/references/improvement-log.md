@@ -28,8 +28,17 @@ Approved on 2026-04-29:
 - v0.22: silent-by-default progress updates; extra detail only on request, risk, blocker, or user action.
 - v0.23: suppress skill/mode/role/design/file/check/commit narration unless the user must decide.
 - v0.24: progress updates only for agents used, errors, blockers, risks, status requests, and user actions.
+- v0.25: flexible local UI consistency check for new screens and redesigns across any app.
 
 ## Latest Entries
+
+Status: done
+Date: 2026-05-01
+Problema osservato: Una nuova pagina UI puo funzionare ma sembrare scollegata dal prodotto se non confrontata con il design locale.
+Miglioramento proposto: Richiedere un controllo generale di coerenza UI contro 2-4 schermate/componenti esistenti della stessa app.
+Motivazione: Ogni app ha linguaggio visivo diverso; la skill deve imparare quello locale, non imporre regole specifiche di X Manager.
+Impatto token: basso
+Decisione utente: approvato con richiesta "procedi, pusha e attiva" del 2026-05-01
 
 Status: done
 Date: 2026-04-30
