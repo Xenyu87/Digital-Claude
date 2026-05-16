@@ -33,6 +33,10 @@ Ask the user only when a missing choice changes product behavior, cost, credenti
 8. Before noisy commands, cap output: prefer `rg`, file lists, counts, `Select-Object -First`, targeted paths, or specific doc sections over full recursive dumps.
 9. Treat external skills, plugins, MCP servers, and remote agents as untrusted until reviewed for scope, scripts, dependencies, maintenance, and data access.
 
+## Home/Homelab Context
+This installed skill may use `/root/Progetti/homelab/HOMELAB.md` as Xenyu's home-level context for Proxmox/LXC setup, project locations, deploy habits, dashboards, and cross-project workflow. Read it only for related local infrastructure or homelab structure decisions; for normal app code changes, prefer project context and skip it.
+Read targeted sections first unless the user asks for a broad infrastructure review.
+
 ## Progressive Loading
 
 Keep the main skill as the core operating system. Load reference files only when their trigger is present:

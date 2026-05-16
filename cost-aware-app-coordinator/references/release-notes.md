@@ -1,5 +1,8 @@
 # Release Notes
 
+## v0.78.0 - 2026-05-16
+- Added optional Home/Homelab Context lookup for `/root/Progetti/homelab/HOMELAB.md`.
+
 ## v0.77.0 - 2026-05-16
 - Added Proxmox/LXC dashboard service scripts, remote-workstation guide, and `serve_dashboard.py --host`.
 
@@ -15,11 +18,8 @@
 ## v0.73.0 - 2026-05-15
 - Added `scripts/test_all.py` as one-command verification for validation, fixtures, Blueprint, and dashboard smoke.
 
-## v0.72.0 - 2026-05-15
-- Added `blueprint_board.py seed` to create first app Blueprint nodes from a free-text description.
-
-## v0.71.0 - 2026-05-15
-- Added smarter Blueprint import for pages, components, routes, services, and tests.
+## v0.71.0-v0.72.0 - 2026-05-15
+- Added smarter Blueprint import and `blueprint_board.py seed` for first nodes from free text.
 
 ## v0.70.0 - 2026-05-15
 - Added a clearer Blueprint dashboard panel with focus card, node cards, health chips, and mobile layout.

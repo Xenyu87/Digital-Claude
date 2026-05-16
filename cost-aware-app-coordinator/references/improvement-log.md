@@ -16,18 +16,17 @@ Approved on 2026-04-29:
 - v0.1-v0.18: coordinator-first app workflow, budget/model policy, routing, app blueprint, response economy, structure memory, roles, gates, progressive loading, maintenance, skill sync, decisions, QA/Test, specialist triggers, self-check, Red Team, validation, compression.
 - v0.19-v0.26: event-based `AI_AGENT_LOG.md`, `AI_HANDOFF.md`, tighter response economy, silent routine updates, local UI consistency, screenshot/mockup handling.
 - v0.27-v0.35: universal gates, domain questions, cost checkpoints, plan contracts, final acceptance, conditional Playwright checks, bounded auto-improvement, memory hygiene, Design Intent Brief, Backend Contract Gate, targeted Browser Check, filtered handoffs.
-- v0.36-v0.40: tool output budget, cheap skill review, external skill intake, remote-agent handoff, portable `AGENTS.md`, self-test, dashboard generator/server, local command guide.
-- v0.41-v0.43: sync/context/external skill scripts, security docs, bootstrap script, minimal existing-docs mode, mapped AI context routing.
+- v0.36-v0.43: tool output budget, cheap skill review, external intake, remote handoff, portable `AGENTS.md`, self-test, dashboard/server, sync/context scripts, security docs, bootstrap, mapped AI context routing.
 - v0.44-v0.77: project docs audit, PR readiness, selectable dashboard, Project Copilot, expert analytics, event log, memory, smoke tests, Action Pack, maintenance advisor, dashboard refactor, compact JSON, Context Guardrails, expert feedback, auto-pilot decisions, feature-only default, planning gate, Superplan, warning tasks, cleaner dashboard, smart cache, cache visibility, Blueprint Board POC, domains/tags, Doctor drift signals, metadata-only Auto-Update, visual panel, smarter import, new-app seed, one-command test runner, dashboard Blueprint confirmation, node descriptions, graph board, and Proxmox service setup.
 
 ## Latest Entries
 Status: done
 Date: 2026-05-16
-Problema osservato: Moving Codex work to the Proxmox LXC needs a dashboard service on the same machine as Codex logs.
-Miglioramento proposto: Add Linux service install/manage scripts, `--host`, and a Proxmox setup guide.
-Motivazione: Supports one remote Codex workstation reachable from any PC.
+Problema osservato: Coordinator lacked home-level Proxmox/LXC structure.
+Miglioramento proposto: Optional lookup for `/root/Progetti/homelab/HOMELAB.md`.
+Motivazione: Understand project locations and deploy/workflow choices without copying private context.
 Impatto token: basso
-Decisione utente: wants Codex directly on the server
+Decisione utente: link skill to homelab structure file
 
 Status: done
 Date: 2026-05-16
