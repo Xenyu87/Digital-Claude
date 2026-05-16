@@ -9,6 +9,7 @@ Use this reference when answers, updates, or agent prompts are getting longer th
 - Send one short progress update only for sub-agents used, errors, blockers, risks, explicit status requests, or actions the user must take.
 - Use compact plans only when they reduce risk or coordinate work.
 - Summarize command output; do not paste it unless requested.
+- Before noisy commands, cap output with targeted paths, `rg`, counts, `Select-Object -First`, or section reads. Avoid full recursive dependency/build/doc dumps unless the task truly requires them.
 - Prefer one precise file link over a list of every related file.
 - Do not explain routine edits as "I changed X because Y"; reserve reasons for risk, tradeoffs, blockers, or user decisions.
 - Be most precise in `Da fare per te` items: commands to run, env vars to set, accounts to connect, manual checks, or choices needed.
@@ -89,6 +90,15 @@ Residual risk:
 - Merge repeated caveats into one residual risk.
 - Keep examples out unless the user asks or the format is hard to infer.
 - Use exact limits when needed: sentence count, bullet count, files, or checks.
+
+## Tool Output Budget
+
+Use this before commands likely to return hundreds of lines:
+
+- For discovery, start with file names, counts, or `rg` matches before `Get-Content`.
+- For docs, list candidate files first, then read the relevant section or top lines.
+- For dependencies/build outputs, search exact terms instead of recursive dumps.
+- For audits, sample deliberately and state the lens before broad reads.
 
 ## When To Expand
 

@@ -21,6 +21,20 @@ Needed by:
 Risk:
 ```
 
+## Remote Agent Handoff
+
+Use this for GitHub agents, `@codex`, `@claude`, Copilot agents, cloud agents, or another tool that may run outside the current session.
+
+Include:
+
+- objective and acceptance criteria;
+- files, modules, routes, or issues in scope;
+- do-not-touch files, user changes, secrets, production data, and destructive actions;
+- setup assumptions, env vars needed by name only, and commands to run;
+- minimum verification and expected artifact, such as draft PR, patch, test result, or summary.
+
+Do not include secrets, full logs, broad diffs, or hidden chat history. Link to project files the remote agent can inspect.
+
 ## Filtered Context
 
 Before delegating or handing off, include only:

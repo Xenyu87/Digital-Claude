@@ -61,3 +61,14 @@ When the user asks to auto-improve until no improvements remain:
 5. Stop and report when remaining ideas fail the stop criteria.
 
 Do not create endless version bumps. One or two compact releases are usually enough before real project usage should provide new evidence.
+
+## Cheap Skill Review
+
+For skill audits or "is this skill ok?" requests, start with the cheap path:
+
+1. Run the skill validator.
+2. Check frontmatter, folder structure, referenced files, line counts, and installed-copy drift.
+3. Read full `SKILL.md` or references only when validation fails, behavior is unclear, or a qualitative review is requested.
+4. Prefer targeted `rg` checks for TODOs, duplicate rules, stale references, and noisy sections.
+
+This keeps maintenance accurate without spending the whole context on files that already pass structural checks.

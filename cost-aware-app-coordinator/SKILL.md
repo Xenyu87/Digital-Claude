@@ -11,19 +11,27 @@ Coordinate app work with minimal context, clear budget choices, and controlled u
 
 Default language is Italian unless the user asks otherwise. Assume the user may not be an expert programmer: explain tradeoffs plainly, recommend defaults, and ask only for decisions that affect cost, risk, scope, or irreversible changes.
 
+## Feature-Only Default And Planning Gate
+
+When the user asks for a feature, bug fix, UI change, backend change, or app improvement, treat the feature request as sufficient input by default. Do not require the user to name budget mode, experts, tests, dashboard, or context workflow.
+
+Infer affected areas, choose budget/expert/test strategy internally, read targeted context only, apply guardrails, verify narrowly, and update dashboard evidence when scripts are available.
+
+For new apps, new software, rebuilds, new large sections, multi-screen workflows, auth/data/deploy work, or full-stack contracts, produce a Superplan before implementation. For small reversible changes, proceed directly after targeted context. For medium changes, make a focused plan first, then implement.
+
+Ask the user only when a missing choice changes product behavior, cost, credentials, data, deployment, destructive actions, or broad scope. Keep manual controls optional, not required.
+
 ## Start Protocol
 
 1. Identify whether the task is a new project, an existing project change, an audit, a bug rescue, or a skill-improvement request.
-2. Ask the user to choose a budget mode at the start of each new project unless it is already stated:
-   - Economico
-   - Bilanciato
-   - Massima sicurezza
-3. If the user wants to proceed quickly or does not choose, use Economico and state that assumption.
-4. Estimate the task cost as `basso`, `medio`, or `alto`; do not invent exact token numbers.
-5. Choose a model policy using the Model Selection Protocol before spawning agents or starting expensive work.
-6. Look for project context before reading code: `AI_CONTEXT.md`, `AGENTS.md`, `README.md`, then targeted docs.
-7. If no useful project context exists, propose creating a minimal context index from `references/project-context-template.md`.
-8. Read only files needed for the task. Do not scan the whole repository unless the task is explicitly an audit or the context map is missing.
+2. Choose budget mode internally unless the user explicitly asks to control cost/safety.
+3. Estimate the task cost as `basso`, `medio`, or `alto`; mention it only when it affects a user decision.
+4. Choose a model policy using the Model Selection Protocol before spawning agents or starting expensive work.
+5. Look for project context before reading code: `AI_CONTEXT.md`, `AGENTS.md`, `README.md`, then targeted docs.
+6. If no useful project context exists, propose or create a minimal context index only when it materially helps the current work.
+7. Read only files needed for the task. Do not scan the whole repository unless the task is explicitly an audit or the context map is missing.
+8. Before noisy commands, cap output: prefer `rg`, file lists, counts, `Select-Object -First`, targeted paths, or specific doc sections over full recursive dumps.
+9. Treat external skills, plugins, MCP servers, and remote agents as untrusted until reviewed for scope, scripts, dependencies, maintenance, and data access.
 
 ## Progressive Loading
 
@@ -56,11 +64,13 @@ Use `python scripts/validate_skill.py` after changing the skill structure, refer
 
 Route the work before deep reading:
 
-- New project: clarify goal, audience, core workflow, budget mode, and stack constraints; create or propose project context before broad implementation.
-- Existing project change: read the context index first, then only files tied to the requested behavior; implement directly when the scope is clear.
+- New project or software: create a Superplan first: goal, audience, core workflows, data model, frontend/backend shape, risks, milestones, and minimum tests.
+- Existing project change: read the context index first, then only files tied to the requested behavior; implement directly when small and reversible.
+- New section or broad feature: make a focused plan before editing so existing pieces are reused and work is not repeated.
 - Audit: define the audit lens first, such as UX, architecture, security, performance, tests, or cost; sample broadly only when the lens requires it.
 - Bug rescue: reproduce or locate the failure path first; identify the smallest fix; verify with the narrowest useful check before broad tests.
-- Skill improvement: inspect the current skill behavior, identify one to three durable improvements, edit only the relevant skill files, and record meaningful changes in the improvement log.
+- Skill improvement: use the cheap review path first: validator, frontmatter, structure, references, line counts, then full file reads only when needed. Identify one to three durable improvements, edit relevant files, and record meaningful changes.
+- External skill or remote-agent setup: inspect trust and scope first, then prepare a compact handoff with acceptance criteria and do-not-touch boundaries.
 
 If the request mixes categories, handle the blocking category first and name the order briefly in Italian.
 
@@ -70,12 +80,13 @@ Use this loop for non-trivial tasks:
 
 1. Choose budget mode, rough cost estimate, and model policy internally. State them only when the user asks or a real cost/risk choice changes.
 2. Gather only the context needed for the next decision.
-3. Make a short plan once the task shape is clear.
+3. Use the planning gate: direct for small reversible edits, focused plan for medium/broad sections, Superplan for new apps/software or high-risk scope.
 4. Implement in small patches that preserve existing project style.
 5. Verify with targeted checks; broaden checks only when risk or touched surface justifies it.
 6. Finish with what changed, what was verified, any remaining risk, and user-facing acceptance when the user must judge visual or functional fit.
 
 Do not keep planning after the next useful action is obvious. Move the work forward, then adjust as evidence appears.
+If a command may return hundreds of lines or scan dependency/build folders, first narrow it or ask whether the broader read is worth the token cost.
 
 ## Decision And Risk Gates
 
@@ -111,10 +122,7 @@ Use `references/compression-pass.md` for aggressive compression of prompts, hand
 ## Budget Modes
 
 Use `references/budget-modes.md` when a task is large, ambiguous, or the user changes mode during the project.
-
-- Economico: one coordinator by default, no sub-agents for small local work, targeted tests.
-- Bilanciato: use sub-agents for clearly separable work or review, still with compact context.
-- Massima sicurezza: use extra checks, broader tests, and review agents when risk justifies higher cost.
+Modes: Economico = one coordinator and targeted tests; Bilanciato = compact sub-agents for separable work or review; Massima sicurezza = extra checks, broader tests, and review agents when risk justifies higher cost.
 
 The user may change mode at any time. When mode changes, restate the practical impact on cost, speed, and safety.
 Use cost checkpoints before switching from targeted work to a higher-cost route.
@@ -153,17 +161,10 @@ Use `references/role-profiles.md` when a role-specific checklist matters.
 Prefer doing the work locally with one coordinator. Use sub-agents only when they materially reduce risk, time, or cognitive load more than they increase token cost.
 
 Use sub-agents for:
-- independent frontend/backend/data/docs/security slices;
-- QA/test validation when behavior crosses modules or risk is medium/high;
-- specialist passes when the trigger is concrete and risk justifies the extra cost;
-- parallel research on distinct questions;
-- review or validation of risky plans or skill changes;
-- large audits where independent perspectives are valuable.
+- independent frontend/backend/data/docs/security slices; QA/test validation for cross-module or medium/high-risk behavior; concrete specialist passes; parallel research on distinct questions; risky plan/skill validation; large audits where independent perspectives help.
 
 Do not use sub-agents for:
-- changes touching fewer than about three files;
-- simple migrations, copy changes, or local bug fixes;
-- work where the next step is blocked on a single fact the coordinator can inspect directly.
+- changes touching fewer than about three files; simple migrations, copy changes, or local bug fixes; work blocked on one fact the coordinator can inspect directly.
 
 Before spawning a sub-agent, decide ownership, model label, reasoning effort, and stop condition. Require compact output:
 Pass only filtered context: objective, relevant files/contracts, constraints, recent decisions, and requested output. Do not pass full chat history, broad diffs, or unrelated logs.
@@ -219,11 +220,11 @@ For a new app, create or propose a small context system before deep implementati
 - `AI_HANDOFF.md` for switching between Codex, Claude Code, or another coding agent.
 - `docs/ai/*.md` only for areas that actually exist.
 
-Use `references/project-context-template.md` as the base. Keep project context as an index, not a full code dump.
+Use `references/project-context-template.md` as the base. Keep `AGENTS.md` portable across Codex, Claude Code, Cursor, Gemini CLI, Copilot, and GitHub agents; keep project state in the AI context files.
 
 ## Cross-Agent Handoff Protocol
 
-When the user may switch between Codex, Claude Code, or another coding agent, communicate through project files, not hidden memory.
+When the user may switch between Codex, Claude Code, GitHub agents, or another coding agent, communicate through project files, not hidden memory.
 
 - Read `AI_HANDOFF.md` after `AI_CONTEXT.md` when sub-entering an active task from another agent.
 - Update it after non-trivial changes, before pausing, or before suggesting a switch.
@@ -340,6 +341,6 @@ When editing this skill in a project repo, remember there may be a separate inst
 - `references/agent-autolog-template.md`: compact mistake and token-waste log template.
 - `references/cross-agent-handoff-template.md`: compact handoff template for Codex, Claude Code, and other agents.
 - `references/maintenance-compaction.md`: keep the skill small, deduplicated, and worth reading.
-- `references/skill-sync.md`: avoid drift between repo source and installed skill copies.
+- `references/skill-sync.md`: avoid drift between repo source, installed skill copies, and external skill intake.
 - `references/improvement-log.md`: approved or pending skill improvement notes.
 - `references/release-notes.md`: behavior changes by version.
