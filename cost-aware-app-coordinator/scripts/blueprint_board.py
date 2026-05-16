@@ -290,8 +290,35 @@ def import_candidates(project: Path) -> list[dict[str, object]]:
             node = make_node(title, description, source="imported", status="suggested")
             node["files"] = [path.relative_to(project).as_posix()]
             found.append(node)
+    found.extend(skill_candidates(project))
     found.extend(feature_candidates(project))
     return found
+
+
+def skill_candidates(project: Path) -> list[dict[str, object]]:
+    if not (project / "SKILL.md").exists():
+        return []
+    definitions = [
+        ("Skill Operating Rules", "Core coordinator instructions, routing, gates, and behavior.", ["SKILL.md"], "docs"),
+        ("Progressive References", "Triggered reference files for budget, routing, QA, handoff, sync, and maintenance.", ["references"], "docs"),
+        ("Dashboard Runtime", "Dashboard generation, serving, project selection, cache, and operational panels.", ["scripts/generate_dashboard.py", "scripts/serve_dashboard.py"], "infra"),
+        ("Blueprint Board", "Intent graph import, doctor, seed, validation, and dashboard visualization.", ["scripts/blueprint_board.py", "scripts/blueprint_board_test.py"], "feature"),
+        ("Verification Suite", "Validation, self-test, fixture tests, and one-command test runner.", ["scripts/validate_skill.py", "scripts/self_test.py", "scripts/test_all.py"], "test"),
+    ]
+    candidates = []
+    for title, description, files, expected_type in definitions:
+        existing = [path for path in files if (project / path).exists()]
+        if not existing:
+            continue
+        node = make_node(title, description, source="imported-skill", status="suggested")
+        node["files"] = existing
+        node["inferred_type"] = expected_type
+        node["domain"] = infer_domain(f"{title} {description}", expected_type)
+        node["tags"] = infer_tags(f"{title} {description}", str(node["inferred_type"]), str(node["domain"]))
+        node["children_suggested"] = suggested_children(title, str(node["inferred_type"]))
+        node["implementation_steps"] = implementation_steps(title, str(node["inferred_type"]), str(node["domain"]))
+        candidates.append(node)
+    return candidates
 
 
 def feature_candidates(project: Path, limit: int = 32) -> list[dict[str, object]]:

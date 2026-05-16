@@ -82,6 +82,21 @@ def main() -> int:
             errors.append("seed missed dashboard")
         if "Report e analytics" not in seeded_titles:
             errors.append("seed missed report")
+        skill_project = Path(tmp) / "SkillProject"
+        (skill_project / "references").mkdir(parents=True)
+        (skill_project / "scripts").mkdir()
+        (skill_project / "SKILL.md").write_text("# Skill\n", encoding="utf-8")
+        (skill_project / "scripts" / "generate_dashboard.py").write_text("print('dashboard')\n", encoding="utf-8")
+        (skill_project / "scripts" / "serve_dashboard.py").write_text("print('serve')\n", encoding="utf-8")
+        (skill_project / "scripts" / "validate_skill.py").write_text("print('validate')\n", encoding="utf-8")
+        skill_summary = board_summary(skill_project)
+        skill_titles = {str(item.get("title", "")) for item in skill_summary.get("preview_nodes", []) if isinstance(item, dict)}
+        if int(skill_summary.get("nodes", 0)) < 3:
+            errors.append("skill import found too few nodes")
+        if "Skill Operating Rules" not in skill_titles:
+            errors.append("skill import missed operating rules")
+        if "Dashboard Runtime" not in skill_titles:
+            errors.append("skill import missed dashboard runtime")
         if errors:
             print("Blueprint Board fixture-test failed:")
             for error in errors:
