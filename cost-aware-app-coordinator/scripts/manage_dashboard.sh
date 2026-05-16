@@ -15,7 +15,7 @@ case "${ACTION}" in
     python3 "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/test_all.py"
     ;;
   url)
-    PORT="${PORT:-8765}"
+    PORT="${PORT:-3002}"
     HOST_IP="$(hostname -I | awk '{print $1}')"
     echo "http://${HOST_IP}:${PORT}/reports/skill-dashboard.html"
     ;;

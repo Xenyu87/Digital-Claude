@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "reports" / "skill-dashboard.html"
 CONFIG = ROOT / "reports" / "dashboard-config.json"
 CACHE = ROOT / "reports" / "dashboard-cache.json"
-DEFAULT_CONFIG = {"project_path": "", "refresh_seconds": 15, "port": 8765, "host": "127.0.0.1"}
+DEFAULT_CONFIG = {"project_path": "", "refresh_seconds": 15, "port": 3002, "host": "127.0.0.1"}
 
 
 def load_config() -> dict[str, object]:
@@ -133,7 +133,7 @@ def main() -> int:
     config = load_config()
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default=str(config.get("host") or "127.0.0.1"))
-    parser.add_argument("--port", type=int, default=int(config.get("port") or 8765))
+    parser.add_argument("--port", type=int, default=int(config.get("port") or 3002))
     parser.add_argument("--interval", type=int, default=int(config.get("refresh_seconds") or 15))
     parser.add_argument("--project", default="")
     parser.add_argument("--save-config", action="store_true")

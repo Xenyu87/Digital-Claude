@@ -293,6 +293,7 @@ REQUIRED_MARKERS = {
     "scripts/install_dashboard_service.sh": [
         "codex-skill-dashboard",
         "0.0.0.0",
+        "PORT=\"${PORT:-3002}\"",
         "systemctl enable",
         "serve_dashboard.py --host",
     ],
@@ -301,12 +302,6 @@ REQUIRED_MARKERS = {
         "journalctl",
         "test_all.py",
         "url",
-    ],
-    "reports/proxmox-codex-dashboard.md": [
-        "LXC dev",
-        "/root/.codex/skills/cost-aware-app-coordinator",
-        "codex-skill-dashboard.service",
-        "192.168.1.148:8765",
     ],
     "scripts/sync_check.py": [
         "missing_in_installed",

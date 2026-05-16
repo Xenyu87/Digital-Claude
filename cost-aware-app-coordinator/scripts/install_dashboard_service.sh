@@ -3,7 +3,7 @@ set -euo pipefail
 
 SERVICE_NAME="${SERVICE_NAME:-codex-skill-dashboard}"
 HOST="${HOST:-0.0.0.0}"
-PORT="${PORT:-8765}"
+PORT="${PORT:-3002}"
 INTERVAL="${INTERVAL:-15}"
 SKILL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-$(command -v python3 || command -v python)}"

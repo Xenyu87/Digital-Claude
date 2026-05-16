@@ -7,12 +7,12 @@ if (-not (Test-Path -LiteralPath $ConfigPath)) {
     @{
         project_path = ""
         refresh_seconds = 15
-        port = 8765
+        port = 3002
     } | ConvertTo-Json | Set-Content -LiteralPath $ConfigPath -Encoding UTF8
 }
 
 $Config = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
-$Port = if ($Config.port) { [int]$Config.port } else { 8765 }
+$Port = if ($Config.port) { [int]$Config.port } else { 3002 }
 $Interval = if ($Config.refresh_seconds) { [int]$Config.refresh_seconds } else { 15 }
 $Project = if ($Config.project_path) { [string]$Config.project_path } else { "auto dai log Codex" }
 $Url = "http://127.0.0.1:$Port/reports/skill-dashboard.html"

@@ -2,6 +2,7 @@
 
 ## v0.78.0 - 2026-05-16
 - Added optional Home/Homelab Context lookup for `/root/Progetti/homelab/HOMELAB.md`.
+- Aligned Codex Skill Dashboard defaults to port `3002`.
 
 ## v0.77.0 - 2026-05-16
 - Added Proxmox/LXC dashboard service scripts, remote-workstation guide, and `serve_dashboard.py --host`.

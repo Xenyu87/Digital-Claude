@@ -15,7 +15,7 @@ SESSION_LIMIT = 80
 DEFAULT_CONFIG = {
     "project_path": "",
     "refresh_seconds": 15,
-    "port": 8765,
+    "port": 3002,
 }
 
 

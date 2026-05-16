@@ -22,11 +22,11 @@ Approved on 2026-04-29:
 ## Latest Entries
 Status: done
 Date: 2026-05-16
-Problema osservato: Coordinator lacked home-level Proxmox/LXC structure.
-Miglioramento proposto: Optional lookup for `/root/Progetti/homelab/HOMELAB.md`.
-Motivazione: Understand project locations and deploy/workflow choices without copying private context.
+Problema osservato: Dashboard port drift and missing home-level Proxmox/LXC structure.
+Miglioramento proposto: Use port `3002` in dashboard scripts/tests and optional lookup for `/root/Progetti/homelab/HOMELAB.md`.
+Motivazione: Keep homelab docs, skill tooling, project locations, and deploy workflow aligned.
 Impatto token: basso
-Decisione utente: link skill to homelab structure file
+Decisione utente: dashboard is on port `3002`; link skill to homelab structure file
 
 Status: done
 Date: 2026-05-16
