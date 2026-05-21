@@ -1,350 +1,283 @@
 ---
 name: cost-aware-app-coordinator
-description: Use when planning, creating, modifying, auditing, or rescuing an app project with controlled token cost, coordinator-first workflow, optional sub-agents, budget modes, project context and decision memory, and approval-based skill improvement.
+description: Coordina task software non triviali (nuova app, audit, bug rescue, migrazione, deploy, refactor cross-modulo, miglioramento skill). Attiva quando serve pianificazione, scelta stack, multi-agente, file AI_*.md. NON usare per fix di una stringa, rename locale, cambio colore, modifica isolata di 1 file noto, domande concettuali.
 ---
 
-# Cost Aware App Coordinator
+# Cost-Aware App Coordinator
 
-## Overview
+Coordina lavoro su progetti software riducendo spreco di token e output troppo lunghi. Supporta handoff multi-agente tramite file `AI_*.md`.
 
-Coordinate app work with minimal context, clear budget choices, and controlled use of sub-agents. Use this skill for new apps, existing app changes, audits, debugging sessions, project setup, or when the user asks for safer and more organized development without wasting tokens.
+## Lingua
 
-Default language is Italian unless the user asks otherwise. Assume the user may not be an expert programmer: explain tradeoffs plainly, recommend defaults, and ask only for decisions that affect cost, risk, scope, or irreversible changes.
+Default: italiano. Cambia solo se l'utente scrive in altra lingua.
 
-## Feature-Only Default And Planning Gate
+## Quando NON usare questa skill
 
-When the user asks for a feature, bug fix, UI change, backend change, or app improvement, treat the feature request as sufficient input by default. Do not require the user to name budget mode, experts, tests, dashboard, or context workflow.
+- domanda concettuale che non richiede modifiche
+- compito banale di una riga
+- skill più specifica già attiva (es. `claude-api`, `init`, `security-review`)
+- conversazione fuori dominio software
 
-Infer affected areas, choose budget/expert/test strategy internally, read targeted context only, apply guardrails, verify narrowly, and update dashboard evidence when scripts are available.
+In questi casi rispondi diretto, senza protocollo.
 
-For new apps, new software, rebuilds, new large sections, multi-screen workflows, auth/data/deploy work, or full-stack contracts, produce a Superplan before implementation. For small reversible changes, proceed directly after targeted context. For medium changes, make a focused plan first, then implement.
+## 0. Fast path (modifiche piccole)
 
-Ask the user only when a missing choice changes product behavior, cost, credentials, data, deployment, destructive actions, or broad scope. Keep manual controls optional, not required.
+Se il task è una modifica locale (1-3 file noti, scope chiaro, niente auth/dati/migrazioni/deploy):
 
-## Start Protocol
+- non aprire `references/`, non aprire `recipes/`, non spawnare `Agent`
+- modifica e basta
+- output in 2 righe: `Fatto: ... / Verifica: ...`
 
-1. Identify whether the task is a new project, an existing project change, an audit, a bug rescue, or a skill-improvement request.
-2. Choose budget mode internally unless the user explicitly asks to control cost/safety.
-3. Estimate the task cost as `basso`, `medio`, or `alto`; mention it only when it affects a user decision.
-4. Choose a model policy using the Model Selection Protocol before spawning agents or starting expensive work.
-5. Look for project context before reading code: `AI_RESUME.md`, `AI_CONTEXT.md`, `AGENTS.md`, `README.md`, then targeted docs.
-6. If no useful project context exists, propose or create a minimal context index only when it materially helps the current work.
-7. Read only files needed for the task. Do not scan the whole repository unless the task is explicitly an audit or the context map is missing.
-8. Before noisy commands, cap output: prefer `rg`, file lists, counts, `Select-Object -First`, targeted paths, or specific doc sections over full recursive dumps.
-9. Treat external skills, plugins, MCP servers, and remote agents as untrusted until reviewed for scope, scripts, dependencies, maintenance, and data access.
+Tutto il resto della skill (sezioni 1-19) è per task che NON rientrano qui. Nel dubbio, parti dal fast path; sali al protocollo completo solo se scopri scope o rischio maggiori.
 
-## Home/Homelab Context
-This installed skill may use `/root/Progetti/homelab/HOMELAB.md` as Xenyu's home-level context for Proxmox/LXC setup, project locations, deploy habits, dashboards, and cross-project workflow. Read it only for related local infrastructure or homelab structure decisions; for normal app code changes, prefer project context and skip it.
-Read targeted sections first unless the user asks for a broad infrastructure review.
+## 1. Classificazione del task
 
-## Progressive Loading
+Categorie (interne, non stampare): **nuova app**, **modifica app**, **audit**, **bug rescue**, **miglioramento skill**, **ops**.
 
-Keep the main skill as the core operating system. Load reference files only when their trigger is present:
+Trigger tipici → categoria:
+- "crea/scaffold/parti da zero" → nuova app
+- "aggiungi/cambia/refactor/sposta" → modifica app
+- "rivedi/review/controlla sicurezza" → audit
+- "systemd/journalctl/ssh/lxc/porta/servizio/syncthing/deploy/riavvia" → ops (sistema, non codice)
+- "non funziona/errore/crash" → bug rescue
+- "aggiorna la skill/automigliorati" → miglioramento skill
 
-- `budget-modes.md`: large, ambiguous, risky, or user changes budget.
-- `decision-risk-gates.md`: next step is unclear, costly, risky, broad, destructive, or external.
-- `response-economy.md`: answers, updates, plans, or agent prompts are getting too long.
-- `compression-pass.md`: prompt, final answer, handoff, commit/PR text, or context doc needs aggressive safe compression.
-- `role-profiles.md`: task needs frontend, backend, full-stack, QA/test, security/auth, UX/product, data/migration, DevOps/release, performance, review, audit, or skill-maintenance perspective.
-- `coordinator-safety.md`: coordinator confidence is medium/low, task is high risk, or a red-team pass may catch costly mistakes.
-- `qa-test-agent.md`: workflow crosses frontend/backend, changes contracts/auth/data, fixes non-trivial bugs, prepares push/PR validation, or needs Playwright UI checks.
-- `specialist-agents.md`: specialist agent selection for security/auth, UX/product, data/migration, DevOps/release, or performance.
-- `agent-handoff.md`: multiple sub-agents need to share decisions, contracts, blockers, or integration notes.
-- `task-routing.md`: request is broad, mixed, or easy to over-read.
-- `app-creation-blueprint.md`: new app, full-stack feature, rebuild, or UI/backend contract.
-- `project-context-template.md`: project lacks `AI_CONTEXT.md`, `AGENTS.md`, or lightweight docs.
-- `structure-memory-template.md`: project needs `AI_STRUCTURE.md` or structure memory maintenance.
-- `second-brain-template.md`: project needs durable decision memory or repeated tradeoff context.
-- `agent-autolog-template.md`: repeated waste, wrong routing, missed risk, unnecessary rereads, or user-corrected behavior.
-- `cross-agent-handoff-template.md`: switching between Codex, Claude Code, or another coding agent on the same project.
-- `improvement-log.md`: only for skill improvement or recording an approved behavior change.
-- `release-notes.md`: only when summarizing or updating skill versions.
+Anche senza dichiarazione esplicita, classifica dal verbo principale e dallo stato del repo. Dettagli: `references/task-routing.md`.
 
-Do not load every reference by default. If a reference was just read in the same turn, reuse that understanding instead of rereading it.
+## 2. Budget mode
 
-Use `python scripts/validate_skill.py` after changing the skill structure, references, release notes, or progressive loading rules.
+- **Economico** (default): minimo letture, output corto
+- **Bilanciato**: letture mirate sui file impattati
+- **Massima sicurezza**: letture estese, doppio check, audit
 
-## Task Routing
+Default Economico, escalation automatica per gate di rischio. L'utente può forzare. Default specifici per categoria di task (nuova app/audit/miglioramento skill = Bilanciato; modifica/bug rescue = Economico) in `references/task-routing.md`. Dettagli budget: `references/budget-modes.md`.
 
-Route the work before deep reading:
+## 3. Selezione del modello
 
-- New project or software: create a Superplan first: goal, audience, core workflows, data model, frontend/backend shape, risks, milestones, and minimum tests.
-- Existing project change: read the context index first, then only files tied to the requested behavior; implement directly when small and reversible.
-- New section or broad feature: make a focused plan before editing so existing pieces are reused and work is not repeated.
-- Audit: define the audit lens first, such as UX, architecture, security, performance, tests, or cost; sample broadly only when the lens requires it.
-- Bug rescue: reproduce or locate the failure path first; identify the smallest fix; verify with the narrowest useful check before broad tests.
-- Skill improvement: use the cheap review path first: validator, frontmatter, structure, references, line counts, then full file reads only when needed. Identify one to three durable improvements, edit relevant files, and record meaningful changes.
-- External skill or remote-agent setup: inspect trust and scope first, then prepare a compact handoff with acceptance criteria and do-not-touch boundaries.
+Modello più piccolo capace di chiudere il task (`haiku` < `sonnet` < `opus` per costo).
 
-If the request mixes categories, handle the blocking category first and name the order briefly in Italian.
+**Baseline 2026-05**: Haiku 4.5 · Sonnet 4.6 · Opus 4.7. Le regole di escalation si riferiscono alla famiglia, non alla minor version.
 
-## Working Loop
+**Main agent**: scelto dall'utente, non cambiabile dalla skill. Se il rischio sale (auth, migrazioni), suggerisci di cambiare modello con `/model` (tasto `d` nel picker per renderlo default nella sessione), non assumere.
 
-Use this loop for non-trivial tasks:
+**Sub-agent (routing per categoria di sotto-task)**: imposta automaticamente `model` su `Agent`:
 
-1. Choose budget mode, rough cost estimate, and model policy internally. State them only when the user asks or a real cost/risk choice changes.
-2. Gather only the context needed for the next decision.
-3. Use the planning gate: direct for small reversible edits, focused plan for medium/broad sections, Superplan for new apps/software or high-risk scope.
-4. Implement in small patches that preserve existing project style.
-5. Verify with targeted checks; broaden checks only when risk or touched surface justifies it.
-6. Finish with what changed, what was verified, any remaining risk, and user-facing acceptance when the user must judge visual or functional fit.
+| Sotto-task | Modello | Quando |
+|---|---|---|
+| esplorazione file (grep ampio, lettura README/struttura, "dove sta X") | `haiku` | rispondi al main agent in 1-2 paragrafi, niente patch |
+| QA test runner, lint, type-check, riepilogo log | `haiku` | output strutturato, deterministico |
+| modifica isolata 1-3 file con scope chiaro | `sonnet` | edits diretti, niente design |
+| audit security/cross-module review | `sonnet` | salvo gate di rischio attivo |
+| design architetturale, scelta stack, piano migrazione | `opus` | solo se main agent è già Opus o gate Massima sicurezza |
+| sintesi finale / review pre-commit di un piano lungo | `opus` | quando il costo del retry > costo Opus |
 
-Do not keep planning after the next useful action is obvious. Move the work forward, then adjust as evidence appears.
-If a command may return hundreds of lines or scan dependency/build folders, first narrow it or ask whether the broader read is worth the token cost.
+Heuristica di scoring (per scegliere fra due opzioni vicine): `quality × 1 / log(1 + cost_relativo)`. Favorisce cheap-and-good sopra expensive-and-marginally-better.
 
-## Decision And Risk Gates
+Default per categoria principale (combinato con budget §2):
 
-Before spending significant context, changing many files, using sub-agents, or running broad checks, pass the relevant gate.
+- **ops** + Economico → Haiku per main agent suggerito (comandi e log)
+- **modifica** + Economico → Sonnet, Haiku per esplorazione preliminare
+- **audit** + Bilanciato → Sonnet per scan, Opus solo per sintesi finale se il finding lo richiede
+- **nuova app** + Bilanciato → Sonnet per scaffolding, Opus solo per design iniziale dello stack
+- **bug rescue** → Sonnet; Haiku per riproduzione/log; Opus solo se la causa resta opaca dopo 2 tentativi
+- **miglioramento skill** → Sonnet; Opus per ridisegno di sezione, mai per piccoli edit
 
-- Act now when the request is clear, reversible, and locally inspectable.
-- Ask one concise question when a missing choice affects cost, risk, scope, data loss, external systems, or user-visible product direction.
-- Plan briefly when work crosses modules, roles, frontend/backend contracts, deployment/runtime behavior, or has multiple valid product/design/technical paths.
-- For ambiguous or high-impact work, ask 1-3 precise questions, recommend a direction, name tradeoffs, likely areas touched, validation, and cost/risk before implementation.
-- Use a domain-specific mini-plan for bug rescue, full-stack features, data/migrations, auth, deploy, refactors, or new apps when the wrong route would cause rework.
-- Use a plain-language plan contract for medium/high-risk work: goal, success criteria, decisions to approve, likely areas, minimum verification, residual risk.
-- Before expensive steps, give a cost checkpoint when user approval would change the route: broad code reading, sub-agents, wide tests, schema/data changes, deploy, paid services, or production actions.
-- Delegate only when slices are independent, have clear ownership, and the result can be integrated without blocking the next local step.
-- Stop and report when a destructive action, credential, production system, paid service, or ambiguous irreversible change needs explicit user confirmation.
+In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallisce, sali a Sonnet con il contesto del fallimento, non ripartire da zero. Tabella estesa per agente specialista in `references/specialist-agents.md`.
 
-Use decision confidence: high proceeds, medium verifies or uses a specialist, low asks or runs Red Team.
-Use `references/decision-risk-gates.md` for full risk and quality gates.
+**Catalogo subagent locali** (in `~/.claude/agents/`, ognuno con `model:` esplicito):
 
-## Response Economy Protocol
+| Subagent | Modello | Usalo per |
+|---|---|---|
+| `Explore` (built-in) | haiku | grep/glob, "dove sta X", lettura veloce file noti |
+| `ops-runner` | haiku | systemctl/journalctl/cron/ss/df: comandi rapidi, niente decisioni |
+| `code-implementer` | sonnet | edit 1-5 file con scope deciso, refactor locale, wire-up |
+| `qa-tester` | sonnet | scrittura/run di test, regression test su bug |
+| `code-debugger` | sonnet | bug rescue: riproduci → isola → fix → verifica |
+| `doc-writer` | sonnet | AI_*.md / README / handoff dopo modifiche non banali |
+| `code-reviewer` | opus | review pre-commit di diff non triviale (giudizio indipendente) |
+| `architect` | opus | nuova feature, scelta stack, design data model |
 
-Default to the shortest answer that still lets the user trust and use the result. Expand only when the user asks, the task is risky, or missing detail would cause rework.
+**Flag per subagent dispatched**: i subagent accettano `--model`, `--permission-mode` per override puntuale. Fast mode usa Opus 4.7 by default. Esempi pratici in `references/specialist-agents.md`.
 
-- Updates: silent by default while working. Speak only to report sub-agents used, errors, blockers, risks, or user actions needed.
-- Plans: three to six bullets only when they reduce risk or coordinate work.
-- Finals: say what was done and what was checked. Do not add "because/why" for routine edits.
-- For user-facing changes, include 1-3 plain manual verification steps when automated checks cannot prove visual or functional fit.
-- User action: be precise and explicit only for what the user must do, choose, confirm, configure, pay for, or test manually.
-- Never announce skill name, budget mode, model policy, role, design lens, file-by-file intent, routine next step, checks, or commit prep unless requested or required for an important user action.
-- Avoid dumping file contents, diffs, inspected files, or tool output unless requested.
-- Use `references/response-economy.md` when output shape needs more guidance.
-Use `references/compression-pass.md` for aggressive compression of prompts, handoffs, commit/PR text, or context docs.
+**Regola di delega** (anti-pattern: "lo faccio io con Opus perché ce l'ho"):
+- Esplorazione codice/grep/find su >2 file → `Explore`. Mai leggere 10 file in main session.
+- Comando ops semplice (status/restart/tail) → `ops-runner`. Mai bash inline in main session se l'output va parsato.
+- Edit con scope già deciso → `code-implementer`. Main session NON dovrebbe editare codice di prodotto: pianifica + delega.
+- Bug non banale → `code-debugger`. Main session NON dovrebbe debuggare a sentimento.
+- Decisione architetturale → `architect` (anche se main è già Opus: l'agent isolato non sporca il contesto principale).
 
-## Budget Modes
+**Trigger automatici da contesto** (la dashboard emette `<routing-hint>` nel prompt via UserPromptSubmit hook — quando vedi un blocco di quel tipo, rispetta `suggested_subagent` salvo motivo esplicito di non farlo):
 
-Use `references/budget-modes.md` when a task is large, ambiguous, or the user changes mode during the project.
-Modes: Economico = one coordinator and targeted tests; Bilanciato = compact sub-agents for separable work or review; Massima sicurezza = extra checks, broader tests, and review agents when risk justifies higher cost.
-
-The user may change mode at any time. When mode changes, restate the practical impact on cost, speed, and safety.
-Use cost checkpoints before switching from targeted work to a higher-cost route.
-
-## Model Selection Protocol
-
-Use the smallest capable model for each piece of work, and upgrade only when risk, ambiguity, or reasoning depth justifies the extra cost. Do not claim to switch the active coordinator model unless the runtime exposes a real model override. When spawning sub-agents, set a model override only when the task clearly benefits from it; otherwise let the agent inherit the current model.
-
-- Mini/small: discovery, summaries, docs, formatting, low-risk mechanical work.
-- Default: normal implementation, debugging, and review of a few files.
-- Coding-strong: multi-file implementation, refactors, migrations, test fixes.
-- Frontier/high effort: architecture, security, auth, payments, privacy, production, data loss, large audits.
-
-Keep model choice internal unless the user asks, cost changes, or a stronger model/sub-agent needs a user-visible tradeoff.
-
-## Role Profiles
-
-Adopt the smallest useful role profile for the task. Use it to guide decisions, checks, and sub-agent prompts; do not repeat the role to the user unless it clarifies a tradeoff.
-
-- Frontend: usable workflows, UI states, responsive layout, accessibility basics, and local design consistency; for important UI, define a short design intent before coding. For new UI, identify 2-4 existing screens/components in that app and match their language. For screenshot/mockup fidelity, clarify priorities, treat as medium UI risk, verify visually when possible, and consider UX/design or QA visual agents if value exceeds cost.
-- Backend: contract gate before risky backend work; validation, auth, persistence, transactions, idempotency, safe errors.
-- Full-stack: UI/backend/data/auth contract and one high-signal verification path.
-- QA/Test: first usable slice, UI states, API contracts, validation, auth, smoke checks, and residual risk.
-- Security/Auth: permissions, protected data, server-side enforcement, secrets, abuse cases.
-- UX/Product: user intent, workflow clarity, friction, empty/error copy, product tradeoffs.
-- Data/Migration: schemas, migrations, seed/import/export, rollback, destructive operations.
-- DevOps/Release: env vars, build, CI/CD, deploy, hosting, secrets, release risk.
-- Performance: expensive queries, bundle size, large lists, realtime, images, latency.
-- Review/audit: bugs, regressions, missing tests, security, data loss, production risks.
-- Skill maintenance: shorter rules, lower token cost, safer routing, durable behavior.
-
-Use `references/role-profiles.md` when a role-specific checklist matters.
-
-## Coordinator Rules
-
-Prefer doing the work locally with one coordinator. Use sub-agents only when they materially reduce risk, time, or cognitive load more than they increase token cost.
-
-Use sub-agents for:
-- independent frontend/backend/data/docs/security slices; QA/test validation for cross-module or medium/high-risk behavior; concrete specialist passes; parallel research on distinct questions; risky plan/skill validation; large audits where independent perspectives help.
-
-Do not use sub-agents for:
-- changes touching fewer than about three files; simple migrations, copy changes, or local bug fixes; work blocked on one fact the coordinator can inspect directly.
-
-Before spawning a sub-agent, decide ownership, model label, reasoning effort, and stop condition. Require compact output:
-Pass only filtered context: objective, relevant files/contracts, constraints, recent decisions, and requested output. Do not pass full chat history, broad diffs, or unrelated logs.
-
-```text
-Files touched or inspected:
-- ...
-
-Decision:
-- ...
-
-Risks:
-- ...
-
-Tests or checks:
-- ...
+```
+<routing-hint>
+classified: <category>
+suggested_subagent: <nome>
+model: <haiku|sonnet|opus>
+budget_max: <token>
+</routing-hint>
 ```
 
-The coordinator integrates all results and remains responsible for the final answer.
+## 4. Lettura iniziale del contesto
 
-## Agent Handoff Protocol
+Solo questi file se esistono, in ordine:
 
-When multiple sub-agents work on related slices, let them communicate through compact structured handoffs. The coordinator remains the router and final decision-maker.
+1. `AI_HANDOFF.md` (se subentri da un altro agente)
+2. `AI_CONTEXT.md`
+3. `AGENTS.md`
+4. `CLAUDE.md`
+5. `AI_STRUCTURE.md` (solo se il task tocca moduli o contratti)
+6. `AI_DECISIONS.md` (solo se la decisione corrente ne incrocia una passata)
+7. `README.md` (solo se i precedenti non bastano)
 
-- Use handoffs only for shared contracts, blockers, assumptions, changed files, integration risks, or decisions another agent must know.
-- Keep messages short and addressed: `from`, `to`, `topic`, `decision/blocker`, `files`, `needed by`.
-- Prefer coordinator-mediated handoffs. Do not create open-ended agent discussion loops.
-- If two agents disagree, the coordinator resolves or asks the user when the choice affects scope, risk, product direction, or irreversible work.
-- Use `references/agent-handoff.md` for templates and multi-agent communication rules.
+Non leggere tutta la repo: la lettura preventiva brucia contesto su file mai usati.
 
-## Definition Of Done
+## 5. Progressive loading
 
-A task is done when:
+`SKILL.md` è il core sempre caricato. I `references/*.md` solo quando un trigger concreto è presente. Se una reference è già stata letta in questo turno, riusa la comprensione invece di rileggerla.
 
-- the requested behavior or decision has been handled;
-- touched files are scoped to the task;
-- relevant checks were run or the reason for skipping them is stated;
-- the final answer names the concrete outcome without dumping unnecessary detail;
-- medium/high-risk visual or functional work asks the user to confirm whether the result matches their intent in plain, non-technical terms;
-- any follow-up is actionable and not phrased as vague optional work.
+Mappa attivazione reference:
 
-Before closing medium/high-risk work, run a quick coordinator self-check. Use `qa-test-agent.md`, `specialist-agents.md`, or `coordinator-safety.md` when their triggers apply.
-For medium/high-risk UI work, consider Playwright screenshots or smoke checks automatically; use a cost checkpoint if server/setup/wide browser checks make it non-trivial.
+- task → `references/task-routing.md`
+- budget → `references/budget-modes.md`, `references/response-economy.md`
+- gate decisionali → `references/decision-risk-gates.md`
+- scope ambiguo o utente non programmer → `references/scope-checkpoint.md`
+- ruoli → `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`
+- handoff → `references/agent-handoff.md`, `references/cross-agent-handoff-template.md`
+- creazione app → `references/app-creation-blueprint.md`, `references/default-stacks.md`, `references/project-context-template.md`, `references/structure-memory-template.md`, `references/second-brain-template.md`, `references/agent-autolog-template.md`; ricette pronte in `recipes/`
+- deploy app → `references/deploy-paths.md` + script in `assets/scripts/deploy-*.sh`
+- testing visivo (UI) → `references/visual-first-testing.md`
+- task **ops** (systemd, journalctl, ssh, lxc, proxmox, syncthing, cron, firewall, deploy, porte) → `references/homelab-ops.md`
+- integrazioni MCP (GitHub/Linear/Slack/Notion/...) → `references/mcp-integrations.md`
+- manutenzione → `references/maintenance-compaction.md`, `references/compression-pass.md`, `references/skill-sync.md`, `references/improvement-log.md`, `references/release-notes.md`
+- sicurezza coordinatore → `references/coordinator-safety.md`
+- self-improvement → `references/self-improvement.md`, `references/reflexion-loop.md`
+- tuning del loading → `references/progressive-loading.md`
 
-## Project Context Pattern
+## 6. Working loop
 
-For a new app, create or propose a small context system before deep implementation:
+Per task non banali: budget+modello internamente → contesto minimo → mini-piano se serve → patch piccole → verifica mirata → chiusura corta. Smetti di pianificare quando il prossimo passo è ovvio.
 
-- `AI_RESUME.md` for cheap latest-state resume; `AGENTS.md` for agent rules and project-specific guardrails.
-- `AI_CONTEXT.md` for the routing table and current decisions.
-- `AI_STRUCTURE.md` for the app structure memory when the project has enough files to benefit.
-- `AI_DECISIONS.md` for durable decisions, tradeoffs, constraints, and "do not repeat" notes.
-- `AI_HANDOFF.md` for switching between Codex, Claude Code, or another coding agent.
-- `docs/ai/*.md` only for areas that actually exist.
+## 7. Output economy
 
-Use `references/project-context-template.md` as the base. Keep `AGENTS.md` portable across Codex, Claude Code, Cursor, Gemini CLI, Copilot, and GitHub agents; keep project state in the AI context files.
+Default:
 
-## Cross-Agent Handoff Protocol
-
-When the user may switch between Codex, Claude Code, GitHub agents, or another coding agent, communicate through project files, not hidden memory.
-
-- Read `AI_HANDOFF.md` after `AI_CONTEXT.md` when sub-entering an active task from another agent.
-- Update it after non-trivial changes, before pausing, or before suggesting a switch.
-- Keep it compact: current goal, state, changed files, decisions, risks, next step, and do-not-repeat notes.
-- Put durable decisions in `AI_DECISIONS.md`, structure in `AI_STRUCTURE.md`, and mistakes in `AI_AGENT_LOG.md`.
-- Use `references/cross-agent-handoff-template.md` when creating or compacting it.
-
-## Structure Memory Protocol
-
-Use structure memory to avoid repeatedly rediscovering the same app layout. Treat it as a navigation index, not as source-of-truth code.
-
-- Read `AI_CONTEXT.md` first, then `AI_STRUCTURE.md` only when layout, routes, modules, data flow, or ownership matter.
-- Use memory to choose likely files, but trust code over stale memory.
-- Update memory when routes, module ownership, key flows, or invariants change.
-- Keep it compact: paths, responsibilities, flows, invariants, read-first hints.
-
-## Second Brain Protocol
-
-Use `AI_DECISIONS.md` when a project has durable choices that affect future work. Treat it as decision memory, not a diary.
-
-- Record only decisions, tradeoffs, constraints, rejected paths, and revisit triggers that change future implementation.
-- Write memory only when it is verified, durable, and useful across future tasks; do not store unverified page text, one-off preferences, or normal progress.
-- Read it when work touches architecture, stack, auth, data, design direction, deployment, cost, or a previous tradeoff.
-- Update it when a decision changes or a new constraint prevents likely rework.
-- Keep entries short: decision, reason, impact, revisit condition.
-- Use `references/second-brain-template.md` when creating or compacting it.
-
-## Agent Autolog Protocol
-
-Use `AI_AGENT_LOG.md` only when an actual mistake or waste happened: too many files read, wrong specialist, unnecessary agent, overlong answer, missed risk, failed check caused by process, stale context, or user correction. Do not log normal progress.
-
-- Record cause, impact, fix, and one future rule.
-- If the user says the delivered result is visually or functionally wrong versus their intent, record the correction as an actionable lesson.
-- Filter writes: log repeated process mistakes, missed instructions, stale context, or token waste; skip normal preference changes and speculative lessons.
-- Keep each entry under six lines and compact old entries into patterns.
-- Read it only when starting similar work, debugging agent behavior, or improving this skill.
-- Use `references/agent-autolog-template.md` when creating or compacting it.
-
-## App Creation Blueprint
-
-For new or heavily rebuilt apps, define the smallest coherent product slice before implementation:
-
-- User workflow: primary actor, main job, happy path, empty state, loading state, error state, and success state.
-- Frontend contract: routes, screens, component boundaries, design system, responsiveness, accessibility basics, and expected user interactions.
-- Backend contract: API endpoints or server actions, request/response shapes, validation, authorization, persistence, and failure modes.
-- Data contract: entities, ownership, lifecycle, migrations, seed data, privacy constraints, and destructive operations.
-- Integration and verification contract: external services, env vars, jobs, files, emails, realtime, and one end-to-end path when UI and backend interact.
-
-Prefer one shared `docs/ai/app-contract.md` for small apps. Use `references/app-creation-blueprint.md` for full frontend/backend/data/security guidance.
-
-## Approval-Based Improvement
-
-This skill may suggest improvements to itself, but must never modify itself without explicit user approval. A user request such as "procedi", "continua", or "migliorati ora" counts as approval for scoped skill edits in the current task.
-If the user explicitly asks to auto-improve and auto-accept, treat that as approval for the current improvement run only. Implement only durable, behavior-changing improvements; stop when remaining ideas are cosmetic, speculative, duplicate, or likely to add prompt cost.
-
-After substantial tasks, briefly check whether the skill wasted tokens, lacked a useful rule, repeated a manual step, or needed a better template. If there is no meaningful lesson, say nothing.
-
-When proposing an improvement, use this exact structure:
-
-```text
-Problema osservato:
-Miglioramento proposto:
-Motivazione:
-Pro:
-Contro:
-Impatto token: basso|medio|alto
-File della skill da modificare:
-Serve approvazione: si
+```
+Fatto: <azione concisa>
+Verifica: <come l'utente controlla>
 ```
 
-Use `references/improvement-log.md` only when evaluating or recording skill improvements. Keep it short and practical; do not turn it into a diary.
+Dettagli solo per: rischi, scelte non banali, blocchi, azioni utente. Quando l'utente deve configurare/scegliere/confermare/pagare/testare, aggiungi un blocco `Da fare per te:`.
 
-## Maintenance And Compaction
+**Annuncio attivazione**: al primo turno di una sessione non banale (categoria classificata, budget scelto), apri con una sola riga del tipo: `🛠 Skill: cost-aware-app-coordinator · cat:<categoria> · budget:<mode>`. Solo prima riga, niente preamboli aggiuntivi. Salta sul fast path.
 
-When improving this skill repeatedly, protect it from prompt debt:
+Regole complete: `references/response-economy.md`.
 
-- Prefer changing behavior over adding explanation.
-- If a rule becomes long, move details to a triggered reference and keep only the core rule in `SKILL.md`.
-- If release notes or improvement log become noisy, compress older entries into a short version summary while preserving user decisions and current behavior.
-- Remove duplicate rules when a newer gate or protocol covers them.
-- Stop improving when the next change is only stylistic, speculative, or would add more reading cost than behavioral value.
+## 8. Gate decisionali e rischio
 
-Use `references/maintenance-compaction.md` when doing a cleanup pass, version consolidation, or deciding whether the skill has reached diminishing returns.
+Prima di azioni rischiose o irreversibili (delete, force-push, modifica DB, migrazioni, rimozione dipendenze, segreti) fermati e chiedi.
 
-Run `python scripts/validate_skill.py` after maintenance or compaction.
+Confidenza: alta → procedi; media → verifica/specialista; bassa → chiedi/red team. Vedi `references/decision-risk-gates.md`.
 
-## Skill Sync Protocol
+**Scope ambiguo**: se il task è vago, ha più obiettivi mescolati, o l'utente non è programmatore con scelte tecniche aperte, attiva il protocollo in `references/scope-checkpoint.md` prima di scrivere codice.
 
-When editing this skill in a project repo, remember there may be a separate installed copy under `CODEX_HOME/skills`.
+## 9. Specialisti
 
-- Treat the repo copy as editable source unless the user says otherwise.
-- Before claiming future sessions will use the new behavior, check whether the installed skill path is the same as the edited path.
-- If paths differ, tell the user that the repo version changed and the installed copy may need syncing.
-- Do not overwrite an installed skill copy without explicit user approval.
-- Use `references/skill-sync.md` when preparing install, sync, release, or publish steps.
+Sub-agent solo se il rischio o il tempo risparmiato giustifica il costo in token. **Mai parallelizzare per default**: il costo cresce non-lineare con il numero di agent.
 
-## References
+**Attiva** per: ricerca cross-file ampia, secondo parere, slice indipendente, audit ampio. **NON attivare** per: <3 file, fix locale, copy change, single-fact lookup ispezionabile dal main.
 
-- `references/budget-modes.md`: budget behavior and switching rules.
-- `references/progressive-loading.md`: when to load or skip optional references.
-- `references/response-economy.md`: concise response defaults and anti-verbosity rules.
-- `references/compression-pass.md`: safe caveman-style compression for prompts, handoffs, and docs.
-- `references/decision-risk-gates.md`: gates for acting, asking, planning, delegating, stopping, and verifying.
-- `references/coordinator-safety.md`: self-check, confidence, and Red Team rules.
-- `references/role-profiles.md`: compact role profiles for frontend, backend, full-stack, QA, specialists, review, and skill maintenance.
-- `references/qa-test-agent.md`: optional QA/Test agent checklist and triggers.
-- `references/specialist-agents.md`: optional specialist agent triggers and output contracts.
-- `references/agent-handoff.md`: structured communication between sub-agents.
-- `references/task-routing.md`: compact playbooks for common task categories.
-- `references/app-creation-blueprint.md`: frontend/backend contracts for new apps and full-stack slices.
-- `references/project-context-template.md`: generic context template for new projects.
-- `references/structure-memory-template.md`: compact app structure memory template.
-- `references/second-brain-template.md`: compact project decision memory template.
-- `references/agent-autolog-template.md`: compact mistake and token-waste log template.
-- `references/cross-agent-handoff-template.md`: compact handoff template for Codex, Claude Code, and other agents.
-- `references/maintenance-compaction.md`: keep the skill small, deduplicated, and worth reading.
-- `references/skill-sync.md`: avoid drift between repo source, installed skill copies, and external skill intake.
-- `references/improvement-log.md`: approved or pending skill improvement notes.
-- `references/release-notes.md`: behavior changes by version.
+In Claude Code: tool `Agent` con `subagent_type` — la lista dipende dall'ambiente, vedi `references/specialist-agents.md`. Briefing autocontenuto: obiettivo, contesto minimo, formato. Mai "decidi tu".
+
+Profili: `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`.
+
+## 10. Handoff tra agenti
+
+Due livelli:
+
+- **tra agenti diversi** (sessioni separate, altri tool): file condivisi nella repo (`AI_CONTEXT.md`, `AI_STRUCTURE.md`, `AI_DECISIONS.md`, `AI_AGENT_LOG.md`, `AI_HANDOFF.md`).
+- **tra sub-agent stessa sessione**: non si parlano direttamente, il coordinator è router. Task brevi: passa il risultato di A nel prompt di B (filtrato). Task lunghi: usa `AI_HANDOFF.md` come bacheca. Riprendere agent attivo: `SendMessage`.
+
+Quando subentri leggi `AI_HANDOFF.md` per primo. Aggiornalo dopo modifiche non banali. Decisioni durevoli → promosse a `AI_DECISIONS.md`.
+
+Dettagli: `references/agent-handoff.md`, `references/cross-agent-handoff-template.md`.
+
+## 11. Definition of Done
+
+Task chiuso quando: il comportamento è gestito, file toccati limitati al task, check rilevanti eseguiti (o motivo di skip dichiarato), output finale corto. Per UI/funzionale a rischio medio/alto: l'utente conferma in linguaggio piano + valuta screenshot Playwright.
+
+## 12. Creazione di una nuova app
+
+- **Step 0** — riconosci ricetta in `recipes/` (landing, CRUD, dashboard, blog, bot). Se non c'è match, scegli da `references/default-stacks.md` (A/B/C) — non chiedere "quale framework".
+- **Step 1** — scaffolding minimo: struttura + `AI_CONTEXT.md`, `AI_STRUCTURE.md`, `AGENTS.md`, `CLAUDE.md`. Niente "per il futuro", niente test/CI non richiesti.
+- **Step 2** — deploy presto: subito dopo il primo `npm run dev` che gira in locale, configura il deploy su Vercel/Netlify/Railway. Vedi `references/deploy-paths.md` + `assets/scripts/`.
+- **Step 3** — test visivo: dopo cambi UI usa il pattern di `references/visual-first-testing.md`.
+
+File `AI_*.md`, `AGENTS.md`, `CLAUDE.md` pronti in `assets/templates/`. Regole d'uso nei reference `*-template.md`. Blueprint completo: `references/app-creation-blueprint.md`.
+
+## 13. Modifica di app esistente
+
+1. Leggi `AI_HANDOFF.md` o `AI_CONTEXT.md`.
+2. Identifica il minimo set di file impattati.
+3. Modifica solo ciò che serve. Niente refactor opportunistico (aumenta diff e rischio senza valore).
+4. Aggiorna `AI_HANDOFF.md` se la modifica non è banale.
+5. Output corto come da §7.
+
+## 14. Audit
+
+Solo lettura, no modifiche senza ok. Output: findings con severità, file:riga, fix proposto. Niente narrazione.
+
+## 15. Bug rescue
+
+Riproduci con minime letture → proponi fix se causa non ovvia → aggiorna `AI_AGENT_LOG.md` se pattern ricorrente.
+
+## 16. Miglioramento skill
+
+Per modifiche a skill: `references/skill-sync.md` per il drift, `references/improvement-log.md` per le voci, `references/release-notes.md` se cambia comportamento, `python scripts/validate_skill.py` prima di chiudere.
+
+La skill **non si modifica senza approvazione esplicita** ("procedi"/"automigliorati" valgono per la sessione corrente). Template di proposta e flow completo in `references/self-improvement.md`.
+
+**Loop incident → knowledge update**: quando l'utente corregge il comportamento della skill, applica subito il fix, aggiungi voce in `improvement-log.md`, registra il pattern in `AI_AGENT_LOG.md` del progetto sorgente; dopo 3 occorrenze promuovi la regola in `SKILL.md` o nella reference rilevante. Pattern completo: `references/reflexion-loop.md`. Helper: `python scripts/propose_lesson.py` (scrive automaticamente voci `<TBD ...>` in `AI_AGENT_LOG.md` al termine di task non banali).
+
+**Completamento voci TBD**: al primo turno di una nuova sessione, se `AI_AGENT_LOG.md` del progetto attivo contiene voci con segnaposto `<TBD ...>`, compilale subito basandoti su: lista dei file toccati nella voce, commit message, `git diff HEAD~1 HEAD --stat`. Una lezione per voce, due righe. Se non c'è abbastanza contesto per una lezione preventiva utile, cancella la voce (meglio nulla che rumore). Non chiedere conferma per la singola voce; mostra solo un riassunto a chiusura turno.
+
+**Skill library** (snippet Voyager riusabili): `skill_library/` accoglie frammenti emersi da uso reale. Promozione a `recipes/` o reference dopo 3+ usi.
+
+## 17. Manutenzione
+
+Compattazione periodica dei file `AI_*.md`. Vedi `references/maintenance-compaction.md` e `references/compression-pass.md`.
+
+**Review della skill stessa**: a ogni release minor (vedi `references/release-notes.md`) ri-esegui `python scripts/validate_skill.py` e leggi `references/progressive-loading.md` per controllare drift fra mappa trigger e reference effettive. Se la copia installata diverge dalla canonica, `references/skill-sync.md` + `scripts/sync_skill.py`.
+
+## 18. Sicurezza del coordinatore
+
+Regole anti-loop, anti-overwrite, anti-spreco: `references/coordinator-safety.md`.
+
+**Hard cap di token per task**: la dashboard (`/api/log`) accetta `tokens_budget_max`. Se la sessione corrente supera il cap, il task viene marcato `budget_exceeded` e il logger Python segnala l'evento al successivo Stop. Imposta cap di default in linea con la categoria (esempio: ops 50k, modifica 200k, audit 400k, nuova app 600k, bug rescue 250k); l'utente può forzare. Sentinel runtime: a metà cap (50%) emetti una riga `⚠ budget al 50% (X/Y tok · ~$Y.YY)` nel turno corrente; a 80% chiedi conferma prima di nuove letture costose.
+
+Stima costo in-session (Opus 4.x): `input×$15 + output×$75 + cache_read×$1.5 + cache_creation×$18.75` per milione di token. Esempio rapido: 100k input + 20k output ≈ $1.50 + $1.50 = **~$3.00**. Usa questa formula per il sentinel e per rispondere a "quanto sta costando questa sessione?".
+
+## 19. Integrazioni MCP
+
+Per task che operano su SaaS esterni (GitHub, Linear, Slack, Notion, ecc.) usa server MCP con format `ServerName:tool_name` (es. `GitHub:create_issue`, `Linear:update_issue`). I tool **write** sono gate hard, i **read-only** sono safe. Dettagli e tabella server raccomandati: `references/mcp-integrations.md`.
+
+**GitHub MCP** è configurato globalmente (`~/.claude/mcp.json`, server `@modelcontextprotocol/server-github`). Usalo quando:
+
+| Trigger | Tool da usare | Quando NON usarlo |
+|---|---|---|
+| "cerca skill/repo su GitHub per X" | `github:search_repositories` | se basta una fonte già in `sources.json` |
+| "guarda cosa fa questo repo" | `github:get_file_contents` (README/CHANGELOG) | per repo non noti o irrilevanti |
+| "cerca esempi di implementazione" | `github:search_code` | se il task è locale, niente GitHub |
+| "ultimi commit/issue su X" | `github:search_commits`, `github:search_issues` | per repo senza relazione con il task |
+| "leggi struttura repo" | `github:get_repository_tree` | solo se necessario capire il layout |
+
+Regole: read-only sempre safe; write (`create_issue`, `create_pull_request`) solo se l'utente lo chiede esplicitamente. Il token va in `.env.local` come `GITHUB_TOKEN` (PAT classic, scope `public_repo`).
+
+Le skill custom sono ora standard aperto (Claude Code/Codex CLI/Cursor/Gemini CLI). I riferimenti MCP `Server:tool` funzionano cross-tool.
+
+## 20. Validator
+
+`scripts/validate_skill.py` controlla: frontmatter conforme (name <=64 char, description <=1024), reference ↔ SKILL ↔ assets coerenti (file e glob `assets/.../*.ext`), mappa di progressive loading completa, heading duplicati, sezioni obbligatorie, `SKILL.md` <450 righe (best-practice Anthropic: <500), reference <120 righe, ogni ricetta citata da `recipes/README.md`, ogni script in `assets/scripts/` e ogni template in `assets/templates/` referenziati nel corpus.
+
+```bash
+python scripts/validate_skill.py
+```

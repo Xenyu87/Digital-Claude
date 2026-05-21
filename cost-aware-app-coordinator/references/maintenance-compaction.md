@@ -1,74 +1,52 @@
-# Maintenance And Compaction
+# Maintenance Compaction
 
-Use this reference when improving the skill itself, consolidating versions, or deciding whether to stop.
+Compaction dei file `AI_*.md` per evitare drift e crescita non controllata.
 
-## Keep
+## Trigger
 
-Keep rules that:
+Esegui (o proponi) compaction quando una soglia di `compression-pass.md` è superata, o quando l'utente lo chiede esplicitamente. Le soglie esatte stanno in `compression-pass.md` come fonte unica.
 
-- change behavior;
-- prevent repeated mistakes;
-- reduce token cost;
-- improve safety for irreversible or high-risk work;
-- provide reusable templates.
+## Cadenza consigliata
 
-## Move
+Non automatica. Compaction manuale o offerta a fine settimana / fine sprint.
 
-Move detail out of `SKILL.md` into a reference when:
+## Procedura
 
-- it is only needed for one task type;
-- it is a template;
-- it is a long checklist;
-- it duplicates a compact core rule.
+1. Leggi il file da compattare.
+2. Identifica contenuto promovibile in `AI_DECISIONS.md`, `AI_STRUCTURE.md`, `AGENTS.md`.
+3. Promuovi.
+4. Comprimi residui (raggruppa, accorcia, rimuovi voci scadute).
+5. Diff e commit separato `chore: compaction memorie AI`.
 
-## Compress
+## Cosa preservare sempre
 
-Compress older logs when they become noisy:
+- decisioni durevoli e loro motivazione
+- file marcati critici
+- regole condivise tra agenti
 
-- preserve current behavior;
-- preserve user approvals;
-- summarize old version entries by theme;
-- keep the latest meaningful changes explicit;
-- remove diary-like detail.
+## Cosa è sicuro rimuovere
 
-## Delete Or Merge
+- voci di log >30 giorni la cui lezione è confluita altrove
+- stato di task chiusi
+- output di test
+- riferimenti a branch o PR già mergeate
 
-Delete or merge rules when:
+## Baseline modelli — revisione periodica
 
-- a newer gate fully covers them;
-- they repeat another section;
-- they encourage reading more files without changing decisions;
-- they add style preference but no operational value.
+Ad ogni minor della CLI Claude Code (es. v2.1.x → v2.2.x), rivisita la nota "Baseline" in `SKILL.md` §3. Verifica:
+- `grep -rn "Opus 4\.\|Sonnet 4\.\|Haiku 4\." SKILL.md references/` → nessun modello hardcoded obsoleto
+- prezzi in §18 ancora allineati con la pricing page Anthropic
 
-## Stop Criteria
+## Anti-pattern
 
-Stop improving when the next idea is:
+- compaction durante una feature attiva (rischia di perdere stato)
+- compaction "aggressiva" che riduce le righe ma perde contesto
+- compaction senza commit precedente (impossibile rivedere)
 
-- cosmetic only;
-- speculative;
-- not testable in behavior;
-- likely to increase token cost more than it saves;
-- better handled by using the skill on real projects first.
+## Output
 
-## Auto-Improvement Runs
-
-When the user asks to auto-improve until no improvements remain:
-
-1. List candidates internally.
-2. Keep only candidates that change behavior, reduce repeated error, reduce token cost, or improve safety.
-3. Merge related candidates into one compact version.
-4. Validate, sync, release, then reassess once.
-5. Stop and report when remaining ideas fail the stop criteria.
-
-Do not create endless version bumps. One or two compact releases are usually enough before real project usage should provide new evidence.
-
-## Cheap Skill Review
-
-For skill audits or "is this skill ok?" requests, start with the cheap path:
-
-1. Run the skill validator.
-2. Check frontmatter, folder structure, referenced files, line counts, and installed-copy drift.
-3. Read full `SKILL.md` or references only when validation fails, behavior is unclear, or a qualitative review is requested.
-4. Prefer targeted `rg` checks for TODOs, duplicate rules, stale references, and noisy sections.
-
-This keeps maintenance accurate without spending the whole context on files that already pass structural checks.
+```
+Fatto: compaction AI_HANDOFF.md (84 → 22), AI_AGENT_LOG.md (210 → 65).
+Promosso in AI_DECISIONS.md: scelta DB, scelta auth.
+Verifica: git diff
+```
