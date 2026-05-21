@@ -116,6 +116,8 @@ REQUIRED_MARKERS = {
         "cached_count",
         "blueprint_board.py",
         "Lavagna App",
+        "data-dashboard-tab",
+        "data-dashboard-section",
         "Controllo Lavagna",
         "Prossimo focus lavagna",
         "Scansiona nodi",

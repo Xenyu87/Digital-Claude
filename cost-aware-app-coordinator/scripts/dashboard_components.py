@@ -31,6 +31,13 @@ DASHBOARD_CSS = """
     .button-link:hover { background:#1f4f82; }
     .button-link.secondary { background:#fff; color:var(--accent); }
     .button-link.secondary:hover { background:var(--accent-soft); }
+    .dashboard-tabs { position:sticky; top:0; z-index:20; display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 0 14px; background:#f8fafc; border-bottom:1px solid var(--line); margin:-8px 0 18px; }
+    .tab-button { display:inline-flex; align-items:center; min-height:36px; padding:8px 12px; border:1px solid var(--line); border-radius:6px; background:#fff; color:#334155; font-weight:800; cursor:pointer; }
+    .tab-button:hover { background:var(--accent-soft); border-color:#9fb2c7; }
+    .tab-button.is-active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .dashboard-section { display:none; }
+    .dashboard-section.is-active { display:block; }
+    .section-kicker { margin:0 0 14px; color:var(--muted); max-width:860px; }
     .quick-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
     .quick-card { border:1px solid var(--line); border-radius:8px; background:#fff; padding:14px; min-height:96px; }
     .quick-card strong { display:block; font-size:22px; margin-top:6px; }
@@ -135,7 +142,7 @@ DASHBOARD_CSS = """
     select { width:100%; padding:10px; border:1px solid var(--line); border-radius:6px; font:inherit; background:#fff; }
     button { padding:8px 11px; border:1px solid var(--accent); border-radius:6px; background:#fff; color:var(--accent); font-weight:700; cursor:pointer; }
     button:hover { background:var(--accent-soft); }
-    @media (max-width: 820px) { body { background:#fff; } header, main { padding-left:18px; padding-right:18px; } .simple-view, .blueprint-focus { grid-template-columns:1fr; } .hero-action { font-size:24px; } .quick-grid { grid-template-columns:1fr; } .project-switcher-form { grid-template-columns:1fr; align-items:stretch; } .project-switcher-form input[type=text] { width:100%; } }
+    @media (max-width: 820px) { body { background:#fff; } header, main { padding-left:18px; padding-right:18px; } .dashboard-tabs { position:static; } .tab-button { flex:1; justify-content:center; } .simple-view, .blueprint-focus { grid-template-columns:1fr; } .hero-action { font-size:24px; } .quick-grid { grid-template-columns:1fr; } .project-switcher-form { grid-template-columns:1fr; align-items:stretch; } .project-switcher-form input[type=text] { width:100%; } }
 """
 
 

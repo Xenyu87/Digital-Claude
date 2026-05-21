@@ -764,6 +764,14 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
     </div>
   </header>
   <main>
+    <nav class="dashboard-tabs" aria-label="Sezioni dashboard">
+      <button class="tab-button is-active" type="button" data-dashboard-tab="home">Home</button>
+      <button class="tab-button" type="button" data-dashboard-tab="lavagna">Lavagna</button>
+      <button class="tab-button" type="button" data-dashboard-tab="azioni">Azioni</button>
+      <button class="tab-button" type="button" data-dashboard-tab="automazione">Automazione</button>
+      <button class="tab-button" type="button" data-dashboard-tab="diagnostica">Diagnostica</button>
+    </nav>
+    <section class="dashboard-section is-active" data-dashboard-section="home">
     <section class="project-switcher">
       <div>
         <h2>Scegli Progetto Da Monitorare</h2>
@@ -804,7 +812,10 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
       <div class="guidance-board">{guidance_html}</div>
     </section>
 
+    </section>
+    <section class="dashboard-section" data-dashboard-section="automazione">
     <h2 id="automazione">Controllo Automatico</h2>
+    <p class="section-kicker">Controlli operativi e runner restano separati dalla Home: qui si gestiscono scansioni, coda, limiti e guardrail.</p>
     <section class="grid">
       <div class="card">
         <div class="section-label">Dashboard</div>
@@ -931,7 +942,10 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
       </section>
     </details>
 
+    </section>
+    <section class="dashboard-section" data-dashboard-section="azioni">
     <h2>Ripresa Lavoro</h2>
+    <p class="section-kicker">Prompt, checkpoint e azioni operative per continuare il lavoro senza rileggere tutto il progetto.</p>
     <section class="grid">
       <div class="card">
         <div class="metric">{esc(active_task.get("status", "none"))}</div>
@@ -950,7 +964,10 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
     </section>
     <details><summary>Prompt di ripresa task</summary><pre>{esc(active_task.get("resume_prompt", ""))}</pre></details>
 
+    </section>
+    <section class="dashboard-section" data-dashboard-section="lavagna">
     <h2 id="lavagna-app">Lavagna App</h2>
+    <p class="section-kicker">Area principale per capire il progetto come flussi: React Flow, nodi, relazioni, audit e piano fix.</p>
     <section class="blueprint-panel">
       <div class="blueprint-focus">
         <div>
@@ -1102,8 +1119,12 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
       </details>
     </section>
 
-    <details>
-      <summary>Strumenti avanzati progetto</summary>
+    </section>
+    <section class="dashboard-section" data-dashboard-section="azioni">
+    <h2>Azioni Progetto</h2>
+    <p class="section-kicker">Task dai warning, prompt pronti, analisi progetto ed esperti consigliati.</p>
+    <details open>
+      <summary>Strumenti azioni progetto</summary>
     <h2>Task Automatici Dai Warning</h2>
     <div class="task-table">
       {render_table(action_pack_json.get("warning_tasks", []) or [], ["priority", "task", "why", "prompt"])}
@@ -1120,7 +1141,8 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
       </section>
     </details>
 
-    <h2>Riepilogo automatico avanzato</h2>
+    <details>
+      <summary>Riepilogo automatico avanzato</summary>
     <section class="grid">
       <div class="card">
         <h2>Controllo automatico</h2>
@@ -1145,6 +1167,7 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
         </div>
       </div>
     </section>
+    </details>
     <details><summary>Controllo: nuovi problemi</summary>{render_table(background_json.get("new_findings", []) or [], ["kind", "title", "status", "problem", "reason", "fix"])}</details>
     <details><summary>Controllo: problemi spariti</summary>{render_table(background_json.get("resolved_findings", []) or [], ["kind", "title", "status", "problem", "reason"])}</details>
     <div class="card">
@@ -1209,7 +1232,12 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
     <h2>Expert Feedback Loop</h2>
     <p class="muted">Segna quali esperti sono stati davvero utili. La skill usa questi eventi per capire se servono altri profili o meno rumore.</p>
     {render_expert_feedback(agent_json.get("suggested_experts", []) or [], expert_feedback_json, str(monitored_project))}
+    </details>
 
+    </section>
+    <section class="dashboard-section" data-dashboard-section="diagnostica">
+    <h2 id="diagnostica">Diagnostica</h2>
+    <p class="section-kicker">Stato tecnico, memoria, log, consumo stimato e controlli raw. Da usare quando serve debug o audit.</p>
     <h2>Memoria progetti</h2>
     <p class="muted">Memoria locale compatta dei progetti monitorati. Serve a non ripartire da zero tra una sessione e l'altra.</p>
     {render_table(project_memory.get("projects", []) or [], ["name", "app_type", "budget_mode", "pr_status", "warnings", "experts", "last_seen", "path"])}
@@ -1240,10 +1268,8 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
       <div class="card"><div>Evento Dominante</div><div class="muted">{esc(maintenance_json.get("top_event", ""))}</div></div>
     </div>
     {render_table(maintenance_json.get("recommendations", []) or [], ["priority", "area", "title", "benefit"])}
-    </details>
-
-    <details>
-      <summary id="diagnostica">Diagnostica tecnica</summary>
+    <details open>
+      <summary>Diagnostica tecnica</summary>
     <h2>Prompt Pronto Per L'Altra Chat</h2>
     <pre>{esc(project_audit.get("handoff_prompt", ""))}</pre>
 
@@ -1288,9 +1314,39 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
     <h2>Ultimo Miglioramento</h2>
     <pre>{esc(report["latest_improvement"])}</pre>
     </details>
+    </section>
 
     <p class="muted">Nota: le stime token sono proxy locali, non costi di fatturazione.</p>
   </main>
+  <script>
+    (() => {{
+      const buttons = [...document.querySelectorAll('[data-dashboard-tab]')];
+      const sections = [...document.querySelectorAll('[data-dashboard-section]')];
+      const aliases = {{
+        'lavagna-app': 'lavagna',
+        'automazione': 'automazione',
+        'diagnostica': 'diagnostica',
+        'home-progetto': 'home'
+      }};
+      function activate(name, updateHash = true) {{
+        const target = name || 'home';
+        buttons.forEach((button) => button.classList.toggle('is-active', button.dataset.dashboardTab === target));
+        sections.forEach((section) => section.classList.toggle('is-active', section.dataset.dashboardSection === target));
+        if (updateHash) {{
+          history.replaceState(null, '', `#${{target}}`);
+        }}
+      }}
+      buttons.forEach((button) => button.addEventListener('click', () => activate(button.dataset.dashboardTab)));
+      document.querySelectorAll('a[href^="#"]').forEach((link) => {{
+        link.addEventListener('click', () => {{
+          const key = link.getAttribute('href').slice(1);
+          if (aliases[key]) activate(aliases[key]);
+        }});
+      }});
+      const initial = location.hash.slice(1);
+      activate(aliases[initial] || initial || 'home', false);
+    }})();
+  </script>
 </body>
 </html>
 """

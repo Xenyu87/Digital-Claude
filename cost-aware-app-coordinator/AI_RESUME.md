@@ -1,14 +1,14 @@
 # AI Resume
 
-Last updated: 2026-05-21T20:25:05
+Last updated: 2026-05-21T20:29:58
 Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Current State
 
-- Goal: Dashboard coordinator organizzata e riprendibile
+- Goal: Dashboard coordinator divisa in sezioni chiare
 - Branch: master
-- Git state: 7 elementi modificati/non tracciati
-- Last commit: 5a32cfc add lightweight project resume memory
+- Git state: 4 elementi modificati/non tracciati
+- Last commit: b1ec30d add project context and clean blueprint warnings
 
 ## Latest Work
 
@@ -19,25 +19,22 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Changed Or Untracked Files
 
-- `M scripts/blueprint_board.py`
-- `?? AGENTS.md`
-- `?? AI_CONTEXT.md`
-- `?? AI_DECISIONS.md`
-- `?? AI_HANDOFF.md`
-- `?? AI_RESUME.md`
-- `?? docs/`
+- `M scripts/dashboard_components.py`
+- `M scripts/dashboard_smoke_test.py`
+- `M scripts/generate_dashboard.py`
+- `M scripts/self_test.py`
 
 ## Recent Commits
 
+- `b1ec30d add project context and clean blueprint warnings`
 - `5a32cfc add lightweight project resume memory`
 - `dae33f5 add interactive blueprint dashboard`
 - `8c9ce96 detect skill blueprint nodes`
 - `3c721ea align dashboard port to 3002`
-- `a38b271 add homelab context lookup`
 
 ## Next Step
 
-- Verificare cleanup contesto/scanner, poi pianificare split dashboard in Home/Lavagna/Azioni/Automazione/Diagnostica.
+- Secondo pass: rifattorizzare render_html in funzioni render_home/render_board/render_actions/render_automation/render_diagnostics e ridurre duplicazioni legacy.
 
 ## Read Next Only If Needed
 
