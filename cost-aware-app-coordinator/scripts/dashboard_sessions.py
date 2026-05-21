@@ -7,7 +7,7 @@ import collections
 import json
 from pathlib import Path
 
-from dashboard_projects import SESSION_LIMIT, is_project_path, is_skill_workspace
+from dashboard_projects import SESSION_LIMIT, is_project_path, is_skill_workspace, project_row
 
 
 MAX_SESSION_TEXT_CHARS = 120000
@@ -115,18 +115,7 @@ def codex_sessions(limit: int = SESSION_LIMIT) -> tuple[list[dict[str, object]],
             current_path = Path(str(cwd))
             if is_project_path(current_path) and not is_skill_workspace(current_path):
                 key = str(current_path.resolve())
-                existing = project_paths.setdefault(
-                    key,
-                    {
-                        "name": current_path.name,
-                        "path": key,
-                        "sessions": 0,
-                        "last_seen": first_ts or "",
-                        "has_ai_context": (current_path / "AI_CONTEXT.md").exists(),
-                        "has_agents": (current_path / "AGENTS.md").exists(),
-                        "is_git": (current_path / ".git").exists(),
-                    },
-                )
+                existing = project_paths.setdefault(key, project_row(current_path, last_seen=first_ts or "", source="log codex"))
                 existing["sessions"] = int(existing["sessions"]) + 1
                 existing["last_seen"] = first_ts or existing["last_seen"]
             for key in totals:

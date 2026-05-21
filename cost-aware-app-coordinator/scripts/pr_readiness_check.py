@@ -31,7 +31,7 @@ def run_git(root: Path, args: list[str]) -> tuple[int, str, str]:
         capture_output=True,
         check=False,
     )
-    return result.returncode, result.stdout.strip(), result.stderr.strip()
+    return result.returncode, result.stdout.rstrip(), result.stderr.strip()
 
 
 def parse_status(status: str) -> list[dict[str, str]]:

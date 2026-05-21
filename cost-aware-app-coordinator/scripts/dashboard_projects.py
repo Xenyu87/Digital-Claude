@@ -12,10 +12,12 @@ REPO = ROOT.parent
 REPORTS = ROOT / "reports"
 CONFIG = REPORTS / "dashboard-config.json"
 SESSION_LIMIT = 80
+PROJECTS_DIRS = [Path("/root/Progetti"), Path("/progetti")]
 DEFAULT_CONFIG = {
     "project_path": "",
     "refresh_seconds": 15,
     "port": 3002,
+    "background_mode": "safe",
 }
 
 
@@ -50,6 +52,89 @@ def is_skill_workspace(path: Path) -> bool:
         or resolved == REPO.resolve()
         or resolved.name == "Codex-app-coordinator-skill"
         or (resolved / "cost-aware-app-coordinator" / "SKILL.md").exists()
+    )
+
+
+def project_row(
+    path: Path,
+    sessions: int = 0,
+    last_seen: str = "",
+    source: str = "cartella progetti",
+    display_name: str | None = None,
+    display_path: Path | None = None,
+) -> dict[str, object]:
+    resolved = path.resolve()
+    shown_path = display_path or resolved
+    return {
+        "name": display_name or resolved.name,
+        "path": str(shown_path),
+        "sessions": sessions,
+        "last_seen": last_seen,
+        "has_ai_context": (resolved / "AI_CONTEXT.md").exists(),
+        "has_agents": (resolved / "AGENTS.md").exists(),
+        "is_git": (resolved / ".git").exists(),
+        "source": source,
+    }
+
+
+def lxc_projects() -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for root in PROJECTS_DIRS:
+        if not root.exists() or not root.is_dir():
+            continue
+        try:
+            children = sorted(root.iterdir(), key=lambda item: item.name.lower())
+        except OSError:
+            continue
+        for child in children:
+            if child.name.startswith("."):
+                continue
+            try:
+                if not child.is_dir():
+                    continue
+                resolved = child.resolve()
+            except OSError:
+                continue
+            key = str(resolved)
+            if key in seen:
+                continue
+            seen.add(key)
+            source = "symlink in /root/Progetti" if child.is_symlink() else "cartella /root/Progetti"
+            if is_skill_workspace(resolved):
+                source = f"{source}, skill/dashboard"
+            rows.append(project_row(resolved, source=source, display_name=child.name, display_path=child))
+    return rows
+
+
+def merge_project_rows(*groups: list[dict[str, object]]) -> list[dict[str, object]]:
+    merged: dict[str, dict[str, object]] = {}
+    for group in groups:
+        for item in group:
+            path = item.get("path")
+            if not path:
+                continue
+            try:
+                key = str(Path(str(path)).resolve())
+            except OSError:
+                key = str(path)
+            existing = merged.get(key)
+            if not existing:
+                merged[key] = {**item, "path": key}
+                continue
+            existing["sessions"] = max(int(existing.get("sessions", 0) or 0), int(item.get("sessions", 0) or 0))
+            existing["last_seen"] = existing.get("last_seen") or item.get("last_seen", "")
+            existing["has_ai_context"] = bool(existing.get("has_ai_context")) or bool(item.get("has_ai_context"))
+            existing["has_agents"] = bool(existing.get("has_agents")) or bool(item.get("has_agents"))
+            existing["is_git"] = bool(existing.get("is_git")) or bool(item.get("is_git"))
+            sources = {str(existing.get("source", "")), str(item.get("source", ""))}
+            existing["source"] = ", ".join(sorted(source for source in sources if source))
+    return sorted(
+        merged.values(),
+        key=lambda item: (
+            0 if str(item.get("path", "")).startswith("/root/Progetti/") or str(item.get("path", "")).startswith("/progetti/") else 1,
+            str(item.get("name", "")).lower(),
+        ),
     )
 
 

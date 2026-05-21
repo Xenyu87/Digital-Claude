@@ -6,7 +6,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from blueprint_board import BLUEPRINT_FILE, add_node, auto_update, board_summary, doctor, import_project, load_blueprint, make_node, save_blueprint, seed_blueprint, superplan
+from skill_learning import record_learning
+from blueprint_board import BLUEPRINT_FILE, add_node, apply_design_wizard, auto_update, board_summary, doctor, edge_key, import_project, load_blueprint, make_node, save_blueprint, seed_blueprint, superplan
 
 
 def main() -> int:
@@ -16,9 +17,9 @@ def main() -> int:
         (project / "backend" / "src" / "routes").mkdir(parents=True)
         (project / "backend" / "src" / "services" / "__tests__").mkdir(parents=True)
         (project / "docs").mkdir()
-        (project / "backend" / "src" / "routes" / "loginRoute.js").write_text("export const login = true;\n", encoding="utf-8")
+        (project / "backend" / "src" / "routes" / "loginRoute.js").write_text("router.post('/login', login);\n", encoding="utf-8")
         (project / "backend" / "src" / "services" / "__tests__" / "login.test.js").write_text("test('login', () => {});\n", encoding="utf-8")
-        (project / "frontend" / "src" / "components" / "AdminDashboard.jsx").write_text("export function AdminDashboard() { return null }\n", encoding="utf-8")
+        (project / "frontend" / "src" / "components" / "AdminDashboard.jsx").write_text("export function AdminDashboard() { fetch('/login', { method: 'POST', body: JSON.stringify({email}) }) }\n", encoding="utf-8")
         data = load_blueprint(project)
         login = add_node(data, make_node("Login con email e Google"))
         cache = add_node(data, make_node("Cache intelligente dashboard", "Ridurre refresh e mostrare log consumi"))
@@ -58,10 +59,50 @@ def main() -> int:
             errors.append("doctor checked no nodes")
         if not doctor_report.get("health_counts"):
             errors.append("doctor health counts missing")
+        if not doctor_report.get("audit", {}).get("counts"):
+            errors.append("doctor audit counts missing")
+        if not doctor_report.get("audit", {}).get("fix_plan"):
+            errors.append("doctor audit fix plan missing")
+        if not doctor_report.get("flows", {}).get("items"):
+            errors.append("flow trace missing")
         if "doctor" not in summary:
             errors.append("summary doctor missing")
         if not doctor_report.get("suggestions"):
             errors.append("doctor suggestions missing")
+        doctor_nodes = [item for item in doctor_report.get("nodes", []) if isinstance(item, dict)]
+        if not any(item.get("plain_summary") for item in doctor_nodes):
+            errors.append("doctor plain summaries missing")
+        if not any("plain_relations" in item for item in doctor_nodes):
+            errors.append("doctor plain relations missing")
+        if not any(
+            any(rel.get("kind") == "calls_api" and rel.get("confidence") == "high" for rel in item.get("plain_relations", []) if isinstance(rel, dict))
+            for item in doctor_nodes
+        ):
+            errors.append("scanner missed high-confidence UI to API link")
+        action_node = next((item for item in doctor_nodes if item.get("title") == "Action: POST /login"), {})
+        relation = next((rel for rel in action_node.get("plain_relations", []) if isinstance(rel, dict) and rel.get("kind") == "calls_api"), {})
+        if action_node and relation:
+            record_learning(str(project), edge_key(str(action_node.get("id")), str(relation.get("id")), str(relation.get("kind"))), "ignore_edge")
+            ignored_report = doctor(project)
+            ignored_nodes = [item for item in ignored_report.get("nodes", []) if isinstance(item, dict)]
+            ignored_action = next((item for item in ignored_nodes if item.get("title") == "Action: POST /login"), {})
+            ignored_relation = next((rel for rel in ignored_action.get("plain_relations", []) if isinstance(rel, dict) and rel.get("kind") == "calls_api"), {})
+            if ignored_relation.get("state") != "ignored":
+                errors.append("edge ignore feedback not applied")
+        if not any(
+            item.get("http_method") == "POST" and item.get("contract", {}).get("input") == ["email"]
+            for item in doctor_nodes
+        ):
+            errors.append("scanner missed method/body contract")
+        if not any(item.get("scanner_evidence") for item in doctor_nodes):
+            errors.append("scanner evidence missing")
+        if not any(item.get("audit_status") == "certo" for item in doctor_nodes):
+            errors.append("audit precision missed certain node")
+        if not any(item.get("audit_problem") for item in doctor_nodes):
+            errors.append("audit problems missing")
+        flow_items = doctor_report.get("flows", {}).get("items", [])
+        if not any("POST /login" in str(item.get("chain", "")) for item in flow_items if isinstance(item, dict)):
+            errors.append("flow trace missed login chain")
         if dry_update.get("applied"):
             errors.append("dry auto-update wrote changes")
         if not written_update.get("applied"):
@@ -82,6 +123,31 @@ def main() -> int:
             errors.append("seed missed dashboard")
         if "Report e analytics" not in seeded_titles:
             errors.append("seed missed report")
+        designed_project = Path(tmp) / "DesignedApp"
+        designed_project.mkdir()
+        designed = apply_design_wizard(
+            designed_project,
+            {
+                "goal": "Gestionale ordini",
+                "users": "Admin\nCliente",
+                "screens": "Home\nOrdini",
+                "actions": "creare ordine\nfare login",
+                "data": "Ordine\nUtente",
+                "auth": "Solo admin cancella",
+                "tests": "creazione ordine",
+                "template": "gestionale",
+            },
+            write=True,
+        )
+        designed_nodes = [item for item in designed.get("blueprint", {}).get("nodes", []) if isinstance(item, dict)]
+        if not any(item.get("origin") == "design" and item.get("kind") == "screen" for item in designed_nodes):
+            errors.append("design wizard missed screen nodes")
+        if not any(item.get("origin") == "design" and item.get("kind") == "action" and item.get("ui_route") for item in designed_nodes):
+            errors.append("design wizard missed action route")
+        if not any(item.get("origin") == "design" and item.get("kind") == "api" and item.get("api_route") for item in designed_nodes):
+            errors.append("design wizard missed api contract node")
+        if designed.get("blueprint", {}).get("design_template") != "gestionale":
+            errors.append("design wizard missed template metadata")
         skill_project = Path(tmp) / "SkillProject"
         (skill_project / "references").mkdir(parents=True)
         (skill_project / "scripts").mkdir()
