@@ -1,90 +1,64 @@
-# Decision And Risk Gates
+# Decision and Risk Gates
 
-Use this reference when the next step is unclear, costly, risky, or broad.
+Azioni che richiedono conferma esplicita prima di procedere.
 
-## Act
+## Gate hard (sempre fermarsi)
 
-Act without asking when the request is clear, reversible, locally inspectable, and does not involve external accounts, payments, production systems, credentials, or destructive operations.
+Non procedere senza conferma in chat:
 
-## Ask
+- `git push --force` (specie su main / master)
+- `git reset --hard`, `git clean -fd`
+- `rm -rf` su cartelle di progetto
+- drop / truncate / alter table su DB
+- migrazioni su dati produzione
+- rotazione o lettura segreti, chiavi API, token
+- modifica di policy IAM, ruoli, permessi cloud
+- pubblicazione package (npm publish, pypi, ecc.)
+- chiusura/apertura PR, merge su branch protetti
+- invio messaggi a sistemi esterni (Slack, email, webhook)
 
-Ask 1-3 precise questions when the answer changes direction, cost, risk, or rework: product direction, UX/design fidelity, budget, data model, auth/permissions, irreversible actions, external services, deployment target, or paid resources.
+## Gate soft (escalation budget)
 
-Do not ask broad questions. Prefer choices like pixel-like fidelity vs local app consistency, speed vs maintainability, or mandatory vs optional elements.
+Non bloccanti ma fanno passare a Bilanciato o Massima sicurezza:
 
-Useful domain questions:
+- modifica file di configurazione di build, CI, deploy
+- aggiunta o rimozione di dipendenze
+- modifica di file marcati critici in `AI_STRUCTURE.md`
+- cambio di schema dati locale
+- modifica di test che validano contratti pubblici
 
-- Bug: fix rapido della causa visibile, o diagnosi piu profonda?
-- Feature: MVP minimo, o base piu scalabile?
-- UI/design: fedelta allo screen, coerenza con app esistente, o redesign piu deciso?
-- Data/migration: solo nuovi dati, o anche dati esistenti?
-- Auth: chi puo vedere, creare, modificare, eliminare, esportare?
-- Backend: quale chiamante usa il contratto e quali errori deve vedere l'utente?
-- Deploy: locale, staging, o produzione? Serve rollback?
-- Refactor: comportamento identico, o si puo migliorare?
-- External service: servizio gia presente, o nuovo servizio?
+## Procedura al gate hard
 
-## Plan
+1. Stop. Non eseguire.
+2. Riassumi in 1-3 righe cosa stavi per fare e perché.
+3. Chiedi conferma esplicita.
+4. Procedi solo dopo "sì", "ok", "procedi" chiaro.
 
-Plan briefly when contracts must align, modules are crossed, tests/migrations are involved, multiple routes exist, product/design/UX tradeoffs are ambiguous, the user asks to lower errors, or a wrong choice would cause rework.
+Esempio:
 
-Use three to six bullets: goal, recommended route, tradeoffs, likely areas, validation, cost/risk. After approval, implement.
+```
+Sto per: rm -rf node_modules e reinstallare da zero.
+Motivo: dipendenza corrotta blocca build.
+Procedo?
+```
 
-For users who are not programmers, write a plain-language plan contract:
+## Reversibilità
 
-- Obiettivo: what the user should get.
-- Criteri di successo: how the user can judge visual or functional correctness.
-- Decisioni da approvare: choices that change behavior, cost, or risk.
-- Aree probabili: app areas or screens, not code jargon unless needed.
-- Verifica minima: what Codex will check.
-- Rischio residuo: what may still need the user's eye or manual test.
+Prima di un'azione, valuta:
 
-Domain mini-plan hints:
+- è reversibile in <1 minuto? → procedi
+- è reversibile ma con effort? → segnala e procedi
+- non è reversibile? → gate hard
 
-- Bug/fix: symptom, suspected cause, smallest fix, verification, residual risk.
-- Full-stack: user flow, UI contract, backend/data contract, validation path, rollout risk.
-- UI/design: intent mode, user job, must-keep elements, flexible elements, visual verification.
-- Data/migration: schema/data effect, retroactivity, rollback, verification, data-loss risk.
-- Auth: actors, allowed actions, server-side enforcement, abuse cases, tests.
-- Backend/API: caller, input/output, permissions, data effect, compatibility, verification.
-- Deploy: environment, config/secrets, rollout, rollback, monitoring check.
-- Refactor: invariant behavior, modules, compatibility, tests proving no drift.
-- New app: target user, first workflow, stack constraints, context docs, first slice.
+## Effetti su shared state
 
-Keep the plan short. If implementation can start safely after one recommended route, do not over-plan.
+Tutto ciò che è visibile fuori dalla macchina locale è gate hard:
 
-## Cost Checkpoint
+- push remoti
+- commenti su PR / issue
+- modifiche a infrastruttura condivisa
+- caricamento file su servizi terzi
 
-Before moving from targeted work to a higher-cost route, state the next expensive step, cost estimate (`basso`, `medio`, `alto`), why it is useful, cheaper alternative/tradeoff, and whether approval is needed.
+## Una conferma vale per scope, non per categoria
 
-Use a checkpoint before broad code reading, sub-agents, wide tests, schema/data changes, production deploys, paid services, or long-running external operations. Skip it for cheap, local, reversible actions.
-
-## User Acceptance Feedback
-
-After medium/high-risk visual or functional work, ask:
-
-`Per te lato visivo e funzionale rispecchia quello che avevi chiesto?`
-
-If the user says no, ask for the smallest concrete mismatch, fix it, and log the lesson in `AI_AGENT_LOG.md` only when it reveals a repeatable agent mistake or missed intent. Do not log normal preference changes.
-
-## Delegate
-
-Delegate only when the slice is independent, ownership is clear, model label and stop condition are explicit, the coordinator can keep working without waiting immediately, and integration risk is lower than doing everything in one pass.
-
-When delegated slices depend on each other, require structured handoffs instead of free-form discussion.
-
-## Stop
-
-Stop and report when credentials or secrets are missing, production systems or paid services would be changed, a destructive action is ambiguous, repository state is unsafe, or tests reveal serious unrelated risk.
-
-## Verify
-
-- Low: narrow lint, unit, type, smoke, or manual check.
-- Medium: targeted tests around touched modules and contracts.
-- High: broader tests, migration/auth/security checks, and explicit residual risk.
-
-## Confidence
-
-- High: proceed with normal checks.
-- Medium: verify assumptions, use a specialist, or run a targeted check before implementation/closure.
-- Low: ask the user, reduce scope, or run Red Team before proceeding.
+Se l'utente conferma `git push` per un branch, questo non autorizza altri push successivi. Chiedi di nuovo per ogni nuova azione rischiosa.

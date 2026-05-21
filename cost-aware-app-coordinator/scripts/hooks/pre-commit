@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-commit hook per il repo cost-aware-app-coordinator.
+# Lancia validate_skill + pytest. Blocca il commit se uno fallisce.
+#
+# Installato con: python scripts/install_hooks.py
+# Bypass eccezionale: git commit --no-verify  (sconsigliato)
+
+# Lancia solo se ci sono cambi che toccano la skill (no docs-only commit potrebbe skippare)
+# Per semplicita' lanciamo sempre: ~2 secondi.
+
+echo ""
+echo "[pre-commit] lancio scripts/run_tests.py..."
+python scripts/run_tests.py
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "[pre-commit] FAIL: commit bloccato."
+    echo "  Per fixare: leggi l'output sopra, correggi, e ricommitta."
+    echo "  Bypass eccezionale (sconsigliato): git commit --no-verify"
+    exit 1
+fi
+
+echo "[pre-commit] OK"
+exit 0

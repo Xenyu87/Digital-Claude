@@ -1,51 +1,54 @@
 # Coordinator Safety
 
-Use this reference when the coordinator might be wrong and the cost of being wrong matters.
+Regole per evitare loop, sprechi e overwrite involontari.
 
-## Self-Check Gate
+## Anti-loop
 
-Before medium/high-risk implementation or final answer, ask:
+- Non riprovare lo stesso comando con gli stessi parametri se è fallito; cambia approccio.
+- Non leggere lo stesso file più di due volte nello stesso turno: se serve di nuovo, prendi nota e usa quello che hai.
+- Se un test continua a fallire dopo due tentativi, ferma e diagnostica prima di un terzo.
 
-- Did I classify the task and risk correctly?
-- Did I read the right context files?
-- Did I miss auth, data, migration, deploy, performance, or QA risk?
-- Are frontend and backend contracts aligned?
-- Are checks proportional to the touched surface?
-- Is any action irreversible, paid, external, or production-impacting?
+## Anti-overwrite
 
-Keep the self-check internal unless it changes the decision or leaves residual risk.
+- Prima di sovrascrivere file `AI_*.md`, leggi quello esistente.
+- Prima di sovrascrivere codice generato in precedenza, controlla se l'utente ha modificato a mano (timestamp, diff).
+- Mai sovrascrivere `AI_DECISIONS.md` per intero: append-only, marca le revoche.
 
-## Decision Confidence
+## Anti-spreco
 
-- High: evidence is local, reversible, and checks are clear.
-- Medium: assumptions exist or shared behavior changed; verify or use a specialist.
-- Low: missing product/data/auth/deploy decision, irreversible risk, or unclear failure; ask the user or run Red Team.
+- Niente lettura preventiva "per sicurezza".
+- Niente Plan tool per task con <3 passi chiari.
+- Niente specialista se il main agent può chiudere in 2 turni.
+- Niente compaction / refactor mentre c'è una feature aperta.
 
-## Red Team Agent
+## Anti-narrazione
 
-Use Red Team only for high-risk work or low-confidence decisions.
+- Non raccontare cosa stai per fare prima di farlo, se è ovvio.
+- Non riassumere il diff dopo averlo scritto.
+- Non spiegare scelte ovvie.
 
-Ownership:
+## Anti-deriva di scope
 
-- find what the coordinator may be missing;
-- challenge assumptions;
-- identify missing specialists;
-- identify insufficient checks;
-- identify irreversible or hidden external risk.
+Se l'utente ha chiesto X e stai per fare X+Y:
 
-Output:
+- chiedi prima
+- oppure fai solo X e segnala Y come `Da fare per te` o nuova issue
 
-```text
-Concern:
-Evidence:
-Impact:
-Suggested action:
-Confidence:
+## Anti-azione fantasma
+
+Mai dichiarare `Fatto:` se non hai effettivamente eseguito (file scritto, comando ok). Se c'è dubbio:
+
+```
+Tentato: <azione>
+Esito: <output o errore>
 ```
 
-Rules:
+## Anti-segreti
 
-- Keep Red Team bounded to the plan or diff.
-- Do not let Red Team rewrite implementation.
-- Coordinator decides whether to accept, reject, or ask the user.
+- Mai stampare contenuto di `.env`, chiavi, token in output.
+- Se devi modificarli, opera by-line senza eco del valore.
+- Mai committare segreti. Se vedi un segreto in un file tracciato, segnala come gate hard.
 
+## Anti-rumore in chat
+
+Non chiedere conferme per task banali ("vuoi che aggiunga il punto e virgola?"). Conferme solo per gate.

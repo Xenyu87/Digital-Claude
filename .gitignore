@@ -1,5 +1,7 @@
-.system/
-**/__pycache__/
-*.py[cod]
-
-cost-aware-app-coordinator/reports/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.egg-info/
+.env
+.env.local

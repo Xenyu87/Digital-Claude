@@ -1,97 +1,58 @@
 # App Creation Blueprint
 
-Use this reference for new apps, full-stack features, or rebuilds where frontend and backend need to agree.
+Crea una nuova app con scaffolding minimo, senza file "per il futuro".
 
-## First Usable Slice
+## Pre-requisiti
 
-Define the smallest workflow that feels real:
+Prima di scrivere file:
 
-- target user and job to be done;
-- entry route or screen;
-- primary action;
-- backend operation or persisted state;
-- success result;
-- empty, loading, and error states;
-- one verification path.
+1. Conferma con l'utente: stack, target (web/mobile/CLI), licenza, posizione su disco.
+2. Se il progetto richiede package manager o runtime non installati, segnala.
+3. Verifica che la cartella scelta sia vuota o crea sotto-cartella.
 
-Avoid building detached pages, generic dashboards, or placeholder flows before the first usable slice works.
+## Step base
 
-## Frontend Contract
+1. `git init` se richiesto
+2. File minimi del linguaggio scelto (es. `package.json`, `pyproject.toml`)
+3. Entry point unico (es. `src/index.ts`, `app.py`)
+4. `.gitignore` standard del linguaggio
+5. `README.md` minimo: nome, scopo, come avviare
+6. File `AI_*.md` di base (vedi sotto)
 
-Capture only what affects implementation:
+## File AI_*.md di base
 
-- routes and screen ownership;
-- component boundaries;
-- shared UI primitives or design system;
-- responsive behavior for mobile and desktop;
-- form states, validation display, loading, empty, error, and success states;
-- accessibility basics: labels, focus, keyboard access, contrast;
-- user-facing copy that must match backend states.
+Crea solo se hanno contenuto utile da subito; altrimenti rimanda al primo passo non banale. I file pronti stanno in `assets/templates/`: copiali nella root del nuovo progetto e compila i campi.
 
-Frontend checks should match risk: component or smoke checks for narrow UI work, visual/manual checks for layout-heavy work, and end-to-end checks when the UI depends on backend behavior.
+- `AI_CONTEXT.md` — copia da `assets/templates/AI_CONTEXT.md`; regole in `project-context-template.md`
+- `AI_STRUCTURE.md` — copia da `assets/templates/AI_STRUCTURE.md`; regole in `structure-memory-template.md`
+- `AGENTS.md` — copia da `assets/templates/AGENTS.md`
+- `CLAUDE.md` — copia da `assets/templates/CLAUDE.md`
 
-## Backend Contract
+`AI_DECISIONS.md`, `AI_AGENT_LOG.md`, `AI_HANDOFF.md` si creano solo quando hai qualcosa da scrivere; usa rispettivamente `assets/templates/AI_DECISIONS.md`, `AI_AGENT_LOG.md`, `AI_HANDOFF.md`.
 
-Capture the behavior the UI and tests can rely on:
+## Cosa NON includere by default
 
-- endpoint, server action, command, or job name;
-- request and response shape;
-- validation rules;
-- auth and permission rules;
-- persistence model and transaction boundaries;
-- idempotency or retry behavior when relevant;
-- error codes and user-safe messages;
-- logging or observability expectations for important failures.
+- test scaffolding (a meno che l'utente lo chieda)
+- CI / GitHub Actions
+- Docker / docker-compose
+- linter / formatter completi (massimo configurazione minima)
+- librerie "che potrebbero servire dopo"
+- pagine demo, esempi finti
+- file `LICENSE` se l'utente non ha dichiarato licenza
 
-Backend checks should cover validation, auth, data changes, and failure modes before broad refactors.
+## Conferma a metà
 
-## Backend Contract Gate
+Dopo lo scaffolding, ferma e mostra struttura:
 
-Before implementing medium/high-risk backend, API, RPC, server action, job, or integration work, define:
+```
+Fatto: scaffolding minimo. Struttura:
+- ...
+Da fare per te:
+- conferma stack e prossima feature da implementare
+```
 
-- caller: which UI, job, command, or external service uses it;
-- input/output: required fields, optional fields, and user-safe error shape;
-- permission: who may read/write and where enforcement happens;
-- data effect: create/update/delete/archive, transaction boundary, and idempotency;
-- compatibility: existing callers, existing data, migration or rollback needs;
-- verification: one success path, one invalid input, one permission/failure path.
+## Anti-pattern
 
-If any item is unknown and changes behavior or risk, ask before editing.
-
-## Data And Security
-
-Before implementing persistence, identify:
-
-- entities and ownership;
-- lifecycle: create, read, update, delete, archive;
-- migrations and seed data;
-- privacy constraints and sensitive fields;
-- destructive operations and rollback expectations;
-- rate limits, abuse cases, and audit needs when relevant.
-
-Use stronger model policy and broader review for auth, payments, privacy, migrations, or destructive operations.
-
-## Full-Stack Verification
-
-For any workflow crossing frontend and backend, verify at least:
-
-- the UI sends the expected data;
-- the backend validates and persists or rejects it correctly;
-- the UI shows loading, success, and error states;
-- permissions are enforced server-side;
-- a refreshed page or repeated action behaves correctly.
-
-Prefer one high-signal end-to-end path over many shallow checks when budget is limited.
-
-## Delivery Slices
-
-When building in steps, prefer this order:
-
-1. Contract: define the first usable slice and frontend/backend/data shapes.
-2. Skeleton: create routes, screens, API/server actions, and data placeholders with clear boundaries.
-3. Happy path: make the main workflow work end to end.
-4. States: add loading, empty, validation, error, and success states.
-5. Hardening: add auth, permissions, persistence edge cases, and targeted tests.
-6. Polish: refine responsive layout, accessibility, copy, and performance.
-
-Do not polish a screen whose backend contract is still unknown, and do not finalize backend behavior that the UI cannot clearly express.
+- copiare un boilerplate gigante
+- generare 20 cartelle "che servono in produzione" prima del primo run
+- aggiungere autenticazione, database, deploy prima che l'utente abbia detto cosa vuole

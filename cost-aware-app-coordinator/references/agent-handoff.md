@@ -1,86 +1,86 @@
 # Agent Handoff
 
-Use this reference when two or more sub-agents need to coordinate.
+Come passare lo stato tra agenti diversi (Claude Code, altri assistenti AI, sviluppatori umani).
 
-## Principle
+## Principio
 
-Sub-agents communicate through compact handoffs. The coordinator routes, deduplicates, resolves conflicts, and owns the final decision.
+Comunicazione tramite file versionati nella repo. Nessuna memoria nascosta, nessun assunto su sessione precedente.
 
-Avoid free-form discussion loops. Use structured messages only when another agent needs the information.
+## File coinvolti
 
-## Handoff Message
+- `AI_CONTEXT.md` — contesto stabile (cos'è il progetto, stack, scopi)
+- `AI_STRUCTURE.md` — mappa stabile di moduli, contratti, file critici
+- `AI_DECISIONS.md` — decisioni durevoli (append-only)
+- `AI_AGENT_LOG.md` — errori, sprechi, lezioni di processo
+- `AI_HANDOFF.md` — stato corrente, sostituibile turno per turno
+- `AGENTS.md` — regole condivise per qualsiasi agente
+- `CLAUDE.md` — regole specifiche di Claude Code
 
-```text
-From:
-To:
-Topic:
-Decision or blocker:
-Files/contracts affected:
-Assumptions:
-Needed by:
-Risk:
-```
+## All'inizio del turno
 
-## Remote Agent Handoff
+Se subentri dopo un altro agente, leggi in ordine:
 
-Use this for GitHub agents, `@codex`, `@claude`, Copilot agents, cloud agents, or another tool that may run outside the current session.
+1. `AI_HANDOFF.md` (priorità)
+2. `AI_CONTEXT.md` (se ti manca contesto base)
+3. `AGENTS.md`, `CLAUDE.md` (regole vincolanti)
+4. `AI_DECISIONS.md` (solo se la decisione corrente le tocca)
 
-Include:
+Non leggere `AI_AGENT_LOG.md` salvo task di skill maintenance o se sospetti pattern già visto.
 
-- objective and acceptance criteria;
-- files, modules, routes, or issues in scope;
-- do-not-touch files, user changes, secrets, production data, and destructive actions;
-- setup assumptions, env vars needed by name only, and commands to run;
-- minimum verification and expected artifact, such as draft PR, patch, test result, or summary.
+## Durante il turno
 
-Do not include secrets, full logs, broad diffs, or hidden chat history. Link to project files the remote agent can inspect.
+- Aggiorna `AI_HANDOFF.md` solo se la modifica è non banale.
+- Decisioni durevoli → vanno promosse in `AI_DECISIONS.md` con data e motivazione.
+- Cambiamenti di struttura → aggiornano `AI_STRUCTURE.md`.
+- Errori ripetibili → riga in `AI_AGENT_LOG.md`.
 
-## Filtered Context
+## Fine turno
 
-Before delegating or handing off, include only:
+Lascia `AI_HANDOFF.md` in stato pulito:
 
-- objective and stop condition;
-- owned files, modules, routes, contracts, or commands;
-- relevant constraints and user-approved decisions;
-- known blockers, risks, and validation expected;
-- exact output format needed by the coordinator.
+- è subito leggibile in <30 secondi
+- contiene solo lo stato attuale, non la storia
+- punta a file specifici e prossimo passo concreto
 
-Do not pass full chat history, broad diffs, unrelated logs, large command output, or speculative background. Summarize long evidence and include file paths or commands the next agent can inspect if needed.
+## Cosa NON mettere in AI_HANDOFF.md
 
-## When To Send
+- diari ("oggi ho fatto…")
+- commenti sulle scelte fatte: vanno in `AI_DECISIONS.md`
+- output di test: vanno nel terminale o in CI
+- segreti, chiavi, credenziali
+- considerazioni filosofiche
 
-Send a handoff when:
+## Conflitti
 
-- frontend and backend contract changes;
-- data shape or auth rule affects another slice;
-- a blocker prevents progress;
-- one agent changed files another agent depends on;
-- tests reveal an integration risk;
-- a decision must be confirmed before another slice continues.
+Se `AI_HANDOFF.md` contraddice il codice: il codice vince. Aggiorna handoff.
+Se `AI_DECISIONS.md` contraddice una richiesta utente nuova: chiedi se la decisione precedente va revocata, e marcala revocata.
 
-## When Not To Send
+## Comunicazione tra sub-agent (stesso coordinator)
 
-Do not send a handoff for:
+I sub-agent **non si parlano direttamente**. Il coordinator fa da router. Tre pattern:
 
-- local implementation details that do not affect another slice;
-- repeated status updates;
-- speculative ideas;
-- broad commentary already visible in the shared plan.
+**A — Handoff via coordinator (default per task brevi):**
 
-## Conflict Handling
+1. Lancia sub-agent A con un prompt autocontenuto.
+2. Ricevi il suo risultato.
+3. Lancia sub-agent B passando nel prompt **solo le parti utili** del risultato di A (non tutto).
 
-If agents disagree:
+Niente chat libera fra A e B; il coordinator filtra cosa serve a chi.
 
-1. Coordinator compares evidence and touched contracts.
-2. Coordinator chooses the lower-risk option when reversible.
-3. Coordinator asks the user when the choice changes product direction, data model, auth, cost, or irreversible behavior.
-4. Coordinator records durable decisions in `AI_DECISIONS.md` when relevant.
+**B — Handoff via file (per task lunghi, multi-turno, o quando A e B operano in tempi diversi):**
 
-## Final Integration
+1. Sub-agent A scrive lo stato in `AI_HANDOFF.md` (volatile) e/o promuove decisioni durevoli in `AI_DECISIONS.md`.
+2. Sub-agent B riceve nel prompt l'istruzione "leggi `AI_HANDOFF.md` come primo passo".
+3. B parte già informato senza che il coordinator debba ripetere tutto.
 
-Coordinator summarizes:
+Usa questo modo quando il payload è grosso o cambia spesso, o quando vuoi tracciabilità nel repo.
 
-- accepted decisions;
-- unresolved blockers;
-- files/contracts changed;
-- verification needed across slices.
+**C — Riprendere un sub-agent attivo (`SendMessage`):**
+
+Se un sub-agent è già stato lanciato in questa sessione e serve continuare, usa `SendMessage` con il suo ID. Riprende con il contesto già caricato (più efficiente di un nuovo `Agent`).
+
+**Anti-pattern:**
+
+- A → scrive 200 righe → B legge tutto: filtra prima.
+- Loop di handoff infinito: il coordinator decide quando si chiude.
+- Far chiedere a un sub-agent di lanciarne un altro: la regia resta al coordinator.

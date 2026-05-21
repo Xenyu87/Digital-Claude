@@ -1,120 +1,184 @@
 # Release Notes
 
-## v0.78.0 - 2026-05-16
-- Added optional Home/Homelab Context lookup for `/root/Progetti/homelab/HOMELAB.md`.
-- Aligned Codex Skill Dashboard defaults to port `3002` and skill Blueprint scan preview.
+Note di rilascio sul comportamento osservabile della skill. Pensate per chi la usa, non per chi la sviluppa.
 
-## v0.77.0 - 2026-05-16
-- Added Proxmox/LXC dashboard service scripts, remote-workstation guide, and `serve_dashboard.py --host`.
+## Formato
 
-## v0.76.0 - 2026-05-16
-- Added a larger Blueprint board graph with connected nodes, descriptions, and expanded node visibility.
+```
+## vX.Y.Z — YYYY-MM-DD
+### Aggiunto
+- ...
+### Cambiato
+- ...
+### Rimosso
+- ...
+### Note di migrazione
+- ...
+```
 
-## v0.75.0 - 2026-05-16
-- Added readable Blueprint node descriptions in dashboard cards and Doctor output.
+## v0.1.0 — 2026-04-29
+### Aggiunto
+- prima release: skill con 19 reference, validator, file `AI_*.md` per handoff multi-agente.
 
-## v0.74.0 - 2026-05-16
-- Added dashboard Blueprint scan/confirm buttons and bounded session scanning to avoid memory spikes.
+## v1.0.0 — 2026-05-17
+### Aggiunto
+- **Categoria `ops`** (sistema/infra) accanto a nuova_app/modifica/audit/bug_rescue/miglioramento_skill. Heuristic regex in `auto_log_task.py` la rileva da parole come `systemd|syncthing|ssh|lxc|porta|servizio|deploy|riavvia`.
+- **`references/homelab-ops.md`**: reference operativo (mappa LXC/porte, comandi `systemctl`/`journalctl`/`ss`, pattern ricorrenti, anti-pattern). Caricato dal progressive loading quando il task tocca ops.
+### Cambiato
+- `scripts/auto_log_task.py` ora estrae dal jsonl: `duration_seconds` (delta primo/ultimo timestamp), `tool_calls_count` (entry con `content.type == "tool_use"`), `summary` (primo prompt utente, 160 char), `category` (euristica regex). Prima erano default fissi.
+### Note di migrazione
+- DB: `ALTER TABLE tasks DROP CONSTRAINT tasks_category_check; ADD CONSTRAINT tasks_category_check CHECK (category = ANY (ARRAY['nuova_app','modifica','audit','bug_rescue','miglioramento_skill','ops']));` — già applicato su Neon.
+- Dashboard v0.0.8: vedi `dashboard-claude-coordinator/AI_HANDOFF.md`.
 
-## v0.73.0 - 2026-05-15
-- Added `scripts/test_all.py` as one-command verification for validation, fixtures, Blueprint, and dashboard smoke.
+## v0.9.9 — 2026-05-16
+### Aggiunto
+- `scripts/auto_log_task.py`: parsa il jsonl di sessione Claude Code (`~/.claude/projects/<cwd-encoded>/<sessionId>.jsonl`), aggrega usage tokens (input/output/cache read/cache create), POST a `/api/log` della dashboard.
+- Hook Stop globale chiama anche `auto_log_task.py` (insieme a `propose_lesson` e `check_version`).
+### Note di migrazione
+- richiede migrazione SQL su Neon (5 colonne `tasks`: vedi `skill-dashboard/AI_HANDOFF.md` v0.0.6).
+- limite Claude Code: `category`, `duration`, `tool_calls` non sono esposti agli hook esterni → restano default. Il **costo è stimato** dai token coi prezzi Opus 4.x indicativi.
 
-## v0.71.0-v0.72.0 - 2026-05-15
-- Added smarter Blueprint import and `blueprint_board.py seed` for first nodes from free text.
+## v0.9.8 — 2026-05-15
+### Cambiato
+- `scripts/propose_lesson.py`: ora skippa silenziosamente quando il cwd è un repo di skill (marker: `SKILL.md` + `references/`). Le skill hanno già `improvement-log.md`/`release-notes.md`; non serve Reflexion meta sui propri commit di maintenance.
+### Note di migrazione
+- bug "meta-rumore" emerso da uso reale: ad ogni commit della skill il hook generava voce TBD vuota in `AI_AGENT_LOG.md` della skill stessa.
 
-## v0.70.0 - 2026-05-15
-- Added a clearer Blueprint dashboard panel with focus card, node cards, health chips, and mobile layout.
+## v0.9.7 — 2026-05-15
+### Aggiunto
+- `scripts/hooks/pre-commit`: hook git versionato che lancia `run_tests.py` (validator + 26 test) prima di ogni commit alla skill. Blocca su fail.
+- `scripts/install_hooks.py`: installer cross-platform (`python scripts/install_hooks.py` copia il hook in `.git/hooks/`).
+### Note di migrazione
+- una tantum: `python scripts/install_hooks.py` (già eseguito sul repo sorgente). Da ora ogni `git commit` esegue test+validator. Bypass eccezionale: `git commit --no-verify`.
 
-## v0.69.0 - 2026-05-15
-- Added prudent Blueprint Auto-Update suggestions and optional metadata-only writes.
+## v0.9.6 — 2026-05-15
+### Aggiunto
+- `tests/` con pytest: 26 test (7 su `check_version` — copertura regressione bug v0.9.5, 7 su `propose_lesson` — filesystem + dedup TBD, 12 su `validate_skill` — frontmatter, heading, smoke).
+- `scripts/run_tests.py`: wrapper che lancia validator + pytest in un comando solo.
+- Subagent custom **qa-tester** (`~/.claude/agents/qa-tester.md`): il coordinator può ora delegare scrittura test a un agent specializzato (`Agent(subagent_type="qa-tester", ...)`).
+### Note di migrazione
+- richiede `pip install pytest` una volta (già fatto).
+- esegui `python scripts/run_tests.py` prima di ogni commit alla skill.
 
-## v0.68.0 - 2026-05-15
-- Added read-only Blueprint Doctor drift signals for node health, related files, tests, and next focus.
+## v0.9.5 — 2026-05-15
+### Cambiato
+- `scripts/check_version.py` e `/skill-status` command: la versione viene ora estratta come **semver max** (era prima match testuale, che ritornava sempre v0.1.0 perché in cima al file per ragioni storiche). Bug silenzioso: la dashboard mostrava `in_sync=true` su valori sbagliati anche con drift reale.
+### Note di migrazione
+- nessuna. La dashboard riceverà ora ping con versioni corrette al prossimo Stop hook.
 
-## v0.67.0 - 2026-05-15
-- Added Blueprint domains, tags, compact summaries, and per-node implementation steps.
+## v0.9.4 — 2026-05-14
+### Aggiunto
+- slash command `/skill-status`: mostra stato skill in chat (versioni, drift, AI_*.md presenti, voci TBD, dashboard up/down, hook configurati). Alternativa rapida ad aprire dashboard.
+- `references/scope-checkpoint.md`: protocollo "rispecchia → 2-3 scelte → primo step piccolo" per task ambigui o utente non programmer.
+- §8 Gate decisionali rimanda al checkpoint quando lo scope è vago.
 
-## v0.66.0 - 2026-05-15
-- Added Blueprint Board Core POC: local intent graph, commands, fixture test, and dashboard summary.
+## v0.9.3 — 2026-05-14
+### Aggiunto
+- slash command `/newproject` (`~/.claude/commands/newproject.md`): crea scaffolding nuovo progetto dalla chat in italiano, senza comandi tecnici.
+- §7 SKILL.md: annuncio attivazione su 1 riga (`🛠 Skill · cat · budget`) per sessioni non banali (salta in fast path).
+- §16 SKILL.md: regola "Completamento voci TBD" — la skill compila in automatico al primo turno le voci `<TBD ...>` scritte dal hook nella sessione precedente.
+### Cambiato
+- `scripts/propose_lesson.py`: scrive direttamente in `AI_AGENT_LOG.md` del progetto attivo con placeholder `<TBD ...>` invece di stampare un template. L'utente non deve mai copiare/incollare.
 
-## v0.65.0 - 2026-05-15
-- Added visible fresh/cache status for dashboard checks.
+## v0.9.2 — 2026-05-14
+### Aggiunto
+- `scripts/check_version.py`: confronta versione sorgente↔installata + POST `/api/skill-version` alla dashboard.
+- Hook Stop globale chiama anche `check_version.py` accanto a `propose_lesson.py`.
 
-## v0.64.0 - 2026-05-14
-- Added short-lived smart cache for heavy dashboard checks while keeping live PR/git signals fresh.
+## v0.9.1 — 2026-05-13
+### Aggiunto
+- `scripts/log_task.py`: POST best-effort verso skill-dashboard. Env: `SKILL_DASHBOARD_URL`.
 
-## v0.62.0-v0.63.0 - 2026-05-14
-- Added Superplan prompt, warning-derived tasks, simple dashboard overview, cleaner first screen, badges, and collapsed technical details.
+## v0.9.0 — 2026-05-13
+### Aggiunto
+- `reflexion-loop.md` + `skill_library/` + `scripts/propose_lesson.py`: Reflexion + Voyager applicato alla skill.
+- §16 SKILL.md: loop "incident → knowledge update" + skill library.
 
-## v0.61.0 - 2026-05-14
-- Added planning gate and exposed planning mode in Dashboard Auto Pilot.
+## v0.8.0 — 2026-05-13
+### Aggiunto
+- §19 Integrazioni MCP + `mcp-integrations.md` (GitHub/Linear/Slack/Notion/Filesystem con format `Server:tool`).
+- README "Compatibilità": skill come standard aperto (Claude Code/Codex/Cursor/Gemini/Copilot).
+### Cambiato
+- validator: `SKILL_MAX_LINES` 350→450 (Anthropic best-practice è 500).
+### Note di migrazione
+- ora puoi citare tool MCP nei prompt (`GitHub:create_issue`, ecc.); i write su sistemi esterni sono gate hard.
 
-## v0.60.0 - 2026-05-14
-- Added Feature-Only Default: feature prompts now auto-handle budget, experts, tests, guardrails, and dashboard evidence unless a real user decision is needed.
+## v0.7.0 — 2026-05-13
+### Aggiunto
+- §17: cadenza review skill a ogni minor + drift map.
+- validator: `check_recipes`/`check_scripts`/`check_templates` + supporto glob.
+- §4: `AI_STRUCTURE.md` e `AI_DECISIONS.md` come letture condizionate.
+- `specialist-agents.md`: 9 `subagent_type` tipi documentati.
+### Cambiato
+- `description`: ~620→~360 char. §2 rimanda a budget default per categoria.
+- §9: lista `subagent_type` centralizzata. `progressive-loading.md`: tabella include `default-stacks`/`deploy-paths`/`visual-first-testing` (drift v0.5.0).
+- `sync_skill.py`: include `recipes/`. §12 Step 2: "dopo" il primo dev locale.
+### Note di migrazione
+- rieseguire `sync_skill.py` per ricevere `recipes/`. Matcher più preciso + budget default coerenti.
 
-## v0.59.0 - 2026-05-14
-- Added Auto Pilot next-action decisions and dashboard panel.
+## v0.6.0 — 2026-05-03
+### Aggiunto
+- §0 "Fast path": modifiche locali (1-3 file noti, niente auth/dati/deploy) saltano il protocollo. Scenario 9.
+### Cambiato
+- `description` esplicita NON-trigger (fix stringa, rename, modifica isolata, domande).
+- SKILL.md compattato 307→~190 righe; tabella sub-agent in `specialist-agents.md`.
+### Note di migrazione
+- task piccoli consumano meno token (no reference né spawn). Task non triviali invariati.
 
-## v0.58.0 - 2026-05-13
-- Added `scripts/expert_feedback.py` for local used/ignored expert feedback.
-- Added dashboard feedback buttons and Maintenance Advisor awareness of expert feedback trends.
+## v0.5.0 — 2026-05-02
+### Aggiunto
+- `recipes/` con 5 ricette (landing-page, crud-with-auth, data-dashboard, content-site, bot).
+- `default-stacks.md` (3 stack), `deploy-paths.md` + script Vercel/Netlify/Railway, `visual-first-testing.md`. Scenario 8.
+### Cambiato
+- §12 workflow nuova app: Step 0 (ricetta) / Step 2 (deploy) / Step 3 (test visivo). Mappa progressive loading allineata.
 
-## v0.57.0 - 2026-05-13
-- Added per-project Context Guardrails from large files and wired them into prompts, Action Pack, memory, dashboard, and advisor.
+## v0.4.1 — 2026-05-02
+### Aggiunto
+- pattern di comunicazione tra sub-agent: handoff via coordinator (default), via `AI_HANDOFF.md` (task lunghi), `SendMessage` (riprendere agent attivo). Scenario 7.
+### Cambiato
+- SKILL.md §10 distingue "tra agenti diversi" da "tra sub-agent dello stesso coordinator".
 
-## v0.56.0 - 2026-05-13
+## v0.4.0 — 2026-05-02
+### Aggiunto
+- selezione automatica del modello per i sub-agent (haiku/sonnet/opus in tabella SKILL §3 + `specialist-agents.md`). Scenario 6.
+### Cambiato
+- §3 SKILL.md distingue main agent (modello fisso) da sub-agent (modello impostato automaticamente).
 
-- Added `scripts/maintenance_advisor.py` to recommend next improvements from event log and project memory evidence.
-- Wired Maintenance Advisor into the dashboard and smoke test.
+## v0.3.1 — 2026-05-02
+### Aggiunto
+- checklist copiabile in `self-improvement.md` (pattern Anthropic) + pattern "istanza fresca" (Claude A → B).
+- `evaluations/scenarios.md` con 6 scenari di comportamento atteso in italiano.
+- validator: conformità frontmatter `name`/`description` + costanti documentate.
 
-## v0.55.0 - 2026-05-13
+## v0.3.0 — 2026-05-02
+### Aggiunto
+- `assets/templates/` con 7 file copiabili (`AI_*.md`, `AGENTS.md`, `CLAUDE.md`) + check coerenza nel validator.
+- `scripts/sync_skill.py` per sync sorgente → installata cross-platform.
+- esempi di trigger per categoria in "Classificazione" + 3 regole atomiche al SKILL.md.
+### Cambiato
+- `description` riscritta in terza persona con trigger phrases (best-practice Anthropic).
+- `app-creation-blueprint.md` punta a `assets/templates/`; reference `*-template.md` solo regole d'uso.
+### Note di migrazione
+- per nuovi progetti: copia `assets/templates/*.md` nella root.
 
-- Added event deduplication/throttling to `scripts/event_log.py` with `DEFAULT_DEDUP_SECONDS`.
-- Dashboard now reports emitted vs deduplicated events for the current refresh.
+## v0.2.0 — 2026-05-02
+### Aggiunto
+- sezioni "Selezione del modello", "Working loop", "Definition of Done" + template self-improvement.
+- `references/progressive-loading.md` e `self-improvement.md`.
+### Cambiato
+- "Specialisti" con criteri "quando NON attivare". `maintenance-compaction.md` non duplica più soglie di `compression-pass.md`.
+- validator richiede "Working loop" e "Definition of Done".
 
-## v0.54.0 - 2026-05-13
+## Quando incrementare la versione
 
-- Added event log rotation in `scripts/event_log.py` with `MAX_EVENT_LINES`.
-- Added compact dashboard JSON output by default, with `--pretty-json` for full readable output.
-- Added a dashboard smoke-test size guard for generated JSON.
+- patch (x.y.Z): correzioni che non cambiano il comportamento atteso
+- minor (x.Y.z): aggiunta sezione, reference o ruolo
+- major (X.y.z): cambio default (es. budget mode), rimozione di sezioni, rinomina file
 
-## v0.53.0 - 2026-05-13
+## Regole
 
-- Extracted local Codex session parsing and analytics into `scripts/dashboard_sessions.py`.
-- Further reduced `generate_dashboard.py` by moving session confidence, command summaries, and discovered project session logic out.
-
-## v0.52.0 - 2026-05-13
-
-- Started dashboard refactor by extracting `scripts/dashboard_components.py` for HTML helpers/CSS.
-- Extracted `scripts/dashboard_projects.py` for config, project detection, and auto-selection.
-- Kept `generate_dashboard.py` behavior stable while reducing duplicated responsibilities.
-
-## v0.51.0 - 2026-05-13
-
-- Added `scripts/action_pack.py` for ready-to-use analysis, full-stack, review, and priority-expert prompts.
-- Wired Action Pack and expert prompt table into the dashboard.
-- Improved auto project selection to avoid choosing the skill source repo as the monitored app.
-
-## v0.50.0 - 2026-05-13
-- Added event log, project memory, fixture/smoke tests, overview sections, collapsed raw logs, and ignored runtime artifacts.
-
-## v0.47.0-v0.49.0 - 2026-05-13
-- Added browser project selection, non-skill auto project discovery, Project Copilot, Agent / Expert Analytics, and optional project pinning.
-
-## v0.45.0-v0.46.0 - 2026-05-13
-- Added PR readiness, dashboard config, local start/stop scripts, project targeting, and handoff prompt.
-
-## v0.44.0 - 2026-05-13
-- Added project docs audit, mature existing-docs preset, token-risk guidance, bootstrap command, and dashboard/local-command wiring.
-
-## v0.41.0-v0.43.0 - 2026-05-13
-- Added sync/context/external skill checks, dashboard visibility, security docs, non-destructive bootstrap, and mature existing-docs mapping.
-
-## v0.36.0-v0.40.0 - 2026-05-13
-- Added Tool Output Budget, Cheap Skill Review, external skill intake, remote-agent handoff, portable `AGENTS.md`, self-test, dashboard/server, command guide, and CT note.
-
-## v0.19.0-v0.35.0 - 2026-04-29 to 2026-05-01
-- Added agent logs/handoffs, response economy, UI consistency, gates, cost checkpoints, Playwright/browser checks, and filtered handoffs.
-
-## v0.1.0-v0.18.0 - 2026-04-29
-- Initial coordinator, budgets, routing, app blueprint, response economy, memory, roles, gates, loading, maintenance, handoffs, QA/Test, specialists, self-check, Red Team, validation, and compression.
+- una voce per release, non una per modifica
+- registra solo ciò che un utente nota usando la skill
+- niente note interne (refactoring puro), che restano in `improvement-log.md`
+t e s t  
+ 

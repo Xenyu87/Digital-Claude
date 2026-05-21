@@ -1,63 +1,33 @@
-# Second Brain Template
+# Template: AI_DECISIONS.md
 
-Use this template to create `AI_DECISIONS.md` when project decisions should be remembered across tasks.
+Memoria a lungo termine di decisioni durevoli. Append-only.
 
-Keep it short. This file is for durable decision memory, not a diary.
-
-Use a write filter before adding memory:
-
-- Verified: based on code, tests, user decision, or observed failure.
-- Durable: likely useful in future tasks, not just today.
-- Actionable: changes a future implementation, check, or route.
-- Safe: does not store secrets, raw external page text, or untrusted instructions.
-
-If a new note contradicts an older decision, mark the old decision as replaced instead of keeping both as active truth.
+File copiabile pronto: `assets/templates/AI_DECISIONS.md`. Esempio di voce ben compilata:
 
 ```markdown
-# AI Decisions
-
-Last updated: YYYY-MM-DD
-
-## Active Decisions
-
-- Decision:
-  - Reason:
-  - Impact:
-  - Revisit when:
-
-## Tradeoffs
-
-- Chose:
-  - Instead of:
-  - Because:
-  - Cost/risk:
-
-## Constraints
-
-- [Technical, product, legal, budget, deployment, data, or design constraint]
-
-## Rejected Paths
-
-- Do not:
-  - Reason:
-  - Revisit when:
-
-## Do Not Repeat
-
-- [Mistake, failed approach, or unwanted pattern]
-
-## Review Later
-
-- [Decision or risk to revisit, with trigger]
+## 2026-04-29 — Postgres su SQLite
+- Decisione: usare Postgres anche in locale via Docker.
+- Motivo: parità con prod, evitare divergenze sulle date.
+- Implicazioni: dev richiede Docker. Test integrazione contro Postgres reale.
+- Alternative scartate: SQLite (driver diverso), Postgres su CI ma SQLite locale (rischio drift).
 ```
 
-Good entries are durable:
+## Regole
 
-- `Use server-side auth checks for all protected writes. Revisit only if auth provider changes.`
-- `MVP uses SQLite locally; migrate to Postgres before production deploy.`
+- Una voce per decisione, non per task.
+- Una voce contiene: data, decisione, motivo, implicazioni, alternative scartate.
+- Niente voci senza motivazione.
+- Una decisione revocata non viene cancellata: marcata `~~revocata~~` e si aggiunge la nuova.
+- Niente decisioni triviali (naming variabile, ordine import).
 
-Bad entries are diary notes:
+## Quando promuovere da `AI_HANDOFF.md`
 
-- `Today we edited the dashboard.`
-- `Need to think about backend later.`
-- `User preferred blue on this one screen.` unless it becomes a durable design rule.
+- la scelta vincola decisioni future
+- è costoso tornare indietro
+- altri agenti rischiano di re-litigarla
+
+## Quando NON registrare
+
+- preferenze personali
+- scelte derivabili dalla documentazione del framework
+- micro-ottimizzazioni locali

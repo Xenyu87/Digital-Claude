@@ -1,48 +1,49 @@
 # Skill Sync
 
-Use this reference when a skill is edited in a repository but may also exist as an installed copy.
+Procedura per modificare questa skill o sincronizzarla tra installazione globale e di progetto.
 
-## Check
+## Posizioni
 
-- Identify the edited source path.
-- Identify the installed skill path when relevant.
-- Compare whether they are the same directory.
+- Globale (utente): `~/.claude/skills/cost-aware-app-coordinator/`
+- Progetto: `.claude/skills/cost-aware-app-coordinator/`
 
-## Report
+Su Windows l'equivalente di `~` è `%USERPROFILE%`. Il path tipico è `C:\Users\<utente>\.claude\skills\cost-aware-app-coordinator\`.
 
-If paths differ, say:
+Su Linux/LXC `dev` (Debian) il path reale è `/root/.claude/skills/cost-aware-app-coordinator/`, accessibile anche via symlink `/root/Progetti/_claude-skills/cost-aware-app-coordinator/`.
 
-- repo/source version was updated;
-- installed copy may still be older;
-- syncing requires explicit approval before overwriting files.
+## Quando aggiornare globale vs progetto
 
-## Sync Rules
+- Modifica con valore generale → globale
+- Modifica specifica di un progetto (es. regole di test particolari) → progetto, sotto forma di override o estensione
 
-- Do not overwrite installed skill files without user approval.
-- Do not assume future sessions load the repo copy.
-- Preserve user edits in the installed copy.
-- Prefer a clear copy/sync step over manual partial edits.
+## Procedura di modifica
 
-## External Skill Intake
+1. Apri `SKILL.md` o la reference da modificare.
+2. Applica la modifica con cambi minimi.
+3. Aggiorna `improvement-log.md` con una riga.
+4. Se la modifica cambia il comportamento osservabile, aggiorna `release-notes.md`.
+5. Esegui `python3 scripts/validate_skill.py` (`python` su Windows).
+6. Se OK, committa.
 
-Before installing, copying, or recommending a third-party skill, plugin, MCP server, or agent bundle:
+## Vincoli da rispettare
 
-- Treat stars and popularity as discovery signals, not trust signals.
-- Inspect `SKILL.md`, scripts, dependencies, install steps, licenses, recent maintenance, and open issues.
-- Identify tool access, filesystem/network reach, credentials, external services, and generated commands.
-- Reject or sandbox anything that handles untrusted input, executes broad shell commands, requests secrets, or has unclear provenance.
-- Prefer official or already-installed skills when they cover the need with lower risk.
+- `SKILL.md` < 450 righe (best-practice Anthropic: < 500)
+- ogni reference < 120 righe
+- progressive loading map in `SKILL.md` deve citare ogni file in `references/`
+- ogni file in `references/` deve essere citato da `SKILL.md`
+- ogni asset citato da `SKILL.md` deve esistere in `assets/`
 
-## Release Checklist
+## Sincronizzazione globale ↔ progetto
 
-- Working tree reviewed.
-- Release notes updated.
-- Improvement log updated or intentionally skipped.
-- `python scripts/test_all.py` run before syncing or committing meaningful skill changes.
-- `python scripts/self_test.py` run when a focused marker check is enough.
-- `python scripts/generate_dashboard.py` run when the user wants an operational status page or release/test evidence.
-- `python scripts/serve_dashboard.py` used when the user wants the page to refresh while Codex sessions are active.
-- `scripts/start_dashboard.ps1` and `scripts/stop_dashboard.ps1` preferred for non-technical local dashboard operation.
-- `reports/dashboard-config.json` reviewed when project-specific dashboard checks should target a real app instead of the skill repo.
-- Installed copy sync status known.
-- User told which version future sessions will load.
+Quando una modifica fatta in versione globale deve arrivare al progetto (o viceversa):
+
+1. Identifica la versione canonica (di solito la globale).
+2. Sync automatico: `python scripts/sync_skill.py` copia `SKILL.md`, `references/`, `assets/`, `scripts/` verso `~/.claude/skills/cost-aware-app-coordinator/`. Usa `--dry-run` per anteprima e `--dest <path>` per destinazioni custom.
+3. Esegui validator in destinazione.
+4. Aggiorna `improvement-log.md` solo nella canonica.
+
+## Anti-pattern
+
+- modificare la versione di progetto e dimenticare la globale (drift)
+- copiare l'intera cartella ogni volta (perdi modifiche locali al progetto)
+- saltare il validator

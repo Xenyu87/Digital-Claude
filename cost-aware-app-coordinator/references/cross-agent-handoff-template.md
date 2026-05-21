@@ -1,52 +1,50 @@
-# Cross-Agent Handoff Template
+# Template: AI_HANDOFF.md
 
-Use this to create `AI_HANDOFF.md` when the same project may be edited by Codex, Claude Code, or another coding agent.
+Stato corrente, sostituibile. Pensato per essere letto in <30 secondi dal prossimo agente.
 
-This file is a baton pass, not a diary. Keep only what helps the next agent continue safely.
+File copiabile pronto: `assets/templates/AI_HANDOFF.md`. Esempio compilato:
 
 ```markdown
-# AI Handoff
+## Goal corrente
+aggiungere validazione email all'endpoint login
 
-Last updated: YYYY-MM-DD HH:mm
-From: Codex | Claude Code | Other
-To: Codex | Claude Code | Any
+## Stato
+in corso
 
-## Current Goal
+## File toccati
+- `src/api/login.ts` — aggiunta validazione email
+- `src/db/schema.ts` — nuovo campo `email_verified`
 
-[One sentence.]
+## Decisioni
+- Zod invece di yup (consistenza col repo)
 
-## State
+## Rischi aperti
+- migrazione `email_verified` non ancora applicata in staging
 
-- Done:
-- In progress:
-- Not started:
-
-## Changed Files
-
-- `path`: [reason]
-
-## Decisions
-
-- [Decision that affects the next step]
-
-## Open Risks
-
-- [Risk, blocker, or assumption]
-
-## Next Step
-
-[Single best next action.]
-
-## Do Not Repeat
-
-- [Only if it prevents rework or waste]
+## Prossimo passo
+- applicare la migrazione in staging e rilanciare e2e
 ```
 
-Rules:
+## Regole
 
-- Read after `AI_CONTEXT.md` when taking over active work.
-- Update after non-trivial changes or before switching agents.
-- Do not paste diffs, logs, or routine command output.
-- Move durable decisions to `AI_DECISIONS.md`.
-- Move stable structure to `AI_STRUCTURE.md`.
-- Move repeated mistakes or token waste to `AI_AGENT_LOG.md`.
+- Sostituibile, non append-only. Sovrascrivi sezioni quando lo stato cambia.
+- Solo stato corrente. Niente storia.
+- Decisioni durevoli → promuovile in `AI_DECISIONS.md` e rimuovile da qui.
+- Se stato è `rilasciato` e non c'è prossimo passo, ripulisci a uno stato vuoto coerente.
+
+## Quando aggiornare
+
+Dopo modifiche non banali:
+
+- nuova feature
+- refactor su >2 file
+- bug fix con causa non ovvia
+- cambio decisione di scope
+
+Non aggiornare per: typo, rename locale, commento.
+
+## Quando NON usare
+
+- come diario
+- come elenco di tutto ciò che hai fatto in giornata
+- come contenitore di output di test

@@ -1,54 +1,37 @@
-# Agent Autolog Template
+# Template: AI_AGENT_LOG.md
 
-Use this template to create `AI_AGENT_LOG.md` only when real waste or mistakes need to be prevented from repeating.
+Log degli errori, sprechi e lezioni di processo. Non è un diario di attività.
 
-Do not log normal work, status updates, or every command. This is an error and waste memory, not a diary.
-
-Before logging, apply the write filter:
-
-- Is this a repeatable process mistake, missed instruction, stale context, weak verification, or token waste?
-- Would a future agent act differently because of this note?
-- Is it based on verified evidence or direct user correction?
-
-If not, do not log it.
+File copiabile pronto: `assets/templates/AI_AGENT_LOG.md`. Esempio compilato:
 
 ```markdown
-# AI Agent Log
-
-Last compacted: YYYY-MM-DD
-
-## Active Patterns
-
-- Pattern:
-  - Trigger:
-  - Better rule:
-
-## Recent Events
-
-- Date:
-  - Event:
-  - Cause:
-  - Impact:
-  - Fix:
-  - Future rule:
-
-## Do Not Repeat
-
-- [Specific behavior that wasted tokens, caused rework, or increased risk]
+## 2026-04-29
+- **Spreco**: letti 12 file per un fix in `src/utils/format.ts`. Bastavano 2.
+  Lezione: non aprire `src/db/*` se il task è di formatting.
+- **Errore**: ho dichiarato `Fatto:` su una migrazione mai eseguita.
+  Lezione: dichiarare `Fatto:` solo dopo conferma di esecuzione.
 ```
 
-Log when:
+## Cosa registrare
 
-- too many files were read before a routing decision;
-- an unnecessary agent, specialist, or broad test was used;
-- a required QA/security/data/deploy check was missed;
-- the user corrected a repeated assumption or verbosity problem;
-- the user says the result does not match the requested visual or functional intent because Codex missed, assumed, or failed to verify something;
-- stale context caused wrong work;
-- final answers or handoffs became longer than useful.
-- memory would otherwise store untrusted external content or a one-off preference as a durable rule.
+- letture inutili che hanno bruciato contesto
+- specialisti attivati senza necessità
+- loop di retry sullo stesso comando
+- claim non verificati ("Fatto" senza esecuzione)
+- pattern di bug ricorrente
 
-Keep entries actionable:
+## Cosa NON registrare
 
-- Bad: `Worked on auth and made mistakes.`
-- Good: `Read route tree before AI_STRUCTURE.md; next time read AI_CONTEXT.md then route hint first.`
+- ogni singolo task ordinario
+- successi senza lezione
+- info che vanno in `AI_DECISIONS.md` o `AI_STRUCTURE.md`
+
+## Manutenzione
+
+Quando il file supera ~200 righe:
+
+- raggruppa errori simili in una voce con conteggio
+- promuovi le lezioni stabili in `AGENTS.md`
+- elimina voci vecchie >30 giorni se la lezione è già confluita altrove
+
+Vedi `compression-pass.md`.

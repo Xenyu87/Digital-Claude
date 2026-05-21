@@ -1,112 +1,68 @@
 # Response Economy
 
-Use this reference when answers, updates, or agent prompts are getting longer than the task needs.
+Regole di output. Default: corto. Dettaglio solo se serve.
 
-## Defaults
+## Formato base routine
 
-- Keep budget mode, model policy, role, and skill name internal unless the user asks or a real user-visible cost/risk choice changes.
-- Stay silent during routine work. Do not narrate reading, editing, testing, or successful routine steps.
-- Send one short progress update only for sub-agents used, errors, blockers, risks, explicit status requests, or actions the user must take.
-- Use compact plans only when they reduce risk or coordinate work.
-- Summarize command output; do not paste it unless requested.
-- Before noisy commands, cap output with targeted paths, `rg`, counts, `Select-Object -First`, or section reads. Avoid full recursive dependency/build/doc dumps unless the task truly requires them.
-- Prefer one precise file link over a list of every related file.
-- Do not explain routine edits as "I changed X because Y"; reserve reasons for risk, tradeoffs, blockers, or user decisions.
-- Be most precise in `Da fare per te` items: commands to run, env vars to set, accounts to connect, manual checks, or choices needed.
-- For non-programmer users, prefer `Come provarlo` over code details when the change is visual or functional.
-- Do not announce design lens, implementation intent, files you are about to edit, checks you are about to run, or commit/push preparation unless the user must decide something.
-
-## Progress Update Gate
-
-Before sending an update while working, it must answer yes to at least one:
-
-- Is the user blocked or needed?
-- Is a sub-agent being used and should the user know cost/risk changed?
-- Is there risk, destructive action, cost, credential, or external system impact?
-- Did an error, failed check, or blocker occur?
-- Did the user ask for status?
-
-If not, keep working silently.
-
-Forbidden routine updates:
-
-- `Uso [skill] in modalita...`
-- `Mi metto il cappello...`
-- `Scelgo una struttura...`
-- `Ora modifico...`
-- `Aggiorno anche...`
-- `I controlli sono puliti, faccio...`
-- `Preparo un commit...`
-
-Allowed important updates:
-
-- `Uso un agente QA per verificare il flusso auth.`
-- `Errore: build fallita su [check].`
-- `Blocco: manca [env/credential/decision].`
-- `Da fare per te: [action].`
-
-## Final Answer Shapes
-
-Small task:
-
-```text
-Fatto: [outcome]. Verifica: [check].
+```
+Fatto: <azione>
+Verifica: <comando o passo per controllare>
 ```
 
-Medium task:
+Esempio:
 
-```text
-Fatto:
-- ...
+```
+Fatto: aggiunto endpoint POST /login con validazione email.
+Verifica: curl -X POST localhost:3000/login -d ...
+```
 
-Verifica:
-- ...
+## Quando aggiungere dettaglio
 
-Come provarlo:
-- ... [1-3 plain steps only for user-facing behavior]
+Solo per:
 
+- **Rischi**: side-effect su altri moduli, dipendenza nuova, breaking change
+- **Scelte non ovvie**: una sola riga `Scelta: X invece di Y perché <motivo breve>`
+- **Blocchi**: cosa hai trovato, cosa serve per andare avanti
+- **Azioni utente**: configurare chiavi, collegare servizi, testare manualmente
+
+## Sezione "Da fare per te"
+
+Solo se ricorre una di queste condizioni:
+
+- l'utente deve configurare qualcosa (env, secret, account)
+- l'utente deve scegliere tra opzioni
+- l'utente deve testare manualmente UI, pagamenti, integrazioni
+- l'utente deve confermare un'azione rischiosa
+
+Formato:
+
+```
 Da fare per te:
-- ... [only if needed]
+- <azione 1>
+- <azione 2>
 ```
 
-Review or audit:
+Niente "Da fare per te" se è solo "controlla che funzioni" — è già coperto da `Verifica:`.
 
-```text
-Findings:
-- [severity] [file:line] [issue and impact]
+## Cosa evitare
 
-Checked:
-- ...
+- "Ho sistemato X perché Y" quando Y è ovvio dal diff
+- Riassunti dei file letti
+- Ringraziamenti, frasi di apertura
+- Spiegazioni didattiche non richieste
+- Riassunti finali se l'utente vede già il diff
 
-Residual risk:
-- ...
-```
+## Lingua
 
-## Compression Rules
+Italiano per default. Cambia se l'utente scrive in altra lingua. Termini tecnici inglesi vanno bene (commit, branch, endpoint, token).
 
-- Remove background the user already knows.
-- Replace process narration with the final decision.
-- Delete routine reasons after completed work.
-- Merge repeated caveats into one residual risk.
-- Keep examples out unless the user asks or the format is hard to infer.
-- Use exact limits when needed: sentence count, bullet count, files, or checks.
+## Riferimenti a file
 
-## Tool Output Budget
+Usa link markdown cliccabili: `[file.ts:42](src/file.ts#L42)`.
+Niente backticks per nomi file in testo lungo, solo nei comandi.
 
-Use this before commands likely to return hundreds of lines:
+## Lunghezza tipica
 
-- For discovery, start with file names, counts, or `rg` matches before `Get-Content`.
-- For docs, list candidate files first, then read the relevant section or top lines.
-- For dependencies/build outputs, search exact terms instead of recursive dumps.
-- For audits, sample deliberately and state the lens before broad reads.
-
-## When To Expand
-
-Expand only for:
-
-- high-risk decisions;
-- unclear user goals;
-- security, auth, payments, privacy, data loss, or production incidents;
-- teaching requests;
-- user action is required;
-- user explicitly asking for detail.
+- task banale: 2-3 righe
+- feature media: 5-12 righe
+- audit / piano grosso: bullet, max una sezione per area

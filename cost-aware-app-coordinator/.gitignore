@@ -1,6 +1,0 @@
-node_modules/
-reports/runner-secrets.env
-reports/*secret*
-.env
-.env.*
-!.env.example

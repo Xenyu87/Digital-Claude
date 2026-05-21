@@ -1,46 +1,53 @@
 # Compression Pass
 
-Use this reference when text is too long and must keep meaning with fewer tokens.
+Procedura per ridurre file `AI_*.md` quando crescono troppo o si ripetono.
 
-Inspired by caveman-style compression: remove scaffolding, keep semantic payload.
+## Quando eseguire
 
-## Compress
+- `AI_HANDOFF.md` > 80 righe
+- `AI_AGENT_LOG.md` > 200 righe
+- `AI_CONTEXT.md` > 300 righe
+- l'utente chiede "compatta", "ripulisci", "riassumi memoria"
 
-- Remove filler, hedging, repeated context, and process narration.
-- Prefer nouns, verbs, file paths, decisions, risks, checks.
-- Replace paragraphs with compact bullets or `Outcome / Changed / Checked / Risk`.
-- Keep only details that change action, risk, verification, or future decisions.
-- Merge duplicate caveats into one residual risk.
+## Cosa NON comprimere
 
-## Preserve
+- `AI_DECISIONS.md`: si tagliano solo decisioni revocate (con marker `~~revocata~~`)
+- `AI_STRUCTURE.md`: si aggiorna 1:1 con la struttura, non si comprime
 
-Do not over-compress:
+## Strategia per file
 
-- security fixes;
-- breaking changes;
-- data migrations;
-- auth/permission decisions;
-- production/deploy risk;
-- irreversible or destructive actions;
-- user-facing product decisions;
-- future-debug context.
+### AI_HANDOFF.md
+Tieni solo lo stato corrente. Se contiene storia, sposta in `AI_AGENT_LOG.md` come voce sintetica e svuota.
 
-## Apply To
+### AI_AGENT_LOG.md
+- Raggruppa errori simili in una voce con conteggio
+- Rimuovi voci più vecchie di 30 giorni se la lezione è già confluita in `AI_DECISIONS.md` o in `AGENTS.md`
+- Mantieni solo lezioni con valore preventivo
 
-- final answers;
-- agent handoffs;
-- QA/specialist outputs;
-- `AI_CONTEXT.md`, `AI_STRUCTURE.md`, `AI_DECISIONS.md`;
-- commit and PR descriptions;
-- release notes and improvement logs.
+### AI_CONTEXT.md
+- Elimina sezioni superate dai file dedicati (struttura → `AI_STRUCTURE.md`, decisioni → `AI_DECISIONS.md`)
+- Tieni: scopo del progetto, stack, convenzioni di alto livello, contatti / proprietari
 
-## Output Check
+## Output del compression pass
 
-After compression, confirm:
+Dopo la compattazione:
 
-- decision still clear;
-- risk still visible;
-- checks still named;
-- next action still obvious;
-- no critical context removed.
+```
+Fatto: compattati AI_HANDOFF.md (<old> → <new> righe), AI_AGENT_LOG.md (<old> → <new>).
+Verifica: git diff AI_HANDOFF.md AI_AGENT_LOG.md
+```
 
+## Anti-pattern
+
+- riscrivere da zero perdendo decisioni durevoli
+- comprimere durante una feature attiva (rischia di perdere stato)
+- comprimere senza commit precedente
+
+## Trigger automatico
+
+Se durante un task ti accorgi che un file `AI_*.md` è oltre soglia, **non comprimere automaticamente**. Segnala in chiusura turno:
+
+```
+Da fare per te:
+- AI_AGENT_LOG.md è a 240 righe. Vuoi che lo compatti?
+```

@@ -1,74 +1,59 @@
-# QA/Test Agent
+# QA / Test Agent
 
-Use this reference when a dedicated QA/Test pass would reduce regression risk.
+Profilo per test e qualità.
 
-## Activate When
+## Quando attivarlo
 
-- frontend and backend both changed;
-- API, server action, auth, validation, data shape, or migration changed;
-- a non-trivial bug was fixed;
-- a first usable slice is being completed;
-- push, PR, release, or deploy validation is needed.
-- UI changes need real-browser confidence: new page, redesign, screenshot fidelity, responsive layout, form, chart, dashboard, or navigation.
+- nuova feature con superficie di test rilevante
+- bug rescue dopo il fix, per evitare regressioni
+- pre-release, anche minor
+- modifica di codice marcato critico in `AI_STRUCTURE.md`
 
-Do not activate for tiny copy edits, isolated docs, or one-file changes with no behavior impact.
+## Quando non attivarlo
 
-## Ownership
+- modifica di un commento o di un testo statico
+- fix tipografico
+- task in cui non esiste alcuna suite di test
 
-QA/Test owns verification, not implementation direction.
+## Cosa fare
 
-It should inspect:
+1. Identifica il livello giusto: unit, integration, e2e.
+2. Scrivi il minimo numero di test che copre la golden path e 1-2 edge case rilevanti.
+3. Esegui i test localmente e riporta esito.
+4. Se la suite esistente è già rotta da prima, segnala e non coprire con un fix non richiesto.
 
-- changed files and contracts;
-- user workflow;
-- checks already run;
-- missing states or failure paths;
-- residual risk.
+## Cosa non fare
 
-## Checklist
-
-- First usable slice still works.
-- UI has loading, empty, error, and success behavior where relevant.
-- Backend validates bad input.
-- Auth/permissions are enforced server-side.
-- API or server-action response shape matches the UI.
-- Refresh/retry/repeated action behavior is acceptable.
-- Tests or smoke checks match touched surface and risk.
-- Playwright screenshot or smoke check covers important UI changes when cost/setup is justified.
-
-## Playwright Guidance
-
-- Use existing project Playwright config when present.
-- Prefer targeted screenshots and one or two meaningful interactions over broad browser matrices.
-- Check desktop and mobile when responsive behavior matters.
-- Use a cost checkpoint before installing browsers, creating test data, logging into external services, or running broad visual suites.
-
-## Browser Check
-
-For important UI changes, verify the smallest useful set:
-
-- screenshot: one desktop viewport and one mobile viewport when responsive matters;
-- console: no new obvious runtime errors on load or primary interaction;
-- workflow: load target route, perform the main action or navigation, confirm visible result;
-- state: check empty/loading/error/success only when touched by the change;
-- artifact: save or mention screenshot/trace path only when useful for review.
-
-Stop after the targeted confidence goal is met. Do not expand into full E2E unless the risk justifies it.
+- generare test fuffa solo per coverage
+- testare framework / libreria di terze parti
+- mockare il DB se il progetto richiede integrazione reale (vedi `AGENTS.md` di progetto)
+- aggiungere un nuovo runner di test senza ok dell'utente
 
 ## Output
 
-```text
-Files or flows checked:
-- ...
-
-Checks run or recommended:
-- ...
-
-Findings:
-- ...
-
-Residual risk:
-- ...
+```
+Fatto: aggiunti N test in <path>. Tutti passano.
+Verifica: <comando per rilanciarli>
 ```
 
-Keep output short. Report only actionable findings and meaningful gaps.
+Se uno fallisce in modo legittimo (bug del codice di produzione):
+
+```
+Tentato: test su <area>.
+Esito: 1 fallito → bug reale. Vedi <file:riga>.
+Da fare per te: confermo fix?
+```
+
+## Test UI
+
+Se modifichi UI o frontend, aggiungi sempre nelle tue note:
+
+```
+Verifica manuale browser: <passi minimi>
+```
+
+Type-check e test automatici verificano correttezza del codice, non della feature.
+
+## Coverage e numeri
+
+Niente claim sulla coverage senza misura. Se la richiede l'utente, esegui il tool reale e riporta.

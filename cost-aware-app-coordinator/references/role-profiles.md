@@ -1,49 +1,65 @@
 # Role Profiles
 
-Use role profiles internally to guide decisions without repeating role narration to the user.
+Profili di ruolo. Attivati come prompt/sotto-task. Non sono agenti separati a meno che Claude Code non offra un `subagent_type` dedicato.
 
-| Role | Use for |
-| --- | --- |
-| Frontend | usable workflows, UI states, responsive layout, accessibility basics, local design consistency |
-| Backend | contracts, validation, auth, persistence, transactions, idempotency, safe errors |
-| Full-stack | UI/backend/data/auth contract and one high-signal verification path |
-| QA/Test | first usable slice, UI states, API contracts, validation, auth, smoke checks, residual risk |
-| Security/Auth | permissions, protected data, server-side enforcement, secrets, abuse cases |
-| UX/Product | user intent, workflow clarity, friction, empty/error copy, product tradeoffs |
-| Data/Migration | schemas, migrations, seed/import/export, rollback, destructive operations |
-| DevOps/Release | env vars, build, CI/CD, deploy, hosting, secrets, release risk |
-| Performance | expensive queries, bundle size, large lists, realtime, images, latency |
-| Review/Audit | bugs, regressions, missing tests, security, data loss, production risks |
-| Skill Maintenance | shorter rules, lower token cost, safer routing, durable behavior |
+## Frontend
+- Focus: UI, componenti, accessibilità, stato client
+- Output: diff componenti + nota su test manuale browser
+- Skip: logica server, schema DB
 
-For QA details, use `qa-test-agent.md`.
-For specialist triggers and output contracts, use `specialist-agents.md`.
+## Backend
+- Focus: API, modelli, business logic, validazione input
+- Output: diff + esempio chiamata
+- Skip: pixel UI
 
-## Frontend Local Consistency
+## Full-stack
+- Solo quando un task tocca davvero entrambi i lati. Default: separa.
 
-For new screens, panels, dashboards, forms, or redesigns, first identify 2-4 existing screens/components in the same app. Match the local design language: layout density, spacing, card radius, typography hierarchy, palette, controls, CTA style, empty/error/loading states, mobile behavior, and copy tone. Do not impose a generic style across apps.
+## QA / Test
+- Vedi `qa-test-agent.md`
 
-## Design Intent Brief
+## Security / Auth
+- Focus: autenticazione, autorizzazione, segreti, OWASP top 10
+- Gate: ogni modifica a flow auth è Massima sicurezza
+- Output: finding + fix proposto + riferimento OWASP se applicabile
 
-For medium/high-risk UI work, define the design direction before coding:
+## UX / Product
+- Focus: flussi utente, naming, microcopy, gerarchia informazione
+- Output: proposta breve + alternativa
+- Skip: implementazione dettagliata
 
-- Mode: close screenshot fidelity, local app consistency, or intentional redesign.
-- Audience/job: who uses it and what they need to do first.
-- Tone: utilitarian, premium, playful, editorial, dense operational, etc.
-- Must keep: elements, data, layout, or behavior that cannot change.
-- Flexible: elements that may be improved if it helps usability.
-- Verification: screenshot, viewport, or workflow check that proves the intent.
+## Data / Migration
+- Focus: schema, migrazioni, integrità referenziale, backup
+- Gate: ogni migrazione su dati esistenti è gate hard
+- Output: piano migrazione + rollback
 
-Ask only when the answer changes the route. Otherwise choose the safest mode from context and state it briefly in the plan.
+## DevOps / Release
+- Focus: CI/CD, build, deploy, configurazione ambienti
+- Gate: modifiche a pipeline produzione sono gate hard
+- Output: diff config + checklist rollout
 
-## High-Fidelity Visual Work
+## Performance
+- Focus: latenza, throughput, memoria, query DB lente
+- Output: misura prima / misura dopo. Niente claim senza numeri.
 
-When the user provides a screenshot, mockup, or design reference and asks for close fidelity, treat the task as at least medium UI risk. Before coding, clarify only priorities that change the path: pixel-like fidelity vs local app consistency, mobile vs desktop priority, mandatory vs flexible elements, and speed vs maintainability. Use stronger visual checks when possible, such as before/after screenshots and mobile/desktop review. Consider UX/design or QA visual sub-agents when the layout is complex, responsive states matter, or a second pass is likely to catch meaningful differences.
+## Review / Audit
+- Solo lettura. Nessuna modifica.
+- In Claude Code: usa il subagent `code-reviewer` quando disponibile.
+- Output: finding con severità (alta/media/bassa), file:riga, fix proposto
 
-## Playwright UI Check
+## Skill maintenance
+- Modifica skill, prompt, configurazione harness
+- Esegui `scripts/validate_skill.py` prima di chiudere
+- Aggiorna `improvement-log.md` e `release-notes.md`
 
-Consider Playwright automatically for new pages, redesigns, important forms, dashboards, charts, navigation, responsive layout, or screenshot/mockup fidelity. Prefer screenshots at the most relevant desktop/mobile viewport plus a small interaction smoke check when behavior matters.
+## Quando NON attivare un ruolo
 
-Skip Playwright for tiny copy changes, backend-only work, mechanical refactors, or CSS tweaks that can be checked locally without a browser. If Playwright requires starting a server, installing browsers, logging in, seeded data, or broad viewport coverage, use a cost checkpoint first.
+- task piccolo che il main agent chiude in 2 turni
+- ruolo non riduce rischio o tempo significativamente
+- task non chiaro: prima chiarisci, poi attiva
 
-When Playwright is used, keep it targeted: screenshot, console errors, one primary workflow, and only states affected by the change.
+## Combinazioni utili
+
+- Backend + QA: nuova API con test
+- Security + Review/Audit: code review focalizzata su auth
+- Data/Migration + DevOps: rollout migrazione produzione
