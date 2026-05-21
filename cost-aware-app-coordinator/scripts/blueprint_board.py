@@ -562,7 +562,22 @@ def scanner_files(project: Path, limit: int = 240) -> list[Path]:
             continue
         if path.is_file() and path.suffix.lower() in TEXT_EXTENSIONS:
             found.append(path)
-    return found
+    return sorted(found, key=scanner_file_priority)
+
+
+def scanner_file_priority(path: Path) -> tuple[int, str]:
+    rel = path.as_posix()
+    if rel.endswith("scripts/serve_dashboard.py"):
+        return (0, rel)
+    if "/backend/" in rel or "/server/" in rel or "/api/" in rel:
+        return (1, rel)
+    if "/scripts/" in rel and path.suffix.lower() == ".py":
+        return (2, rel)
+    if "/frontend/" in rel or path.suffix.lower() in {".jsx", ".tsx", ".html"}:
+        return (3, rel)
+    if "/reports/" in rel:
+        return (8, rel)
+    return (5, rel)
 
 
 def scanner_candidates(project: Path, limit: int = 44) -> list[dict[str, object]]:
