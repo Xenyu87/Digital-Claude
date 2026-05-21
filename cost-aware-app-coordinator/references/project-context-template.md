@@ -9,7 +9,7 @@ Use this when a project lacks lightweight AI context. Adapt it; do not copy irre
 
 These rules should be portable across Codex, Claude Code, Cursor, Gemini CLI, Copilot, GitHub agents, and similar coding agents.
 
-Read `AI_CONTEXT.md` before non-trivial changes. Read `AI_HANDOFF.md` when taking over active work from Codex, Claude Code, GitHub agents, or another agent. Read `AI_STRUCTURE.md` when route, module, or data-flow orientation matters. Read `AI_DECISIONS.md` when architecture, stack, auth, data, design, deployment, cost, or past tradeoffs matter. Read `AI_AGENT_LOG.md` only when similar mistakes or token waste may repeat.
+Read `AI_RESUME.md` first when present; it is the cheap "latest state" entry point for a new chat. Then read `AI_CONTEXT.md` before non-trivial changes. Read `AI_HANDOFF.md` when taking over active work from Codex, Claude Code, GitHub agents, or another agent. Read `AI_STRUCTURE.md` when route, module, or data-flow orientation matters. Read `AI_DECISIONS.md` when architecture, stack, auth, data, design, deployment, cost, or past tradeoffs matter. Read `AI_AGENT_LOG.md` only when similar mistakes or token waste may repeat.
 
 Working rules:
 
@@ -37,6 +37,7 @@ Working rules:
 
 | If the task touches... | Read... |
 | --- | --- |
+| latest state / resume | AI_RESUME.md |
 | app layout/routes/modules | AI_STRUCTURE.md |
 | active handoff from another agent | AI_HANDOFF.md |
 | durable decisions/tradeoffs | AI_DECISIONS.md |
@@ -75,6 +76,10 @@ Working rules:
 
 Update the relevant doc when architecture, APIs, data shapes, setup, deploy, workflows, or structure memory change.
 ```
+
+## AI_RESUME.md
+
+Keep this under about 80 lines. It is the first file a new chat reads to avoid rediscovery. Update it after meaningful work, before closing a session, or with `scripts/update_ai_resume.py` from this skill.
 
 ## AI_STRUCTURE.md
 

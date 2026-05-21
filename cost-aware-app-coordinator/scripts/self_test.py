@@ -49,6 +49,8 @@ REQUIRED_MARKERS = {
         "portable across Codex",
         "GitHub agents",
         "untrusted until reviewed",
+        "AI_RESUME.md",
+        "latest state",
     ],
     "references/release-notes.md": [
         "v0.77.0",
@@ -217,6 +219,19 @@ REQUIRED_MARKERS = {
         "checkpoint",
         "start_task",
         "complete_task",
+    ],
+    "scripts/bootstrap_project_context.py": [
+        "AI_RESUME.md",
+        "cheap \"latest state\" entry point",
+        "AI_RESUME",
+        "MINIMAL_FILES",
+    ],
+    "scripts/update_ai_resume.py": [
+        "AI_RESUME.md",
+        "MAX_STATUS_ITEMS",
+        "Recent Commits",
+        "Read Next Only If Needed",
+        "AI_HANDOFF.md",
     ],
     "scripts/telegram_notify.py": [
         "TELEGRAM_BOT_TOKEN",

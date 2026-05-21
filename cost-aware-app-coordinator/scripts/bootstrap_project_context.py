@@ -12,7 +12,7 @@ AGENTS = """# Agent Instructions
 
 These rules should be portable across Codex, Claude Code, Cursor, Gemini CLI, Copilot, GitHub agents, and similar coding agents.
 
-Read `AI_CONTEXT.md` before non-trivial changes. Read `AI_HANDOFF.md` when taking over active work from Codex, Claude Code, GitHub agents, or another agent. Read `AI_STRUCTURE.md` when route, module, or data-flow orientation matters. Read `AI_DECISIONS.md` when architecture, stack, auth, data, design, deployment, cost, or past tradeoffs matter. Read `AI_AGENT_LOG.md` only when similar mistakes or token waste may repeat.
+Read `AI_RESUME.md` first when present; it is the cheap "latest state" entry point for a new chat. Then read `AI_CONTEXT.md` before non-trivial changes. Read `AI_HANDOFF.md` when taking over active work from Codex, Claude Code, GitHub agents, or another agent. Read `AI_STRUCTURE.md` when route, module, or data-flow orientation matters. Read `AI_DECISIONS.md` when architecture, stack, auth, data, design, deployment, cost, or past tradeoffs matter. Read `AI_AGENT_LOG.md` only when similar mistakes or token waste may repeat.
 
 Working rules:
 
@@ -28,7 +28,7 @@ MINIMAL_AGENTS = """# Agent Instructions
 
 These rules should be portable across Codex, Claude Code, Cursor, Gemini CLI, Copilot, GitHub agents, and similar coding agents.
 
-Read `AI_CONTEXT.md` before non-trivial changes. Use the routing table there to find existing project docs. Prefer targeted searches and section reads over full-file reads for large docs or source files.
+Read `AI_RESUME.md` first when present; it is the cheap "latest state" entry point for a new chat. Then read `AI_CONTEXT.md` before non-trivial changes. Use the routing table there to find existing project docs. Prefer targeted searches and section reads over full-file reads for large docs or source files.
 
 Working rules:
 
@@ -55,6 +55,7 @@ AI_CONTEXT = """# AI Context - Index
 
 | If the task touches... | Read... |
 | --- | --- |
+| latest state / resume | AI_RESUME.md |
 | app layout/routes/modules | AI_STRUCTURE.md |
 | active handoff from another agent | AI_HANDOFF.md |
 | durable decisions/tradeoffs | AI_DECISIONS.md |
@@ -123,6 +124,7 @@ Use this as the routing index for agents. Keep details in existing project docs;
 
 | If the task touches... | Read first | Then, only if needed |
 | --- | --- | --- |
+| latest state / resume | AI_RESUME.md | AI_HANDOFF.md |
 | onboarding/general setup | README.md | docs/ONBOARDING.md |
 | structure/frontend/backend | ARCHITECTURE.md targeted section | specific files |
 | API/backend contract | docs/API-REFERENCE.md targeted section | controller/routes with `rg` |
@@ -173,6 +175,33 @@ AI_HANDOFF = """# AI Handoff
 """
 
 
+AI_RESUME = """# AI Resume
+
+Last updated: never
+
+## Current State
+
+- Goal: unknown
+- Branch: unknown
+- Git state: unknown
+- Last commit: unknown
+
+## Latest Work
+
+- No recent work recorded yet.
+
+## Next Step
+
+- Read `AI_CONTEXT.md`, then inspect only the files tied to the user's request.
+
+## Read Next Only If Needed
+
+- `AI_CONTEXT.md` for routing.
+- `AI_HANDOFF.md` for active handoff.
+- `AI_DECISIONS.md` for durable decisions.
+"""
+
+
 AI_DECISIONS = """# AI Decisions
 
 Record durable choices only.
@@ -219,6 +248,7 @@ Use this only when frontend, backend, and data behavior need a shared contract.
 
 FILES = {
     "AGENTS.md": AGENTS,
+    "AI_RESUME.md": AI_RESUME,
     "AI_CONTEXT.md": AI_CONTEXT,
     "AI_HANDOFF.md": AI_HANDOFF,
     "AI_DECISIONS.md": AI_DECISIONS,
@@ -227,6 +257,7 @@ FILES = {
 
 MINIMAL_FILES = {
     "AGENTS.md": MINIMAL_AGENTS,
+    "AI_RESUME.md": AI_RESUME,
     "AI_CONTEXT.md": AI_CONTEXT_EXISTING,
 }
 

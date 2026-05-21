@@ -27,7 +27,7 @@ Ask the user only when a missing choice changes product behavior, cost, credenti
 2. Choose budget mode internally unless the user explicitly asks to control cost/safety.
 3. Estimate the task cost as `basso`, `medio`, or `alto`; mention it only when it affects a user decision.
 4. Choose a model policy using the Model Selection Protocol before spawning agents or starting expensive work.
-5. Look for project context before reading code: `AI_CONTEXT.md`, `AGENTS.md`, `README.md`, then targeted docs.
+5. Look for project context before reading code: `AI_RESUME.md`, `AI_CONTEXT.md`, `AGENTS.md`, `README.md`, then targeted docs.
 6. If no useful project context exists, propose or create a minimal context index only when it materially helps the current work.
 7. Read only files needed for the task. Do not scan the whole repository unless the task is explicitly an audit or the context map is missing.
 8. Before noisy commands, cap output: prefer `rg`, file lists, counts, `Select-Object -First`, targeted paths, or specific doc sections over full recursive dumps.
@@ -217,7 +217,7 @@ For medium/high-risk UI work, consider Playwright screenshots or smoke checks au
 
 For a new app, create or propose a small context system before deep implementation:
 
-- `AGENTS.md` for agent rules and project-specific guardrails.
+- `AI_RESUME.md` for cheap latest-state resume; `AGENTS.md` for agent rules and project-specific guardrails.
 - `AI_CONTEXT.md` for the routing table and current decisions.
 - `AI_STRUCTURE.md` for the app structure memory when the project has enough files to benefit.
 - `AI_DECISIONS.md` for durable decisions, tradeoffs, constraints, and "do not repeat" notes.
