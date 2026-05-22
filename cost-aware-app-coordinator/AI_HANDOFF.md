@@ -2,38 +2,37 @@
 
 ## Current Goal
 
-Clean up the coordinator dashboard context and prepare a serious dashboard reorganization plan.
+Make the Lavagna the main simple/powerful dashboard area and keep the dashboard organized into clear tabs.
 
 ## State
 
-- Done: repo context files created for the skill project.
-- Done: `AI_CONTEXT.md` now describes real dashboard/skill routing.
-- In progress: closing stale checkpoint and reducing Blueprint scanner false positives.
-- Not started: implementing the dashboard page/tab split.
+- Done: Lavagna has action-focused `blueprint-view-v1` payload and React Flow UI.
+- Done: dashboard tabs exist: Home, Lavagna, Azioni, Automazione, Diagnostica.
+- In progress: renderer cleanup after the remote major cleanup merge.
+- Next target: split `render_html()` into section render helpers.
 
 ## Changed Files
 
-- `AGENTS.md`: project-level agent entry instructions.
 - `AI_RESUME.md`: cheap latest-state entry point.
-- `AI_CONTEXT.md`: real routing/context for this skill repo.
 - `AI_HANDOFF.md`: current handoff.
-- `AI_DECISIONS.md`: durable decisions.
-- `docs/ai/app-contract.md`: dashboard workflow contract.
-- `scripts/blueprint_board.py`: scanner prioritization work.
+- `scripts/dashboard_components.py`: removed legacy SVG Blueprint graph implementation.
+- `scripts/generate_dashboard.py`: merged duplicate Azioni sections into one tab section.
+- `scripts/dashboard_smoke_test.py`: checks each dashboard section appears exactly once.
 
 ## Decisions
 
 - Use tabs/client-side sections before true server routes for the dashboard split. This keeps existing forms and React Flow mount safer.
 - Keep diagnostics visible but moved out of the first screen.
+- React Flow is the canonical Lavagna renderer; the old inline SVG renderer should not return.
 
 ## Open Risks
 
-- Blueprint scanner can still confuse generated report UI with source UI when `reports/skill-dashboard.html` is scanned.
 - `render_html()` remains large and should be split incrementally.
+- Visual/manual browser verification is still useful after larger UI rearrangements.
 
 ## Next Step
 
-Run verification after scanner/context cleanup, then plan the dashboard IA implementation in phases.
+Run verification, commit/push, then split `render_html()` into `render_home_section`, `render_lavagna_section`, `render_actions_section`, `render_automation_section`, `render_diagnostics_section`.
 
 ## Do Not Repeat
 

@@ -957,28 +957,6 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
     </details>
 
     </section>
-    <section class="dashboard-section" data-dashboard-section="azioni">
-    <h2>Ripresa Lavoro</h2>
-    <p class="section-kicker">Prompt, checkpoint e azioni operative per continuare il lavoro senza rileggere tutto il progetto.</p>
-    <section class="grid">
-      <div class="card">
-        <div class="metric">{esc(active_task.get("status", "none"))}</div>
-        <div class="muted">{esc(active_task.get("goal", "Nessun task attivo registrato."))}</div>
-        <div class="muted">Aggiornato: {esc(active_task.get("updated_at", "n/d"))}</div>
-      </div>
-      <div class="card">
-        <h2>Prossimo passo salvato</h2>
-        <div class="muted">{esc(active_task.get("next_step", "Nessun checkpoint disponibile."))}</div>
-      </div>
-      <div class="card">
-        <h2>Stato ripresa</h2>
-        <div class="muted">Fatti: {esc(active_task.get("done_count", 0))} | Rischi: {esc(active_task.get("risk_count", 0))}</div>
-        <div class="muted">File: {esc(", ".join(active_task.get("changed_files", [])[:4]) if isinstance(active_task.get("changed_files"), list) else "")}</div>
-      </div>
-    </section>
-    <details><summary>Prompt di ripresa task</summary><pre>{esc(active_task.get("resume_prompt", ""))}</pre></details>
-
-    </section>
     <section class="dashboard-section" data-dashboard-section="lavagna">
     <h2 id="lavagna-app">Lavagna App</h2>
     <p class="section-kicker">Area principale per capire il progetto come flussi: React Flow, nodi, relazioni, audit e piano fix.</p>
@@ -1137,6 +1115,26 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
     <section class="dashboard-section" data-dashboard-section="azioni">
     <h2>Azioni Progetto</h2>
     <p class="section-kicker">Task dai warning, prompt pronti, analisi progetto ed esperti consigliati.</p>
+    <h2>Ripresa Lavoro</h2>
+    <p class="section-kicker">Prompt, checkpoint e azioni operative per continuare il lavoro senza rileggere tutto il progetto.</p>
+    <section class="grid">
+      <div class="card">
+        <div class="metric">{esc(active_task.get("status", "none"))}</div>
+        <div class="muted">{esc(active_task.get("goal", "Nessun task attivo registrato."))}</div>
+        <div class="muted">Aggiornato: {esc(active_task.get("updated_at", "n/d"))}</div>
+      </div>
+      <div class="card">
+        <h2>Prossimo passo salvato</h2>
+        <div class="muted">{esc(active_task.get("next_step", "Nessun checkpoint disponibile."))}</div>
+      </div>
+      <div class="card">
+        <h2>Stato ripresa</h2>
+        <div class="muted">Fatti: {esc(active_task.get("done_count", 0))} | Rischi: {esc(active_task.get("risk_count", 0))}</div>
+        <div class="muted">File: {esc(", ".join(active_task.get("changed_files", [])[:4]) if isinstance(active_task.get("changed_files"), list) else "")}</div>
+      </div>
+    </section>
+    <details><summary>Prompt di ripresa task</summary><pre>{esc(active_task.get("resume_prompt", ""))}</pre></details>
+
     <details open>
       <summary>Strumenti azioni progetto</summary>
     <h2>Task Automatici Dai Warning</h2>

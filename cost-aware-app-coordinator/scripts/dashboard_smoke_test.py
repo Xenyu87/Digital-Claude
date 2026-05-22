@@ -83,6 +83,7 @@ REQUIRED_HTML = [
     "Crea design nella lavagna",
 ]
 REQUIRED_JSON = ["project_memory", "event_log", "project_audit", "monitored_project", "expert_feedback", "auto_pilot", "smart_cache", "blueprint_board", "background_sentinel", "persistent_runner", "active_task"]
+EXPECTED_DASHBOARD_SECTIONS = ["home", "lavagna", "azioni", "automazione", "diagnostica"]
 MAX_COMPACT_JSON_BYTES = 150000
 
 
@@ -102,6 +103,11 @@ def main() -> int:
         for marker in REQUIRED_HTML:
             if marker not in html:
                 errors.append(f"html missing marker: {marker}")
+        for section in EXPECTED_DASHBOARD_SECTIONS:
+            marker = f'data-dashboard-section="{section}"'
+            count = html.count(marker)
+            if count != 1:
+                errors.append(f"html expected exactly one {marker}, found {count}")
     if DATA.exists():
         if DATA.stat().st_size > MAX_COMPACT_JSON_BYTES:
             errors.append(f"skill-dashboard.json is larger than {MAX_COMPACT_JSON_BYTES} bytes")
