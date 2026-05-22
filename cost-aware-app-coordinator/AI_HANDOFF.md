@@ -10,12 +10,13 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 - Done: dashboard tabs exist: Home, Lavagna, Azioni, Automazione, Diagnostica.
 - Done: renderer cleanup after the remote major cleanup merge.
 - In progress: split `render_html()` into section render helpers.
+- Done in current step: extracted `render_runner_config_form()` from the Automazione section.
 
 ## Changed Files
 
 - `AI_RESUME.md`: cheap latest-state entry point.
 - `AI_HANDOFF.md`: current handoff.
-- `scripts/generate_dashboard.py`: extracted dashboard header, tabs, guidance cards, and Home section helper.
+- `scripts/generate_dashboard.py`: extracted dashboard header, tabs, guidance cards, Home section helper, and runner config form.
 
 ## Decisions
 
@@ -30,7 +31,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 
 ## Next Step
 
-Run verification, commit/push, then split `render_html()` into `render_automation_section`, `render_lavagna_section`, `render_actions_section`, `render_diagnostics_section`.
+Run verification, commit/push, then continue with `render_automation_section`, `render_lavagna_section`, `render_actions_section`, `render_diagnostics_section`.
 
 ## Do Not Repeat
 

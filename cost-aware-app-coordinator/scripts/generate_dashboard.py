@@ -807,6 +807,51 @@ def render_home_section(
     </section>"""
 
 
+def render_runner_config_form(runner_config: dict[str, object]) -> str:
+    return f"""
+          <form method="get" action="/runner-config" class="design-form">
+            <div><label>Modo esecuzione</label><select name="execution_mode">
+              <option value="off" {"selected" if runner_config.get("execution_mode") == "off" else ""}>spento</option>
+              <option value="local_only" {"selected" if runner_config.get("execution_mode") == "local_only" else ""}>solo locale</option>
+              <option value="cloud_only" {"selected" if runner_config.get("execution_mode") == "cloud_only" else ""}>solo cloud</option>
+              <option value="hybrid" {"selected" if runner_config.get("execution_mode") == "hybrid" else ""}>ibrido</option>
+            </select></div>
+            <div><label>Routing</label><select name="routing_policy">
+              <option value="manual" {"selected" if runner_config.get("routing_policy") == "manual" else ""}>manuale</option>
+              <option value="cheap_first" {"selected" if runner_config.get("routing_policy") == "cheap_first" else ""}>locale prima</option>
+              <option value="quality_first" {"selected" if runner_config.get("routing_policy") == "quality_first" else ""}>qualita prima</option>
+            </select></div>
+            <div><label>Provider cloud</label><input type="text" name="provider" value="{esc(runner_config.get("provider", ""))}" placeholder="openai / altro"></div>
+            <div><label>Modello cloud</label><input type="text" name="cloud_model" value="{esc(runner_config.get("cloud_model", "") or runner_config.get("model", ""))}" placeholder="da decidere"></div>
+            <div><label>Endpoint locale</label><input type="text" name="local_endpoint" value="{esc(runner_config.get("local_endpoint", ""))}" placeholder="http://127.0.0.1:11434"></div>
+            <div><label>Modello locale</label><input type="text" name="local_model" value="{esc(runner_config.get("local_model", ""))}" placeholder="piccolo, da decidere"></div>
+            <div><label>LLM locale</label><select name="local_llm_mode">
+              <option value="disabled" {"selected" if runner_config.get("local_llm_mode") == "disabled" else ""}>non usarlo</option>
+              <option value="optional" {"selected" if runner_config.get("local_llm_mode") == "optional" else ""}>solo se conviene</option>
+              <option value="enabled" {"selected" if runner_config.get("local_llm_mode") == "enabled" else ""}>abilitabile</option>
+            </select></div>
+            <div><label>Accesso cloud</label><input type="text" name="cloud_access" value="{esc(runner_config.get("cloud_access", "codex_cli_session"))}" placeholder="codex_cli_session"></div>
+            <div><label>Autonomia</label><select name="autonomy_level">
+              <option value="suggest_only" {"selected" if runner_config.get("autonomy_level") == "suggest_only" else ""}>solo suggerimenti</option>
+              <option value="safe_reports" {"selected" if runner_config.get("autonomy_level") == "safe_reports" else ""}>report/check sicuri</option>
+              <option value="safe_edits_with_checkpoint" {"selected" if runner_config.get("autonomy_level") == "safe_edits_with_checkpoint" else ""}>edit sicuri con checkpoint</option>
+            </select></div>
+            <div><label>RAM server GB</label><input type="number" name="server_total_ram_gb" min="1" max="1024" value="{esc(runner_config.get("server_total_ram_gb", 32))}"></div>
+            <div><label>RAM LXC dev GB</label><input type="number" name="dev_lxc_ram_gb" min="1" max="1024" value="{esc(runner_config.get("dev_lxc_ram_gb", 4))}"></div>
+            <input type="hidden" name="model" value="{esc(runner_config.get("cloud_model", "") or runner_config.get("model", ""))}">
+            <div><label>Budget token</label><input type="number" name="token_budget_limit" min="0" max="200000" value="{esc(runner_config.get("token_budget_limit", 0))}"></div>
+            <div><label>Max step</label><input type="number" name="max_steps_per_task" min="0" max="50" value="{esc(runner_config.get("max_steps_per_task", 0))}"></div>
+            <div><label>Max secondi</label><input type="number" name="max_runtime_seconds" min="10" max="7200" value="{esc(runner_config.get("max_runtime_seconds", 30))}"></div>
+            <div><label>Scrittura</label><select name="write_policy">
+              <option value="approval_required" {"selected" if runner_config.get("write_policy") == "approval_required" else ""}>solo con approvazione</option>
+              <option value="no_write" {"selected" if runner_config.get("write_policy") == "no_write" else ""}>mai scrivere codice</option>
+              <option value="reports_only" {"selected" if runner_config.get("write_policy") == "reports_only" else ""}>solo report</option>
+            </select></div>
+            <div class="wide"><label>Note</label><input type="text" name="notes" value="{esc(runner_config.get("notes", ""))}" placeholder="regole o vincoli da ricordare"></div>
+            <div class="wide"><button type="submit">Salva contratto runner</button></div>
+          </form>"""
+
+
 def render_html(report: dict[str, object], refresh_seconds: int | None = None) -> str:
     checks = report["checks"]
     validate = checks["validate_skill"]
@@ -946,47 +991,7 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
         </div>
         <div class="card">
           <h2>Configura limiti futuri</h2>
-          <form method="get" action="/runner-config" class="design-form">
-            <div><label>Modo esecuzione</label><select name="execution_mode">
-              <option value="off" {"selected" if runner_config.get("execution_mode") == "off" else ""}>spento</option>
-              <option value="local_only" {"selected" if runner_config.get("execution_mode") == "local_only" else ""}>solo locale</option>
-              <option value="cloud_only" {"selected" if runner_config.get("execution_mode") == "cloud_only" else ""}>solo cloud</option>
-              <option value="hybrid" {"selected" if runner_config.get("execution_mode") == "hybrid" else ""}>ibrido</option>
-            </select></div>
-            <div><label>Routing</label><select name="routing_policy">
-              <option value="manual" {"selected" if runner_config.get("routing_policy") == "manual" else ""}>manuale</option>
-              <option value="cheap_first" {"selected" if runner_config.get("routing_policy") == "cheap_first" else ""}>locale prima</option>
-              <option value="quality_first" {"selected" if runner_config.get("routing_policy") == "quality_first" else ""}>qualita prima</option>
-            </select></div>
-            <div><label>Provider cloud</label><input type="text" name="provider" value="{esc(runner_config.get("provider", ""))}" placeholder="openai / altro"></div>
-            <div><label>Modello cloud</label><input type="text" name="cloud_model" value="{esc(runner_config.get("cloud_model", "") or runner_config.get("model", ""))}" placeholder="da decidere"></div>
-            <div><label>Endpoint locale</label><input type="text" name="local_endpoint" value="{esc(runner_config.get("local_endpoint", ""))}" placeholder="http://127.0.0.1:11434"></div>
-            <div><label>Modello locale</label><input type="text" name="local_model" value="{esc(runner_config.get("local_model", ""))}" placeholder="piccolo, da decidere"></div>
-            <div><label>LLM locale</label><select name="local_llm_mode">
-              <option value="disabled" {"selected" if runner_config.get("local_llm_mode") == "disabled" else ""}>non usarlo</option>
-              <option value="optional" {"selected" if runner_config.get("local_llm_mode") == "optional" else ""}>solo se conviene</option>
-              <option value="enabled" {"selected" if runner_config.get("local_llm_mode") == "enabled" else ""}>abilitabile</option>
-            </select></div>
-            <div><label>Accesso cloud</label><input type="text" name="cloud_access" value="{esc(runner_config.get("cloud_access", "codex_cli_session"))}" placeholder="codex_cli_session"></div>
-            <div><label>Autonomia</label><select name="autonomy_level">
-              <option value="suggest_only" {"selected" if runner_config.get("autonomy_level") == "suggest_only" else ""}>solo suggerimenti</option>
-              <option value="safe_reports" {"selected" if runner_config.get("autonomy_level") == "safe_reports" else ""}>report/check sicuri</option>
-              <option value="safe_edits_with_checkpoint" {"selected" if runner_config.get("autonomy_level") == "safe_edits_with_checkpoint" else ""}>edit sicuri con checkpoint</option>
-            </select></div>
-            <div><label>RAM server GB</label><input type="number" name="server_total_ram_gb" min="1" max="1024" value="{esc(runner_config.get("server_total_ram_gb", 32))}"></div>
-            <div><label>RAM LXC dev GB</label><input type="number" name="dev_lxc_ram_gb" min="1" max="1024" value="{esc(runner_config.get("dev_lxc_ram_gb", 4))}"></div>
-            <input type="hidden" name="model" value="{esc(runner_config.get("cloud_model", "") or runner_config.get("model", ""))}">
-            <div><label>Budget token</label><input type="number" name="token_budget_limit" min="0" max="200000" value="{esc(runner_config.get("token_budget_limit", 0))}"></div>
-            <div><label>Max step</label><input type="number" name="max_steps_per_task" min="0" max="50" value="{esc(runner_config.get("max_steps_per_task", 0))}"></div>
-            <div><label>Max secondi</label><input type="number" name="max_runtime_seconds" min="10" max="7200" value="{esc(runner_config.get("max_runtime_seconds", 30))}"></div>
-            <div><label>Scrittura</label><select name="write_policy">
-              <option value="approval_required" {"selected" if runner_config.get("write_policy") == "approval_required" else ""}>solo con approvazione</option>
-              <option value="no_write" {"selected" if runner_config.get("write_policy") == "no_write" else ""}>mai scrivere codice</option>
-              <option value="reports_only" {"selected" if runner_config.get("write_policy") == "reports_only" else ""}>solo report</option>
-            </select></div>
-            <div class="wide"><label>Note</label><input type="text" name="notes" value="{esc(runner_config.get("notes", ""))}" placeholder="regole o vincoli da ricordare"></div>
-            <div class="wide"><button type="submit">Salva contratto runner</button></div>
-          </form>
+{render_runner_config_form(runner_config)}
           <div class="muted">Questo non abilita AI autonoma: prepara solo limiti e regole verificabili.</div>
         </div>
       </section>
