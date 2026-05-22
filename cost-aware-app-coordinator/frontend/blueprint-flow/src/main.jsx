@@ -314,6 +314,23 @@ function FlowBoard({ root }) {
     ];
   }, [payload.flows, boardView, nodes]);
 
+  const boardPrimaryAction = useMemo(() => {
+    const focus = boardView.focus || {};
+    const action = (boardView.actions || [])[0] || {};
+    const issue = (boardView.issues || [])[0] || {};
+    const target =
+      nodes.find((node) => node.id === String(issue.id || focus.id || '')) ||
+      nodes.find((node) => node.data?.title === action.node) ||
+      null;
+    return {
+      title: issue.title || focus.title || action.node || 'Nessun focus critico',
+      action: action.action || issue.fix || focus.next_action || 'Continua dalla vista Flussi e verifica il prossimo nodo utile.',
+      why: action.why || issue.reason || focus.reason || 'La Lavagna sta filtrando rumore tecnico e mostra solo il lavoro piu utile.',
+      check: action.check || 'Rigenera la dashboard e verifica che la Lavagna riduca problemi o ipotesi aperte.',
+      target,
+    };
+  }, [boardView, nodes]);
+
   const taskPrompt = useMemo(() => {
     if (!selectedNode) return '';
     const action = (boardView.actions || []).find((item) => item.node === selectedNode.data?.title);
@@ -410,6 +427,19 @@ function FlowBoard({ root }) {
 
   return (
     <div className="bf-shell">
+      <section className="bf-primary-action">
+        <div>
+          <span>Prossima azione</span>
+          <h3>{boardPrimaryAction.title}</h3>
+          <p>{boardPrimaryAction.action}</p>
+          <small>{boardPrimaryAction.why}</small>
+        </div>
+        <div className="bf-primary-check">
+          <strong>Check</strong>
+          <p>{boardPrimaryAction.check}</p>
+          <button type="button" onClick={() => focusNode(boardPrimaryAction.target)} disabled={!boardPrimaryAction.target}>Apri nodo</button>
+        </div>
+      </section>
       <div className="bf-home">
         {boardHome.map((item) => (
           <button key={item.key} type="button" className={`bf-home-card bf-home-${item.key}`} onClick={() => focusNode(item.target)} disabled={!item.target}>

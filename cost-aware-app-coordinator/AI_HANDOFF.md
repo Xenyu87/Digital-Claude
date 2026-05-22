@@ -15,12 +15,16 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 - Done in current step: extracted full `render_lavagna_section()` while preserving React Flow, design wizard, and screenshot paste markup.
 - Done in current step: extracted full `render_actions_section()` while preserving resume, warning tasks, prompts, and expert feedback markup.
 - Done in current step: extracted full `render_diagnostics_section()` and removed the unused `estimates` local from `render_html()`.
+- Done in current step: Lavagna first panel is now action-first; wizard/screenshot moved under `Strumenti lavagna`; React Flow shows a `Prossima azione` bar above counters.
 
 ## Changed Files
 
 - `AI_RESUME.md`: cheap latest-state entry point.
 - `AI_HANDOFF.md`: current handoff.
-- `scripts/generate_dashboard.py`: extracted dashboard header, tabs, guidance cards, Home, Automazione, Lavagna, Azioni, and Diagnostica section helpers.
+- `scripts/generate_dashboard.py`: Lavagna panel now starts from next task, counters, and direct scan/save commands.
+- `frontend/blueprint-flow/src/main.jsx`: added primary action summary above map counters.
+- `frontend/blueprint-flow/src/styles.css`: styled primary action bar.
+- `scripts/dashboard_smoke_test.py`, `scripts/self_test.py`: updated markers for the new Lavagna UX.
 
 ## Decisions
 
@@ -35,7 +39,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 
 ## Next Step
 
-Run verification, commit/push, then continue with a UX pass on the Lavagna first panel and default technical-detail visibility.
+Run verification, commit/push, then do a visual/manual pass and improve task-copy or empty states if needed.
 
 ## Do Not Repeat
 

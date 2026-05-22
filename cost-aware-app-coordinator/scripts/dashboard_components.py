@@ -57,6 +57,13 @@ DASHBOARD_CSS = """
     .blueprint-panel { border:1px solid #cbd8e6; border-radius:8px; background:#fff; padding:16px; margin:8px 0 14px; }
     .blueprint-focus { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(240px,.7fr); gap:12px; align-items:stretch; }
     .blueprint-title { font-size:22px; font-weight:800; line-height:1.15; overflow-wrap:anywhere; }
+    .blueprint-command-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:14px; }
+    .blueprint-status-card { border:1px solid var(--line); border-radius:8px; background:#fbfcfe; padding:12px; }
+    .blueprint-status-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px; }
+    .blueprint-status-grid div { border:1px solid var(--line); border-radius:8px; background:#fff; padding:10px; min-height:72px; }
+    .blueprint-status-grid strong { display:block; font-size:22px; line-height:1; }
+    .blueprint-status-grid span { display:block; color:var(--muted); font-size:12px; line-height:1.25; margin-top:6px; }
+    .blueprint-workbench { background:#fbfcfe; }
     .blueprint-lane { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin-top:12px; }
     .blueprint-lane.is-filtered .node-card { display:none; }
     .blueprint-lane.is-filtered .node-card.is-visible { display:block; }

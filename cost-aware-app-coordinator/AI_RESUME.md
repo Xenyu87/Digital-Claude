@@ -1,14 +1,14 @@
 # AI Resume
 
-Last updated: 2026-05-22T16:05:00
+Last updated: 2026-05-22T19:40:00
 Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Current State
 
 - Goal: Lavagna come centro operativo semplice e potente
 - Branch: master
-- Git state: modifiche locali in corso su `render_diagnostics_section()`
-- Last commit: e73b104 split dashboard actions renderer
+- Git state: modifiche locali in corso su UX Lavagna
+- Last commit: 84ee003 split dashboard diagnostics renderer
 
 ## Latest Work
 
@@ -17,7 +17,7 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 - Done: dashboard divisa in tab Home, Lavagna, Azioni, Automazione, Diagnostica.
 - Done: renderer legacy rimosso e sezioni dashboard duplicate ripulite.
 - In progress: split incrementale di `render_html()` in helper di sezione.
-- Done in current step: estratta tab Diagnostica in `render_diagnostics_section()` e rimossa variabile `estimates` inutilizzata da `render_html()`.
+- Done in current step: primo pannello Lavagna reso operativo con prossimo task, contatori, comandi diretti; wizard/screenshot spostati sotto Strumenti lavagna; React Flow ha barra Prossima azione.
 
 ## Changed Or Untracked Files
 
@@ -27,14 +27,14 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Recent Commits
 
+- `84ee003 split dashboard diagnostics renderer`
 - `e73b104 split dashboard actions renderer`
 - `db42462 split dashboard board renderer`
 - `99ab40b split dashboard automation renderer`
-- `4810712 extract dashboard runner config form`
 
 ## Next Step
 
-- Valutare uno step UX sulla Lavagna: rendere il primo pannello ancora piu operativo e ridurre i dettagli tecnici visibili di default.
+- Valutare test visuale/manuale della Lavagna e poi migliorare copia task/empty states se il primo pannello risulta ancora troppo tecnico.
 
 ## Read Next Only If Needed
 

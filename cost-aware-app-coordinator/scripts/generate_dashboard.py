@@ -952,35 +952,52 @@ def render_automation_section(
 
 
 def render_lavagna_section(blueprint_json: dict[str, object], monitored_project: object) -> str:
+    doctor = blueprint_json.get("doctor") or {}
+    focus = (doctor.get("next_focus") or {}) if isinstance(doctor, dict) else {}
+    audit = (doctor.get("audit") or {}) if isinstance(doctor, dict) else {}
+    problems = audit.get("problems", []) if isinstance(audit, dict) else []
+    fix_plan = audit.get("fix_plan", []) if isinstance(audit, dict) else []
+    issue_count = len(problems) if isinstance(problems, list) else 0
+    action_count = len(fix_plan) if isinstance(fix_plan, list) else 0
+    focus_title = focus.get("title", blueprint_json.get("next_node", "") or "n/d") if isinstance(focus, dict) else blueprint_json.get("next_node", "") or "n/d"
+    focus_action = focus.get("next_action", "Usa il Blueprint come intent layer prima di implementare.") if isinstance(focus, dict) else "Usa il Blueprint come intent layer prima di implementare."
+    focus_health = focus.get("health", "n/d") if isinstance(focus, dict) else "n/d"
+    focus_domain = focus.get("domain", "n/d") if isinstance(focus, dict) else "n/d"
     return f"""
     <section class="dashboard-section" data-dashboard-section="lavagna">
     <h2 id="lavagna-app">Lavagna App</h2>
-    <p class="section-kicker">Area principale per capire il progetto come flussi: React Flow, nodi, relazioni, audit e piano fix.</p>
+    <p class="section-kicker">Centro operativo del progetto: parti dal prossimo focus, trasformalo in task e usa la mappa solo per capire collegamenti e prove.</p>
     <section class="blueprint-panel">
       <div class="blueprint-focus">
         <div>
-          <div class="hero-label">Prossimo focus lavagna</div>
-          <div class="blueprint-title">{esc(((blueprint_json.get("doctor") or {}).get("next_focus") or {}).get("title", blueprint_json.get("next_node", "") or "n/d"))}</div>
-          <p class="muted">{esc(((blueprint_json.get("doctor") or {}).get("next_focus") or {}).get("next_action", "Usa il Blueprint come intent layer prima di implementare."))}</p>
+          <div class="hero-label">Prossimo task dalla lavagna</div>
+          <div class="blueprint-title">{esc(focus_title)}</div>
+          <p class="muted">{esc(focus_action)}</p>
+          <div class="blueprint-command-row">
+            <a class="button-link" href="#lavagna-app">Apri mappa</a>
+            <form method="get" action="/blueprint-scan"><input type="hidden" name="project" value="{esc(str(monitored_project))}"><button type="submit">Scansiona progetto</button></form>
+            <form method="get" action="/blueprint-import"><input type="hidden" name="project" value="{esc(str(monitored_project))}"><button type="submit">Salva Blueprint</button></form>
+          </div>
         </div>
-        <div>
+        <div class="blueprint-status-card">
           <div class="chip-row">
-            <span class="chip">{esc(((blueprint_json.get("doctor") or {}).get("next_focus") or {}).get("health", "n/d"))}</span>
-            <span class="chip">{esc(((blueprint_json.get("doctor") or {}).get("next_focus") or {}).get("domain", "n/d"))}</span>
-            <span class="chip warn">{esc((blueprint_json.get("doctor") or {}).get("nodes_checked", 0))} nodi</span>
+            <span class="chip">{esc(focus_health)}</span>
+            <span class="chip">{esc(focus_domain)}</span>
+            <span class="chip warn">{esc(doctor.get("nodes_checked", 0) if isinstance(doctor, dict) else 0)} nodi</span>
           </div>
-          <div class="muted" style="margin-top:10px;">Auto-update: proposte visibili qui, scrittura solo con comando esplicito.</div>
-          <div class="topline">
-            <form method="get" action="/blueprint-scan"><input type="hidden" name="project" value="{esc(str(monitored_project))}"><button type="submit">Scansiona nodi</button></form>
-            <form method="get" action="/blueprint-import"><input type="hidden" name="project" value="{esc(str(monitored_project))}"><button type="submit">Conferma e salva Blueprint</button></form>
+          <div class="blueprint-status-grid">
+            <div><strong>{esc(issue_count)}</strong><span>problemi/ipotesi</span></div>
+            <div><strong>{esc(action_count)}</strong><span>azioni pronte</span></div>
+            <div><strong>{esc(blueprint_json.get("planned", 0))}</strong><span>planned</span></div>
           </div>
+          <div class="muted" style="margin-top:10px;">Scrittura solo con comando esplicito. La vista principale nasconde rumore tecnico e controlli interni.</div>
         </div>
       </div>
-      <h2>Lavagna App</h2>
-      <p class="muted">Ogni card traduce il nodo in parole semplici: cosa fa, con chi parla e perche il collegamento esiste. Le frecce mostrano il flusso principale tra UI, backend, dati, test, runtime e documentazione.</p>
-      <details>
-        <summary>Wizard Design App</summary>
-        <p class="muted">Compila solo quello che sai. La skill crea nodi design umani e poi mostra cosa manca rispetto al codice rilevato.</p>
+      <details class="blueprint-workbench">
+        <summary>Strumenti lavagna</summary>
+        <div class="detail-band">
+        <h2>Wizard Design App</h2>
+        <p class="muted">Compila solo quello che sai. La skill crea nodi design umani e mostra cosa manca rispetto al codice rilevato.</p>
         <form method="post" action="/blueprint-design" class="design-form" data-design-wizard>
           <input type="hidden" name="project" value="{esc(str(monitored_project))}">
           <div class="wide"><label>Template app</label><select name="template" data-design-template>
@@ -1037,43 +1054,46 @@ def render_lavagna_section(blueprint_json: dict[str, object], monitored_project:
           updatePreview();
         }})();
         </script>
+        </div>
+        <div class="screenshot-drop" tabindex="0" data-screenshot-drop>
+          <strong>Incolla screenshot qui</strong>
+          <div class="muted">Clicca questo riquadro e premi Ctrl+V dopo aver fatto lo screenshot. Lo salvo nel server della dashboard e posso leggerlo da li.</div>
+          <div class="screenshot-status" data-screenshot-status>In attesa di immagine.</div>
+        </div>
+        <script>
+        (function () {{
+          const box = document.querySelector('[data-screenshot-drop]');
+          const status = document.querySelector('[data-screenshot-status]');
+          if (!box || !status) return;
+          box.addEventListener('paste', async (event) => {{
+            const items = Array.from((event.clipboardData || {{}}).items || []);
+            const imageItem = items.find(item => item.type && item.type.startsWith('image/'));
+            if (!imageItem) {{
+              status.textContent = 'Nessuna immagine trovata negli appunti.';
+              return;
+            }}
+            const file = imageItem.getAsFile();
+            if (!file) return;
+            status.textContent = 'Caricamento screenshot...';
+            try {{
+              const response = await fetch('/upload-screenshot', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': file.type || 'image/png' }},
+                body: file
+              }});
+              const payload = await response.json();
+              status.textContent = payload.ok ? `Salvato: ${{payload.path}}` : 'Upload non riuscito.';
+            }} catch (error) {{
+              status.textContent = 'Upload non riuscito.';
+            }}
+          }});
+        }})();
+        </script>
       </details>
-      <div class="screenshot-drop" tabindex="0" data-screenshot-drop>
-        <strong>Incolla screenshot qui</strong>
-        <div class="muted">Clicca questo riquadro e premi Ctrl+V dopo aver fatto lo screenshot. Lo salvo nel server della dashboard e posso leggerlo da li.</div>
-        <div class="screenshot-status" data-screenshot-status>In attesa di immagine.</div>
-      </div>
-      <script>
-      (function () {{
-        const box = document.querySelector('[data-screenshot-drop]');
-        const status = document.querySelector('[data-screenshot-status]');
-        if (!box || !status) return;
-        box.addEventListener('paste', async (event) => {{
-          const items = Array.from((event.clipboardData || {{}}).items || []);
-          const imageItem = items.find(item => item.type && item.type.startsWith('image/'));
-          if (!imageItem) {{
-            status.textContent = 'Nessuna immagine trovata negli appunti.';
-            return;
-          }}
-          const file = imageItem.getAsFile();
-          if (!file) return;
-          status.textContent = 'Caricamento screenshot...';
-          try {{
-            const response = await fetch('/upload-screenshot', {{
-              method: 'POST',
-              headers: {{ 'Content-Type': file.type || 'image/png' }},
-              body: file
-            }});
-            const payload = await response.json();
-            status.textContent = payload.ok ? `Salvato: ${{payload.path}}` : 'Upload non riuscito.';
-          }} catch (error) {{
-            status.textContent = 'Upload non riuscito.';
-          }}
-        }});
-      }})();
-      </script>
+      <h2>Mappa operativa</h2>
+      <p class="muted">Usala per vedere flussi, problemi e prove. Le tabelle tecniche restano chiuse in fondo.</p>
       {render_blueprint_graph(blueprint_json.get("doctor") or {})}
-      <div class="muted">Fonti / Prove disponibili nella sidebar della lavagna quando selezioni un nodo o un collegamento.</div>
+      <div class="muted">Fonti e prove sono nella sidebar della mappa quando selezioni un nodo o un collegamento.</div>
       <details>
         <summary>Dettagli tecnici lavagna</summary>
       {render_blueprint_cards(blueprint_json.get("doctor") or {})}
