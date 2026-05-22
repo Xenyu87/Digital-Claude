@@ -67,7 +67,7 @@ function BlueprintNode({ data, selected }) {
       <div className="bf-node-title">{data.title}</div>
       <div className="bf-node-body">{data.summary}</div>
       <div className="bf-node-footer">
-        {data.connectionCount} collegamenti{data.uiRoute || data.apiRoute ? ` / ${data.uiRoute || data.apiRoute}` : ''}
+        {data.connectionCount} collegamenti{data.subnodes?.length ? ` / ${data.subnodes.length} sotto-nodi` : ''}{data.uiRoute || data.apiRoute ? ` / ${data.uiRoute || data.apiRoute}` : ''}
       </div>
       <Handle type="source" position={Position.Right} className="bf-handle" />
     </div>
@@ -545,6 +545,31 @@ function FlowBoard({ root }) {
           {(selectedNode?.data?.uiRoute || selectedNode?.data?.apiRoute) && (
             <div className="bf-route">{selectedNode.data.httpMethod ? `${selectedNode.data.httpMethod} ` : ''}{selectedNode.data.uiRoute || selectedNode.data.apiRoute}</div>
           )}
+          {selectedNode?.data?.actionDescription && (
+            <div className="bf-detail-section">
+              <strong>Cosa fa</strong>
+              <p>{selectedNode.data.actionDescription}</p>
+            </div>
+          )}
+          {selectedNode?.data?.subnodes?.length ? (
+            <div className="bf-detail-section">
+              <strong>Sotto-nodi</strong>
+              <div className="bf-subnodes">
+                {selectedNode.data.subnodes.slice(0, 12).map((item) => (
+                  <button
+                    key={item.id || item.title}
+                    type="button"
+                    className="bf-subnode"
+                    onClick={() => item.id && setSelectedId(item.id)}
+                  >
+                    <span>{item.title}</span>
+                    <small>{item.description || item.route || item.kind || 'Elemento interno del nodo.'}</small>
+                    {item.route && <em>{item.route}</em>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {selectedNode?.data?.scannerEvidence && (
             <div className="bf-detail-section">
               <strong>Perche lo so</strong>

@@ -447,6 +447,46 @@
   overflow-wrap: anywhere;
 }
 
+.bf-subnodes {
+  display: grid;
+  gap: 8px;
+}
+
+.bf-subnode {
+  width: 100%;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  border: 1px solid #cbd8e6;
+  border-radius: 6px;
+  background: #f7fafc;
+  color: #334155;
+  padding: 8px;
+}
+
+.bf-subnode:hover {
+  border-color: #2563a8;
+  background: #f1f7ff;
+}
+
+.bf-subnode span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.bf-subnode small,
+.bf-subnode em {
+  color: #5c6876;
+  font-size: 12px;
+  line-height: 1.35;
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
+
+.bf-subnode em {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .bf-gap-note {
   border: 1px solid #e7b1ac;
   border-radius: 6px;

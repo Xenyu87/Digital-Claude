@@ -93,6 +93,12 @@ BACKEND_ROUTE_RE = re.compile(r"""(?:app|router)\.(get|post|put|patch|delete)\(\
 PY_DECORATOR_ROUTE_RE = re.compile(r"""@(?:app|router)\.(get|post|put|patch|delete|route)\(\s*["']([^"']+)["'](?P<args>[\s\S]{0,240}?)\)""", re.IGNORECASE)
 FORM_ACTION_RE = re.compile(r"""<form[^>]*action=["']([^"']+)["'][\s\S]{0,360}?<button[^>]*>([\s\S]{1,120}?)</button>""", re.IGNORECASE)
 BUTTON_RE = re.compile(r"""<button[^>]*>([\s\S]{1,90}?)</button>""", re.IGNORECASE)
+BUTTON_TAG_RE = re.compile(r"""<button(?P<attrs>[\s\S]{0,360}?)(?<!\=)>(?P<label>[\s\S]{1,180}?)</button>""", re.IGNORECASE)
+ONCLICK_RE = re.compile(r"""onClick\s*=\s*\{(?P<handler>[\s\S]{1,220}?)\}""")
+JSX_ROUTE_RE = re.compile(r"""(?:fetch|router\.(?:push|replace))\(\s*["']([^"']+)["']|(?:href|to)\s*=\s*["']([^"']+)["']""")
+CHART_RE = re.compile(r"""<(?P<name>[A-Z][A-Za-z0-9_]*(?:Chart|Graph|Plot|Analytics|Metric|Kpi|Stats)[A-Za-z0-9_]*)\b(?P<attrs>[^>]*)""")
+CHART_PART_RE = re.compile(r"""<(Line|Bar|Area|Pie|Radar|Scatter|Composed)?Chart\b|<(XAxis|YAxis|Tooltip|Legend|CartesianGrid|ResponsiveContainer)\b""")
+CHART_PRIMITIVES = {"LineChart", "BarChart", "AreaChart", "PieChart", "RadarChart", "ScatterChart", "ComposedChart"}
 ENDPOINT_RE = re.compile(r"""["'](/[a-zA-Z0-9_./{}:-]+)["']""")
 COMPONENT_RE = re.compile(r"""(?:export\s+default\s+function|export\s+function|function|const)\s+([A-Z][A-Za-z0-9_]*)""")
 MODEL_RE = re.compile(r"""(?:model|interface|type|class)\s+([A-Z][A-Za-z0-9_]*)|CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?([A-Za-z_][A-Za-z0-9_]*)""", re.IGNORECASE)
@@ -612,6 +618,86 @@ def route_name(route: str) -> str:
     return " ".join(part for part in re.split(r"[/_-]+", clean) if part).title() or route
 
 
+def component_node_id(name: str) -> str:
+    return slug(f"Screen/Component: {name}")
+
+
+def primary_component(text: str) -> str:
+    for component in COMPONENT_RE.findall(text):
+        if component and len(component) > 2 and component not in {"React", "Promise"} and not component.isupper():
+            return component
+    return ""
+
+
+def button_action_details(label: str, attrs: str, context: str) -> tuple[str, str, str]:
+    handler_match = ONCLICK_RE.search(attrs or "")
+    handler = ""
+    if handler_match:
+        handler = " ".join(handler_match.group("handler").split())
+        handler = handler[:90]
+    search_text = f"{attrs}\n{context}"
+    if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", handler):
+        body_match = re.search(
+            rf"""(?:function\s+{re.escape(handler)}\s*\([^)]*\)\s*\{{(?P<body>[\s\S]{{0,700}}?)\}}|(?:const|let)\s+{re.escape(handler)}\s*=\s*(?:\([^)]*\)|[A-Za-z_][A-Za-z0-9_]*)\s*=>\s*\{{(?P<body2>[\s\S]{{0,700}}?)\}})""",
+            context,
+        )
+        if body_match:
+            search_text = body_match.group("body") or body_match.group("body2") or search_text
+    route = ""
+    method = ""
+    route_match = JSX_ROUTE_RE.search(search_text)
+    if route_match:
+        route = clean_route(route_match.group(1) or route_match.group(2) or "")
+    fetch_match = CLIENT_FETCH_RE.search(search_text)
+    axios_match = CLIENT_AXIOS_RE.search(search_text)
+    if fetch_match:
+        route = clean_route(fetch_match.group(1)) or route
+        method = infer_http_method(fetch_match.group("options") or context, "GET")
+    elif axios_match:
+        method = axios_match.group(1).upper()
+        route = clean_route(axios_match.group(2)) or route
+    elif route:
+        method = "GET"
+    if route and method and method != "GET":
+        description = f"Al click `{label}` esegue {method} `{route}`."
+    elif route:
+        description = f"Al click `{label}` porta o chiama `{route}`."
+    elif handler:
+        description = f"Al click `{label}` esegue l'handler `{handler}`."
+    else:
+        description = f"`{label}` e' un comando UI cliccabile; la destinazione non e' ancora esplicita nel codice letto."
+    return description, route, method
+
+
+def chart_subnodes(name: str, attrs: str, context: str) -> list[dict[str, str]]:
+    data_hint = ""
+    data_match = re.search(r"""data\s*=\s*\{([^}]{1,80})\}""", attrs or context)
+    if data_match:
+        data_hint = data_match.group(1).strip()
+    parts = {match.group(0).strip("<").split()[0] for match in CHART_PART_RE.finditer(context)}
+    subnodes = [
+        {
+            "id": f"{slug(name)}-data",
+            "title": "Dati mostrati",
+            "description": f"Usa `{data_hint}` come sorgente dati." if data_hint else "Mostra una serie dati passata al componente.",
+        },
+        {
+            "id": f"{slug(name)}-visual",
+            "title": "Forma del grafico",
+            "description": f"Renderizza elementi {', '.join(sorted(parts)[:5])}." if parts else "Renderizza una visualizzazione grafica compatta.",
+        },
+    ]
+    if any(part in parts for part in {"Tooltip", "Legend", "XAxis", "YAxis"}):
+        subnodes.append(
+            {
+                "id": f"{slug(name)}-reading",
+                "title": "Lettura utente",
+                "description": "Include assi, legenda o tooltip per aiutare a capire il dato.",
+            }
+        )
+    return subnodes
+
+
 def node_contract(route: str, method: str = "", *, input_keys: list[str] | None = None, writes: list[str] | None = None) -> dict[str, object]:
     return {
         "route": route,
@@ -662,6 +748,8 @@ def scanner_candidates(project: Path, limit: int = 44) -> list[dict[str, object]
             text = path.read_text(encoding="utf-8", errors="ignore")[:140000]
         except OSError:
             continue
+        parent_component = primary_component(text)
+        parent_id = component_node_id(parent_component) if parent_component else ""
 
         for route, label in FORM_ACTION_RE.findall(text):
             if len(candidates) >= limit:
@@ -675,7 +763,7 @@ def scanner_candidates(project: Path, limit: int = 44) -> list[dict[str, object]
                 continue
             seen.add(key)
             node = make_node(f"Action: {label}", f"Quando l'utente clicca `{label}`, la UI invia o apre `{route}`.", source="scanner-ui-action", status="suggested")
-            node.update({"files": [rel], "inferred_type": "page", "domain": "frontend", "layer": "frontend", "kind": "action", "ui_route": route, "http_method": "POST", "contract": node_contract(route, "POST"), "scanner_evidence": f"{rel}: form action {route}"})
+            node.update({"files": [rel], "inferred_type": "page", "domain": "frontend", "layer": "frontend", "kind": "action", "ui_role": "form-submit", "parent_id": parent_id, "ui_route": route, "http_method": "POST", "contract": node_contract(route, "POST"), "scanner_evidence": f"{rel}: form action {route}"})
             candidates.append(node)
 
         for match in CLIENT_FETCH_RE.finditer(text):
@@ -761,10 +849,10 @@ def scanner_candidates(project: Path, limit: int = 44) -> list[dict[str, object]
             node.update({"files": [rel], "inferred_type": "page", "domain": "frontend", "layer": "frontend", "kind": "screen" if any(marker in rel.lower() for marker in ["page", "pages", "app/"]) else "component", "scanner_evidence": f"{rel}: componente {component}"})
             candidates.append(node)
 
-        for label in BUTTON_RE.findall(text):
+        for match in BUTTON_TAG_RE.finditer(text):
             if len(candidates) >= limit:
                 break
-            label = clean_label(label)
+            label = clean_label(match.group("label"))
             if not label or len(label) < 3 or label.lower() in {"submit", "button"}:
                 continue
             if is_internal_ui_control(label):
@@ -773,8 +861,50 @@ def scanner_candidates(project: Path, limit: int = 44) -> list[dict[str, object]
             if key in seen:
                 continue
             seen.add(key)
-            node = make_node(f"Button: {label}", f"Bottone o comando visibile nella UI: `{label}`.", source="scanner-ui-button", status="suggested")
-            node.update({"files": [rel], "inferred_type": "page", "domain": "frontend", "layer": "frontend", "kind": "action", "scanner_evidence": f"{rel}: bottone {label}"})
+            context = text[max(0, match.start() - 900): min(len(text), match.end() + 1200)]
+            action_description, route, method = button_action_details(label, match.group("attrs"), context)
+            node = make_node(f"Button: {label}", action_description, source="scanner-ui-button", status="suggested")
+            node.update({
+                "files": [rel],
+                "inferred_type": "page",
+                "domain": "frontend",
+                "layer": "frontend",
+                "kind": "action",
+                "ui_role": "button",
+                "parent_id": parent_id,
+                "ui_route": route,
+                "http_method": method,
+                "contract": node_contract(route, method) if route else {},
+                "scanner_evidence": f"{rel}: bottone {label}",
+                "action_description": action_description,
+            })
+            candidates.append(node)
+
+        for match in CHART_RE.finditer(text):
+            if len(candidates) >= limit:
+                break
+            chart_name = match.group("name")
+            custom_chart_names = {item.group("name") for item in CHART_RE.finditer(text)} - CHART_PRIMITIVES
+            if chart_name in CHART_PRIMITIVES and custom_chart_names:
+                continue
+            key = ("chart", f"{chart_name}:{rel}:{match.start()}")
+            if key in seen:
+                continue
+            seen.add(key)
+            context = text[max(0, match.start() - 700): min(len(text), match.end() + 1800)]
+            description = f"Grafico UI `{chart_name}`: mostra dati o metriche nel componente `{parent_component or human_title(path)}`."
+            node = make_node(f"Chart: {chart_name}", description, source="scanner-ui-chart", status="suggested")
+            node.update({
+                "files": [rel],
+                "inferred_type": "page",
+                "domain": "frontend",
+                "layer": "frontend",
+                "kind": "chart",
+                "ui_role": "chart",
+                "parent_id": parent_id,
+                "scanner_evidence": f"{rel}: grafico {chart_name}",
+                "subnodes": chart_subnodes(chart_name, match.group("attrs"), context),
+            })
             candidates.append(node)
 
         for method, route_value in BACKEND_ROUTE_RE.findall(text):
@@ -1755,6 +1885,50 @@ def attach_plain_relationships(reports: list[dict[str, object]]) -> None:
             item["plain_connection"] = "Non ho ancora abbastanza indizi per spiegare un collegamento chiaro."
 
 
+def attach_ui_hierarchy(reports: list[dict[str, object]]) -> None:
+    by_id = {str(item.get("id", "")): item for item in reports}
+    children_by_parent: dict[str, list[dict[str, object]]] = {}
+    for item in reports:
+        parent_id = str(item.get("parent_id") or "")
+        if parent_id and parent_id in by_id:
+            children_by_parent.setdefault(parent_id, []).append(item)
+
+    for parent_id, children in children_by_parent.items():
+        parent = by_id[parent_id]
+        existing_subnodes = parent.get("subnodes") if isinstance(parent.get("subnodes"), list) else []
+        parent["subnodes"] = list(existing_subnodes)
+        for child in children[:12]:
+            title = str(child.get("title") or "")
+            description = str(child.get("action_description") or child.get("plain_summary") or child.get("description") or "")
+            parent["subnodes"].append(
+                {
+                    "id": str(child.get("id") or ""),
+                    "title": title,
+                    "description": description,
+                    "kind": str(child.get("kind") or ""),
+                    "route": str(child.get("ui_route") or child.get("api_route") or ""),
+                }
+            )
+            append_relation(
+                parent,
+                child,
+                "contiene",
+                f"`{title}` e' un elemento visibile dentro questo componente.",
+                confidence="high",
+                kind="contains_ui",
+                evidence=str(child.get("scanner_evidence") or ""),
+            )
+            append_relation(
+                child,
+                parent,
+                "sta dentro",
+                f"Questo nodo UI vive dentro `{parent.get('title', '')}`.",
+                confidence="high",
+                kind="inside_component",
+                evidence=str(child.get("scanner_evidence") or ""),
+            )
+
+
 def node_doctor(project: Path, node: dict[str, object], files: list[Path]) -> dict[str, object]:
     domain = str(node.get("domain") or infer_domain(str(node.get("title", "")), str(node.get("inferred_type", "feature"))))
     related = related_files(project, node, files)
@@ -1804,6 +1978,9 @@ def node_doctor(project: Path, node: dict[str, object], files: list[Path]) -> di
         "scanner_evidence": node.get("scanner_evidence", ""),
         "data_model": node.get("data_model", ""),
         "next_action": next_action,
+        "ui_role": node.get("ui_role", ""),
+        "action_description": node.get("action_description", ""),
+        "subnodes": node.get("subnodes") if isinstance(node.get("subnodes"), list) else [],
     }
 
 
@@ -1813,6 +1990,7 @@ def doctor(project: Path) -> dict[str, object]:
     files = project_files(project)
     node_reports = [node_doctor(project, item, files) for item in nodes[:90]]
     attach_plain_relationships(node_reports)
+    attach_ui_hierarchy(node_reports)
     attach_scanner_relationships(project, node_reports)
     apply_edge_feedback(project, node_reports)
     attach_gap_status(node_reports)

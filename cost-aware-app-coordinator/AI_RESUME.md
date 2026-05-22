@@ -1,14 +1,14 @@
 # AI Resume
 
-Last updated: 2026-05-22T19:40:00
+Last updated: 2026-05-22T19:50:00
 Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Current State
 
 - Goal: Lavagna come centro operativo semplice e potente
 - Branch: master
-- Git state: modifiche locali in corso su UX Lavagna
-- Last commit: 84ee003 split dashboard diagnostics renderer
+- Git state: modifiche locali in corso su nodi UI Lavagna
+- Last commit: 969727a make board first panel action focused
 
 ## Latest Work
 
@@ -16,25 +16,31 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 - Done: filtri scanner per ridurre rumore da controlli interni dashboard.
 - Done: dashboard divisa in tab Home, Lavagna, Azioni, Automazione, Diagnostica.
 - Done: renderer legacy rimosso e sezioni dashboard duplicate ripulite.
-- In progress: split incrementale di `render_html()` in helper di sezione.
 - Done in current step: primo pannello Lavagna reso operativo con prossimo task, contatori, comandi diretti; wizard/screenshot spostati sotto Strumenti lavagna; React Flow ha barra Prossima azione.
+- Done in current step: scanner Lavagna ora crea nodi distinti per bottoni UI e grafici, collega i figli al componente padre, e passa sotto-nodi/descrizioni precise al dettaglio React Flow.
 
 ## Changed Or Untracked Files
 
+- `M scripts/blueprint_board.py`
+- `M scripts/dashboard_components.py`
+- `M frontend/blueprint-flow/src/main.jsx`
+- `M frontend/blueprint-flow/src/styles.css`
+- `M scripts/blueprint_board_test.py`
+- `M scripts/self_test.py`
 - `M AI_RESUME.md`
 - `M AI_HANDOFF.md`
-- `M scripts/generate_dashboard.py`
+- `M AI_CONTEXT.md`
 
 ## Recent Commits
 
+- `969727a make board first panel action focused`
 - `84ee003 split dashboard diagnostics renderer`
 - `e73b104 split dashboard actions renderer`
 - `db42462 split dashboard board renderer`
-- `99ab40b split dashboard automation renderer`
 
 ## Next Step
 
-- Valutare test visuale/manuale della Lavagna e poi migliorare copia task/empty states se il primo pannello risulta ancora troppo tecnico.
+- Commit/push dei nodi UI granulari; poi prossimo step naturale: visual/manual pass della Lavagna e vero expand/collapse su canvas se il dettaglio laterale non basta.
 
 ## Read Next Only If Needed
 

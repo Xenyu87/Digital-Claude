@@ -19,7 +19,26 @@ def main() -> int:
         (project / "docs").mkdir()
         (project / "backend" / "src" / "routes" / "loginRoute.js").write_text("router.post('/login', login);\n", encoding="utf-8")
         (project / "backend" / "src" / "services" / "__tests__" / "login.test.js").write_text("test('login', () => {});\n", encoding="utf-8")
-        (project / "frontend" / "src" / "components" / "AdminDashboard.jsx").write_text("export function AdminDashboard() { fetch('/login', { method: 'POST', body: JSON.stringify({email}) }) }\n", encoding="utf-8")
+        (project / "frontend" / "src" / "components" / "AdminDashboard.jsx").write_text(
+            """
+export function AdminDashboard() {
+  fetch('/login', { method: 'POST', body: JSON.stringify({email}) })
+  function saveOrder() { fetch('/orders', { method: 'POST', body: JSON.stringify({email}) }) }
+  function exportCsv() { window.location.href = '/orders/export' }
+  return <>
+    <button onClick={saveOrder}>Salva ordine</button>
+    <button onClick={() => router.push('/reports')}>Apri report</button>
+    <button onClick={exportCsv}>Esporta CSV</button>
+    <button onClick={() => setFilters(open)}>Filtra ordini</button>
+    <RevenueChart data={orders} />
+  </>
+}
+function RevenueChart({ data }) {
+  return <LineChart data={data}><XAxis dataKey="month" /><YAxis /><Tooltip /></LineChart>
+}
+""",
+            encoding="utf-8",
+        )
         (project / "frontend" / "src" / "components" / "BoardToolbar.jsx").write_text("export function BoardToolbar() { return <><button>Zoom -</button><button>Reset vista</button><form action='/api'><button>Monitora</button></form></> }\n", encoding="utf-8")
         data = load_blueprint(project)
         login = add_node(data, make_node("Login con email e Google"))
@@ -74,6 +93,23 @@ def main() -> int:
         doctor_titles = {str(item.get("title", "")) for item in doctor_nodes}
         if "Button: Zoom -" in doctor_titles or "Button: Reset vista" in doctor_titles or "Action: Monitora" in doctor_titles:
             errors.append("internal board controls leaked into blueprint issues")
+        for title in {"Button: Salva ordine", "Button: Apri report", "Button: Esporta CSV", "Button: Filtra ordini"}:
+            if title not in doctor_titles:
+                errors.append(f"scanner missed UI button node {title}")
+        chart_node = next((item for item in doctor_nodes if item.get("title") == "Chart: RevenueChart"), {})
+        if not chart_node:
+            errors.append("scanner missed chart node")
+        elif not chart_node.get("subnodes"):
+            errors.append("chart node missing subnodes")
+        admin_node = next((item for item in doctor_nodes if item.get("title") == "Screen/Component: AdminDashboard"), {})
+        if not any(item.get("title") == "Button: Salva ordine" and item.get("parent_id") == admin_node.get("id") for item in doctor_nodes):
+            errors.append("button node missing component parent")
+        if not any(
+            item.get("title") == "Screen/Component: AdminDashboard"
+            and any(rel.get("kind") == "contains_ui" for rel in item.get("plain_relations", []) if isinstance(rel, dict))
+            for item in doctor_nodes
+        ):
+            errors.append("component missing contains_ui relation")
         next_focus_title = str((doctor_report.get("next_focus") or {}).get("title", ""))
         if next_focus_title in {"Button: Zoom -", "Button: Reset vista", "Action: Monitora"}:
             errors.append("internal board control selected as next focus")

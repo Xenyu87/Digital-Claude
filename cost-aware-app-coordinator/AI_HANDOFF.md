@@ -16,30 +16,31 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 - Done in current step: extracted full `render_actions_section()` while preserving resume, warning tasks, prompts, and expert feedback markup.
 - Done in current step: extracted full `render_diagnostics_section()` and removed the unused `estimates` local from `render_html()`.
 - Done in current step: Lavagna first panel is now action-first; wizard/screenshot moved under `Strumenti lavagna`; React Flow shows a `Prossima azione` bar above counters.
+- Done in current step: Blueprint scanner creates granular UI nodes for visible buttons and charts, adds component parent/child relations, and exposes chart/button subnodes in the React Flow detail panel.
 
 ## Changed Files
 
-- `AI_RESUME.md`: cheap latest-state entry point.
-- `AI_HANDOFF.md`: current handoff.
-- `scripts/generate_dashboard.py`: Lavagna panel now starts from next task, counters, and direct scan/save commands.
-- `frontend/blueprint-flow/src/main.jsx`: added primary action summary above map counters.
-- `frontend/blueprint-flow/src/styles.css`: styled primary action bar.
-- `scripts/dashboard_smoke_test.py`, `scripts/self_test.py`: updated markers for the new Lavagna UX.
+- `AI_RESUME.md`, `AI_HANDOFF.md`, `AI_CONTEXT.md`: latest state and scanner contract memory.
+- `scripts/blueprint_board.py`: button/chart scanner, action descriptions, UI hierarchy relations, subnodes in doctor output.
+- `scripts/dashboard_components.py`: passes `uiRole`, `actionDescription`, and `subnodes` to React Flow.
+- `frontend/blueprint-flow/src/main.jsx`, `frontend/blueprint-flow/src/styles.css`: node footer shows subnode count; detail panel shows "Cosa fa" and clickable "Sotto-nodi".
+- `scripts/blueprint_board_test.py`, `scripts/self_test.py`: regression coverage for button nodes, chart nodes, and UI hierarchy.
 
 ## Decisions
 
 - Use tabs/client-side sections before true server routes for the dashboard split. This keeps existing forms and React Flow mount safer.
 - Keep diagnostics visible but moved out of the first screen.
 - React Flow is the canonical Lavagna renderer; the old inline SVG renderer should not return.
+- Keep nodes simple on canvas; put precision in parent/child links and the detail panel. True canvas expand/collapse can come next.
 
 ## Open Risks
 
 - `render_html()` remains large and should be split incrementally.
-- Visual/manual browser verification is still useful after larger UI rearrangements.
+- Playwright is not installed in this repo; use it only after adding the dependency or via an external browser harness.
 
 ## Next Step
 
-Run verification, commit/push, then do a visual/manual pass and improve task-copy or empty states if needed.
+Commit/push the granular UI node work. Next functional step: add canvas-level expand/collapse for component nodes if the detail panel is not enough.
 
 ## Do Not Repeat
 

@@ -35,6 +35,7 @@ Cost-aware Codex coordinator skill for app work. It provides operating rules, pr
 - Dashboard port: default `3002`.
 - Dashboard architecture: generated static report plus small local Python server for forms/actions.
 - Blueprint canvas: React Flow assets built into `reports/blueprint-flow-assets`.
+- Blueprint scanner contract: visible UI buttons and charts should become granular frontend nodes; component nodes may expose `subnodes`, `uiRole`, `actionDescription`, and parent/child `contains_ui` relations.
 - Automation: safe/report-only by default; AI autonomous execution remains disabled.
 - Project memory: use `AI_RESUME.md` as the cheap first-read file for new chats.
 
@@ -50,9 +51,11 @@ Cost-aware Codex coordinator skill for app work. It provides operating rules, pr
 
 ## Pending Work
 
-- [ ] Split dashboard into clearer sections/tabs: Home, Lavagna, Azioni, Automazione, Diagnostica.
-- [ ] Keep Home as a decision cockpit; move raw logs and technical tables out of the first screen.
-- [ ] Reduce Blueprint scanner false positives around generated dashboard forms and local Python endpoints.
+- [x] Split dashboard into clearer sections/tabs: Home, Lavagna, Azioni, Automazione, Diagnostica.
+- [x] Keep Home as a decision cockpit; move raw logs and technical tables out of the first screen.
+- [x] Reduce Blueprint scanner false positives around generated dashboard forms and local Python endpoints.
+- [x] Add granular Lavagna nodes for UI buttons/charts with parent-child relations and detail subnodes.
+- [ ] Add canvas-level expand/collapse for component nodes if detail-panel subnodes are not enough.
 - [ ] Keep runner controls visibly safe and separated from informational panels.
 
 ## Documentation Maintenance
