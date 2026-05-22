@@ -50,6 +50,33 @@ Lo vedrai in browser tra 10 minuti. Se è quello che immaginavi, andiamo
 avanti col resto.
 ```
 
+## Protocollo debate prima di chiedere
+
+Se lo scope e' ambiguo ma vuoi evitare di interrompere l'utente, usa il debate a 2 persona:
+
+### Come funziona
+
+Spawna 2 `Agent` con `model: haiku`, prompt opposti:
+
+**Agente Minimo**: "Interpreta il task come scope MINIMO: quali sono i file/azioni strettamente necessari? Lista compatta, niente extra."
+
+**Agente Espanso**: "Interpreta il task come scope ESPANSO: cosa potrebbe voler dire nella sua accezione piu' ampia? Lista completa di file/azioni."
+
+### Regola di convergenza
+
+- Se i due output condividono >80% di file/azioni → procedi con lo scope minimo, indica in 1 riga: `[scope: minimo per convergenza debate]`.
+- Se divergono → mostra all'utente il diff conciso (non i 2 output interi) e usa `AskUserQuestion`.
+
+### Costo stimato
+
+~30k token Haiku totali ≈ $0.03. Confronto: ~5 minuti utente per rispondere a domande di chiarimento.
+
+### Quando NON usare il debate
+
+- Il task ha gia' un brief preciso (>200 parole, file specifici citati).
+- Budget Economico: il costo debate e' proporzionalmente alto su task piccoli.
+- Il task e' gia' classificato fast path (§0 SKILL.md).
+
 ## Cosa NON fare
 
 - non chiedere all'utente di "definire lo scope" (parolaccia tecnica, non aiuta)
@@ -60,16 +87,7 @@ avanti col resto.
 
 ## Pattern di chiusura
 
-Dopo i mini-step, ogni volta che chiudi un pezzo:
-
-```
-Fatto: <pezzo piccolo>
-Verifica: <come l'utente controlla in browser/risultato visibile>
-
-Prossimo pezzo (se va bene): <cosa segue>
-```
-
-Così l'utente sa sempre dove sei e cosa viene dopo.
+Dopo ogni mini-step: `Fatto: <pezzo> / Verifica: <come l'utente controlla> / Prossimo: <cosa segue>`.
 
 ## Soglia di escalation
 

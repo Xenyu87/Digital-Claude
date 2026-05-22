@@ -95,6 +95,7 @@ In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallis
 | `code-debugger` | sonnet | bug rescue: riproduci → isola → fix → verifica |
 | `doc-writer` | sonnet | AI_*.md / README / handoff dopo modifiche non banali |
 | `code-reviewer` | opus | review pre-commit di diff non triviale (giudizio indipendente) |
+| `mar-reviewer` | opus | audit cross-modulo + review pre-commit di diff non triviale (3 critici + aggregator) |
 | `architect` | opus | nuova feature, scelta stack, design data model |
 
 **Flag per subagent dispatched**: i subagent accettano `--model`, `--permission-mode` per override puntuale. Fast mode usa Opus 4.7 by default. Esempi pratici in `references/specialist-agents.md`.
@@ -106,6 +107,10 @@ In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallis
 - Bug non banale → `code-debugger`. Main session NON dovrebbe debuggare a sentimento.
 - Decisione architetturale → `architect` (anche se main è già Opus: l'agent isolato non sporca il contesto principale).
 
+### External routing (opt-in)
+
+Disabilitato di default (`EXTERNAL_ROUTER_ENABLED=false`). Se attivo, instrada chiamate per categoria `ops` o esplorazioni Haiku-equivalenti a OpenRouter/DeepSeek. **Mai** per codice di prodotto, credenziali, dati personali, categorie modifica/audit/bug_rescue. Al primo uso stampa un warning non silenziabile e logga in `coordination-log.jsonl` con `external_router: true`. Dettagli: `references/external-routing.md`.
+
 **Trigger automatici da contesto** (la dashboard emette `<routing-hint>` nel prompt via UserPromptSubmit hook — quando vedi un blocco di quel tipo, rispetta `suggested_subagent` salvo motivo esplicito di non farlo):
 
 ```
@@ -116,6 +121,20 @@ model: <haiku|sonnet|opus>
 budget_max: <token>
 </routing-hint>
 ```
+
+### Auto-delegation gate (enforcement)
+
+Quattro gate che il main agent deve rispettare prima di eseguire inline. Bypassabili solo con override esplicito (vedi sotto).
+
+**Gate 1 — routing-hint ha priorità**: se il prompt contiene `<routing-hint>` con `suggested_subagent` non vuoto e `model: sonnet|haiku`, il main agent NON esegue il task inline — anche se è già Opus. Spawna immediatamente `Agent(subagent_type=<suggested>, model=<suggested_model>)`. Eccezione: task banale (<2 file, <1 turno, fast path conclamato).
+
+**Gate 2 — tetto Opus per categoria modifica**: se il task richiede edit su >3 file, la delega a `code-implementer` (sonnet) è obbligatoria. Il main agent fa solo planning + verifica del risultato; non tocca direttamente i file di prodotto.
+
+**Gate 3 — Haiku per esplorazione**: pattern "grep/find su >2 file", "leggi README/struttura", "dove sta X" → `Explore` (haiku) sempre. Il main agent non esegue grep inline su più di 2 file.
+
+**Gate 4 — ops + Economico**: categoria ops + budget Economico → `ops-runner` (haiku) per comandi systemctl/journalctl/cron/ss/df. Niente bash inline se l'output va parsato.
+
+**Override esplicito**: se l'utente scrive "fallo tu", "non delegare", "rimani sul main", il gate è bypassato per quel turno. Indicare nella risposta: `[gate bypassato su richiesta utente]`. Dettagli ed esempi: `references/auto-delegation-gate.md`.
 
 ## 4. Lettura iniziale del contesto
 
@@ -142,6 +161,7 @@ Mappa attivazione reference:
 - gate decisionali → `references/decision-risk-gates.md`
 - scope ambiguo o utente non programmer → `references/scope-checkpoint.md`
 - ruoli → `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`
+- gate di delega / drift modello → `references/auto-delegation-gate.md`
 - handoff → `references/agent-handoff.md`, `references/cross-agent-handoff-template.md`
 - creazione app → `references/app-creation-blueprint.md`, `references/default-stacks.md`, `references/project-context-template.md`, `references/structure-memory-template.md`, `references/second-brain-template.md`, `references/agent-autolog-template.md`; ricette pronte in `recipes/`
 - deploy app → `references/deploy-paths.md` + script in `assets/scripts/deploy-*.sh`
@@ -151,6 +171,10 @@ Mappa attivazione reference:
 - manutenzione → `references/maintenance-compaction.md`, `references/compression-pass.md`, `references/skill-sync.md`, `references/improvement-log.md`, `references/release-notes.md`
 - sicurezza coordinatore → `references/coordinator-safety.md`
 - self-improvement → `references/self-improvement.md`, `references/reflexion-loop.md`
+- drain / auto-curriculum / manutenzione notturna → `references/background-drain.md`
+- coordination log / sedimentation → `references/coordination-sedimentation.md`
+- pipeline DAG di subagent → `references/pipeline-dsl.md`
+- routing esterno opt-in → `references/external-routing.md`
 - tuning del loading → `references/progressive-loading.md`
 
 ## 6. Working loop
@@ -241,6 +265,8 @@ La skill **non si modifica senza approvazione esplicita** ("procedi"/"automiglio
 **Completamento voci TBD**: al primo turno di una nuova sessione, se `AI_AGENT_LOG.md` del progetto attivo contiene voci con segnaposto `<TBD ...>`, compilale subito basandoti su: lista dei file toccati nella voce, commit message, `git diff HEAD~1 HEAD --stat`. Una lezione per voce, due righe. Se non c'è abbastanza contesto per una lezione preventiva utile, cancella la voce (meglio nulla che rumore). Non chiedere conferma per la singola voce; mostra solo un riassunto a chiusura turno.
 
 **Skill library** (snippet Voyager riusabili): `skill_library/` accoglie frammenti emersi da uso reale. Promozione a `recipes/` o reference dopo 3+ usi.
+
+Per dettagli su drain e auto-curriculum: `references/background-drain.md`.
 
 ## 17. Manutenzione
 

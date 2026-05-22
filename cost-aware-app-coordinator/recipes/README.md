@@ -30,6 +30,7 @@ La skill apre la ricetta giusta automaticamente quando il task corrisponde. Tu p
 | [data-dashboard.md](data-dashboard.md) | cruscotto con KPI e grafici | Next.js + Supabase + Tremor + Vercel | 0€ tier free |
 | [content-site.md](content-site.md) | blog o sito contenuti markdown | Astro + Vercel/Netlify | 0€ |
 | [bot.md](bot.md) | bot Telegram/Discord per automazioni | Node.js + Railway | ~5€ |
+| [mar-audit.md](mar-audit.md) | audit cross-modulo con 3 reviewer paralleli + aggregatore | agenti locali (mar-reviewer) | ~$0.05-0.15 per audit |
 
 ## Struttura comune di una ricetta
 
@@ -43,6 +44,19 @@ Ogni file ricetta ha le stesse sezioni, in quest'ordine:
 6. **Come testare in browser** — visual-first
 7. **Deploy** — come metterla online
 8. **Punti di personalizzazione** — cosa cambi facilmente, cosa è più rischioso modificare
+
+## Pipelines (DAG di subagent)
+
+Le pipeline definiscono sequenze di subagent con dipendenze esplicite. Ogni step riceve l'output degli step precedenti come contesto nel prompt.
+
+| File | Cosa fa |
+| --- | --- |
+| [pipelines/feature-with-tests.yml](pipelines/feature-with-tests.yml) | impl + test + review per nuova feature |
+| [pipelines/bugfix-locked.yml](pipelines/bugfix-locked.yml) | debug + fix minimo + regressione per bug rescue |
+
+Esegui con: `python scripts/run_pipeline.py --pipeline recipes/pipelines/feature-with-tests.yml --var brief="descrizione feature"`
+
+Sintassi YAML: `references/pipeline-dsl.md`.
 
 ## Aggiungere una ricetta
 

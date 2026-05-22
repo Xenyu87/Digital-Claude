@@ -1,0 +1,39 @@
+pipeline: feature-with-tests
+description: >
+  Pipeline standard per nuove feature: implementazione, scrittura test, review finale.
+  Usa per feature con scope chiaro (3-8 file), budget Bilanciato.
+
+steps:
+  - id: impl
+    agent: code-implementer
+    model: sonnet
+    prompt: >
+      Implementa la feature seguente rispettando il brief e i file AI_*.md del progetto.
+      Brief: {{brief}}
+      Modifica solo i file necessari. Output: lista dei file toccati, una riga ciascuno.
+    output_key: files_changed
+
+  - id: test
+    agent: qa-tester
+    model: sonnet
+    needs: [impl]
+    input_filter: files_changed
+    prompt: >
+      Scrivi i test per i file modificati dalla feature.
+      File modificati: {{impl.files_changed | files_list}}
+      Usa il framework di test del progetto (pytest / Vitest / Jest).
+      Priorita': casi edge, input non validi, comportamenti ai bordi.
+      Output: path dei file di test creati.
+    output_key: test_files
+
+  - id: review
+    agent: code-reviewer
+    model: opus
+    needs: [impl, test]
+    prompt: >
+      Esegui una review pre-commit del diff prodotto.
+      File implementazione: {{impl.files_changed | files_list}}
+      File test: {{test.test_files | files_list}}
+      Controlla: correttezza, sicurezza base, allineamento con AI_CONTEXT.md.
+      Formato: Blocking / Should fix / Nit / Verdetto.
+    output_key: review_report

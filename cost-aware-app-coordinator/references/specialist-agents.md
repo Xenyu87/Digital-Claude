@@ -86,6 +86,14 @@ Fast mode (flag `/fast` in sessione) usa Opus 4.7 by default — utile per task 
 
 `wshobson/agents` (35k+ stelle) è un ecosistema di 185 agent domain-specific (python-pro, k8s, security-auditor, ecc.) installabili via `/plugin marketplace add wshobson/agents`. Organizzati in 80 plugin, non si sovrappongono al catalogo locale (`ops-runner`, `architect`, `code-implementer`). Utile per task fuori dal dominio corrente (es. Django, blockchain, ML pipeline) ma richiede installazione plugin separata — non integrare wholesale.
 
+## Trigger automatico MAR
+
+Preferisci `mar-reviewer` a `code-reviewer` quando:
+- categoria=audit, oppure
+- categoria=modifica AND >5 file AND budget diverso da Economico
+
+`mar-reviewer` spawna 3 sub-review Sonnet (sicurezza/performance/leggibilità) + aggregatore Haiku. Ricetta: `recipes/mar-audit.md`.
+
 ## Anti-pattern
 
 - delegare la comprensione ("decidi tu cosa cambiare")

@@ -1,0 +1,40 @@
+pipeline: bugfix-locked
+description: >
+  Pipeline per bug rescue: debug isolato, fix mirato, test di regressione.
+  "Locked" perche' il fix non puo' modificare file non toccati dal bug.
+  Usa per bug non banali dove la causa non e' ovvia dopo 1 tentativo.
+
+steps:
+  - id: debug
+    agent: code-debugger
+    model: sonnet
+    prompt: >
+      Riproduci e isola il bug seguente. Non fixare ancora.
+      Descrizione bug: {{bug_description}}
+      Obiettivo: identifica file:riga causa radice + stack trace o output atteso/reale.
+      Output: causa radice in 2-3 righe + path del file coinvolto.
+    output_key: root_cause
+
+  - id: fix
+    agent: code-implementer
+    model: sonnet
+    needs: [debug]
+    input_filter: root_cause
+    prompt: >
+      Applica il fix minimo per il bug.
+      Causa radice: {{debug.root_cause | first_200}}
+      Regola LOCKED: modifica SOLO i file citati nella causa radice. Zero refactor.
+      Output: lista file modificati + descrizione del fix in 1 riga.
+    output_key: fix_applied
+
+  - id: regression
+    agent: qa-tester
+    model: sonnet
+    needs: [fix]
+    input_filter: fix_applied
+    prompt: >
+      Scrivi un test di regressione che verifica che il bug sia risolto.
+      Fix applicato: {{fix.fix_applied | first_200}}
+      Il test deve: riprodurre il caso che causava il bug, verificare il comportamento corretto.
+      Output: path del file di test + nome del test case.
+    output_key: regression_test

@@ -67,6 +67,19 @@ Verifica: python scripts/validate_skill.py
 
 Se hai aggiornato `release-notes.md`, cita la nuova versione.
 
+## Auto-curriculum settimanale
+
+Il drain notturno di domenica (`scripts/drain.py --curriculum-weekly`) analizza il `coordination-log.jsonl` degli ultimi 7 giorni e propone voci in `improvement-log.md` con tag `<auto-proposed-curriculum>`.
+
+Pattern rilevati automaticamente:
+- **over-budget ricorrente** per categoria (avg >$1/task)
+- **errori tool ripetuti** (>=2 task failed/partial)
+- **escalation Opus non giustificate** su categorie ops/modifica
+
+Le voci proposte hanno priorita' (high/med/low) e richiedono revisione umana prima di diventare regole. Per promuovere: rimuovi il tag `<auto-proposed-curriculum>` e sposta in `SKILL.md` o nella reference pertinente.
+
+Per dettagli sul drain e sulla schedulazione: `references/background-drain.md`.
+
 ## Test su istanza fresca
 
 Le modifiche alla skill vanno testate con una nuova chat (instance fresh che carica la versione aggiornata). Pattern raccomandato dalla doc Anthropic: lavora con un'istanza A per modificare la skill, poi verifica con un'istanza B che la usi su task reali. Se B fallisce o ignora una regola, ritorna ad A con l'osservazione concreta.

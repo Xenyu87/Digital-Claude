@@ -8,15 +8,10 @@ Diario sintetico delle modifiche alla skill. Una riga per modifica.
 - YYYY-MM-DD — <area> — <cosa è cambiato> — <motivo breve>
 ```
 
-## Esempi
-
-```
-- 2026-04-29 — SKILL.md — aggiunta sezione 13 miglioramento skill — separare il flow di self-update
-- 2026-04-29 — references/budget-modes.md — chiarito de-escalation — evitare permanenza inutile in Massima sicurezza
-```
-
 ## Voci
 
+- 2026-05-22 — roadmap 7 step — implementata (vedi AI_DECISIONS del progetto dashboard-claude-coordinator): coordination-sedimentation, MAR-reviewer, debate scope, background-drain, auto-curriculum, pipeline-dsl, external-routing — espansione coordinata skill + dashboard
+- 2026-05-22 — SKILL.md §3 + references/auto-delegation-gate.md + §5 mappa — Auto-delegation gate: introdotto enforcement a 4 gate (routing-hint, tetto Opus >3 file, Explore per grep >2 file, ops-runner per ops+Economico) — dati reali 14gg: drift suggested→used ~50% (45 task sonnet→opus, 19 haiku→opus su 165 task con hint); costo Opus inflazionato senza beneficio qualitativo
 - 2026-05-21 — SKILL.md §3 — aggiunta nota baseline modelli 2026-05 (Haiku 4.5/Sonnet 4.6/Opus 4.7) + /model per switch sessione — allineamento a CLI v2.1.142-145
 - 2026-05-21 — SKILL.md §3 — nota flag subagent dispatched (--model, --permission-mode) + Fast mode Opus 4.7 — da release notes CLI
 - 2026-05-21 — references/mcp-integrations.md — MCP Registry come fonte canonica, deprecazione Third-Party list, MCP_TOOL_TIMEOUT >60s fix — da commit modelcontextprotocol/servers

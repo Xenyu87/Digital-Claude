@@ -38,6 +38,10 @@ Quando affinare o verificare il caricamento delle reference. Non aprire questo f
 | `release-notes.md` | aggiornamento versione |
 | `self-improvement.md` | l'utente chiede automiglioramento o audit della skill stessa |
 | `reflexion-loop.md` | fine task non banale (≥5 file o utente ha corretto la skill): estrarre lezione preventiva |
+| `coordination-sedimentation.md` | schema JSONL coordination-log, regole privacy, chi scrive/legge |
+| `background-drain.md` | drain notturno, auto-curriculum, attivazione timer systemd |
+| `pipeline-dsl.md` | sintassi YAML per pipeline DAG di subagent |
+| `external-routing.md` | routing verso provider esterni (opt-in, off di default) |
 
 ## Quando NON caricare
 

@@ -1,0 +1,13 @@
+[Unit]
+Description=Background drain: manutenzione automatica notturna skill cost-aware-app-coordinator
+Documentation=https://github.com/xenyu87/cost-aware-app-coordinator
+
+[Timer]
+# Gira ogni notte alle 03:00 ora locale
+OnCalendar=*-*-* 03:00:00
+# Se il sistema era spento all'orario previsto, esegui al riavvio
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

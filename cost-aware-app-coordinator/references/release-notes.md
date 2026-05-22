@@ -16,6 +16,21 @@ Note di rilascio sul comportamento osservabile della skill. Pensate per chi la u
 - ...
 ```
 
+## v1.1.0 — 2026-05-22
+### Aggiunto
+- **Coordination sedimentation**: log JSONL strutturato per ogni task chiuso (`scripts/log_coordination.py`, hook `scripts/hooks/coordination_log.py`). Schema: ts, task_id, project, category, tokens, cost_usd, outcome, lesson.
+- **MAR Reviewer** (`~/.claude/agents/mar-reviewer.md`): audit cross-modulo con 3 reviewer Sonnet paralleli (security/perf/readability) + aggregatore Haiku. Ricetta `recipes/mar-audit.md`. Trigger automatico in `specialist-agents.md` per diff >5 file.
+- **Debate scope**: `scope-checkpoint.md` ora include il protocollo debate a 2 persona Haiku (scope minimo vs espanso) prima di interrompere l'utente. Costo ~$0.03.
+- **Background drain** (`scripts/drain.py`): manutenzione notturna automatizzata (TBD, errori, compaction, validazione drift). Timer systemd in `assets/scripts/drain.timer|service`. Log in `~/.claude/projects/<slug>/memory/drain-log.jsonl`.
+- **Auto-curriculum settimanale** (domenica, flag `--curriculum-weekly` in drain): analisi coordination-log 7gg, propone voci `<auto-proposed-curriculum>` in `improvement-log.md`.
+- **Pipeline DSL** (`references/pipeline-dsl.md`, `scripts/run_pipeline.py`): pipeline YAML con DAG di dipendenze tra subagent. Due ricette: `feature-with-tests.yml`, `bugfix-locked.yml`.
+- **External routing opt-in** (`scripts/external_router.py`, `references/external-routing.md`): routing verso OpenRouter/DeepSeek, disabilitato di default, solo categoria ops, warning obbligatorio al primo uso.
+- **Dashboard**: nuova tabella `coordination_log` (migration SQL), API `POST/GET /api/coordination-log`, pagina `/economy/patterns`, pagina `/drain`.
+### Note di migrazione
+- Applica migration SQL: `supabase/migrations/20260522_coordination_log.sql` sul DB Neon.
+- Opzionale: installa hook Stop `scripts/hooks/coordination_log.py` in `~/.claude/settings.json`.
+- Opzionale: attiva timer drain (`systemctl --user enable --now drain.timer`).
+
 ## v0.1.0 — 2026-04-29
 ### Aggiunto
 - prima release: skill con 19 reference, validator, file `AI_*.md` per handoff multi-agente.

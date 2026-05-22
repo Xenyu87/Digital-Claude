@@ -1,0 +1,26 @@
+[Unit]
+Description=Background drain: manutenzione automatica skill cost-aware-app-coordinator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Sostituisci <PROJECT_PATH> con il path assoluto del progetto
+# Es: /root/Progetti/dashboard-claude-coordinator
+Environment=PROJECT_PATH=<PROJECT_PATH>
+Environment=SKILL_DASHBOARD_URL=http://localhost:3001
+
+ExecStart=/usr/bin/python3 \
+  /root/.claude/skills/cost-aware-app-coordinator/scripts/drain.py \
+  --project %E{PROJECT_PATH} \
+  --curriculum-weekly
+
+# Log su journal (visibile con: journalctl --user -u drain.service)
+StandardOutput=journal
+StandardError=journal
+
+# Non fallire il timer se il progetto e' temporaneamente non disponibile
+SuccessExitStatus=0
+
+[Install]
+WantedBy=default.target
