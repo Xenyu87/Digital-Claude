@@ -69,6 +69,18 @@ function BlueprintNode({ data, selected }) {
       <div className="bf-node-footer">
         {data.connectionCount} collegamenti{data.subnodes?.length ? ` / ${data.subnodes.length} sotto-nodi` : ''}{data.uiRoute || data.apiRoute ? ` / ${data.uiRoute || data.apiRoute}` : ''}
       </div>
+      {data.childCount ? (
+        <button
+          type="button"
+          className="bf-node-toggle"
+          onClick={(event) => {
+            event.stopPropagation();
+            data.onToggleParent?.(data.id);
+          }}
+        >
+          {data.isExpanded ? 'Chiudi dettagli' : `Apri ${data.childCount}`}
+        </button>
+      ) : null}
       <Handle type="source" position={Position.Right} className="bf-handle" />
     </div>
   );
@@ -196,7 +208,28 @@ function FlowBoard({ root }) {
   const [saveLabel, setSaveLabel] = useState('Salva layout');
   const [feedbackLabel, setFeedbackLabel] = useState('');
   const [taskLabel, setTaskLabel] = useState('');
+  const [expandedParents, setExpandedParents] = useState(() => new Set());
   const flow = useReactFlow();
+
+  const childrenByParent = useMemo(() => {
+    const grouped = new Map();
+    nodes.forEach((node) => {
+      const parentId = node.data?.parentId;
+      if (!parentId) return;
+      if (!grouped.has(parentId)) grouped.set(parentId, []);
+      grouped.get(parentId).push(node.id);
+    });
+    return grouped;
+  }, [nodes]);
+
+  const toggleParent = useCallback((parentId) => {
+    setExpandedParents((current) => {
+      const next = new Set(current);
+      if (next.has(parentId)) next.delete(parentId);
+      else next.add(parentId);
+      return next;
+    });
+  }, []);
 
   const viewFiltered = useMemo(() => {
     if (viewMode !== 'flows') return applyView(nodes, applyEdgeMode(edges, lineMode), viewMode);
@@ -210,10 +243,21 @@ function FlowBoard({ root }) {
     const term = search.trim().toLowerCase();
     return viewFiltered.nodes.map((node) => {
       const text = `${node.data.title} ${node.data.summary} ${node.data.description}`.toLowerCase();
-      const match = !node.hidden && (!term || text.includes(term)) && (!domain || node.data.domain === domain);
-      return { ...node, hidden: !match };
+      const parentCollapsed = node.data?.parentId && !expandedParents.has(node.data.parentId) && !term;
+      const match = !node.hidden && !parentCollapsed && (!term || text.includes(term)) && (!domain || node.data.domain === domain);
+      const childCount = childrenByParent.get(node.id)?.length || 0;
+      return {
+        ...node,
+        hidden: !match,
+        data: {
+          ...node.data,
+          childCount,
+          isExpanded: expandedParents.has(node.id),
+          onToggleParent: toggleParent,
+        },
+      };
     });
-  }, [viewFiltered.nodes, search, domain]);
+  }, [viewFiltered.nodes, search, domain, expandedParents, childrenByParent, toggleParent]);
 
   const visibleNodeIds = useMemo(
     () => new Set(visibleNodes.filter((node) => !node.hidden).map((node) => node.id)),
@@ -414,6 +458,15 @@ function FlowBoard({ root }) {
     flow.setCenter(node.position.x + 130, node.position.y + 75, { zoom: 1.05, duration: 450 });
   }, [flow]);
 
+  const openSubnode = useCallback((item) => {
+    if (!item?.id) return;
+    const child = nodes.find((node) => node.id === item.id);
+    if (child?.data?.parentId) {
+      setExpandedParents((current) => new Set(current).add(child.data.parentId));
+    }
+    setSelectedId(item.id);
+  }, [nodes]);
+
   const copyTaskPrompt = useCallback(async () => {
     if (!taskPrompt) return;
     try {
@@ -450,9 +503,14 @@ function FlowBoard({ root }) {
         ))}
       </div>
       <div className="bf-toolbar">
-        <div className="bf-tool-group bf-tool-search">
+          <div className="bf-tool-group bf-tool-search">
           <span>Cerca</span>
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nodo, file, funzione o route" />
+        </div>
+        <div className="bf-tool-group">
+          <span>Dettagli UI</span>
+          <button type="button" onClick={() => setExpandedParents(new Set(childrenByParent.keys()))}>Apri tutti</button>
+          <button type="button" onClick={() => setExpandedParents(new Set())}>Chiudi tutti</button>
         </div>
         <div className="bf-tool-group">
           <span>Vista</span>
@@ -560,7 +618,7 @@ function FlowBoard({ root }) {
                     key={item.id || item.title}
                     type="button"
                     className="bf-subnode"
-                    onClick={() => item.id && setSelectedId(item.id)}
+                    onClick={() => openSubnode(item)}
                   >
                     <span>{item.title}</span>
                     <small>{item.description || item.route || item.kind || 'Elemento interno del nodo.'}</small>

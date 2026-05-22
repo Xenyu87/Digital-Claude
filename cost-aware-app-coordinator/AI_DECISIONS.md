@@ -1,5 +1,14 @@
 # AI Decisions
 
+## 2026-05-22 - Lavagna Visual Regression
+
+- Decision: use Playwright for dashboard-level Lavagna checks.
+- Why: Python smoke tests can confirm generated markers, but cannot verify React Flow renders, toggles UI child nodes, or remains usable after frontend changes.
+- Setup: `@playwright/test`, Playwright Chromium, `playwright.config.js`, `tests/visual/blueprint-board.spec.js`.
+- Fixture: `tests/fixtures/visual-blueprint-app` contains four buttons and one chart so button/chart scanner behavior and canvas expand/collapse are deterministic.
+- Command: `npm run test:visual`.
+- Environment note: minimal Linux hosts need `npx playwright install chromium` and `npx playwright install-deps chromium`; restricted sandboxes may need elevated permission for local server sockets.
+
 Record durable choices only.
 
 ## Decisions

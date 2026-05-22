@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 from skill_learning import record_learning
-from blueprint_board import BLUEPRINT_FILE, add_node, apply_design_wizard, auto_update, board_summary, doctor, edge_key, import_project, load_blueprint, make_node, save_blueprint, seed_blueprint, superplan
+from blueprint_board import BLUEPRINT_FILE, add_node, apply_design_wizard, auto_update, board_summary, doctor, edge_key, import_project, is_internal_ui_control, load_blueprint, make_node, save_blueprint, seed_blueprint, superplan
 
 
 def main() -> int:
@@ -113,6 +113,8 @@ function RevenueChart({ data }) {
         next_focus_title = str((doctor_report.get("next_focus") or {}).get("title", ""))
         if next_focus_title in {"Button: Zoom -", "Button: Reset vista", "Action: Monitora"}:
             errors.append("internal board control selected as next focus")
+        if is_internal_ui_control("Apri tutti") is not True or is_internal_ui_control("Chiudi tutti") is not True:
+            errors.append("internal blueprint expand controls not filtered")
         if not any(item.get("plain_summary") for item in doctor_nodes):
             errors.append("doctor plain summaries missing")
         if not any("plain_relations" in item for item in doctor_nodes):

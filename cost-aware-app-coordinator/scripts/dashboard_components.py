@@ -373,6 +373,7 @@ def render_blueprint_graph(doctor: dict[str, object]) -> str:
                 "auditFix": str(item.get("audit_fix") or ""),
                 "health": str(item.get("health") or "idea"),
                 "nextAction": str(item.get("next_action") or ""),
+                "parentId": str(item.get("parent_id") or ""),
                 "uiRoute": str(item.get("ui_route") or ""),
                 "apiRoute": str(item.get("api_route") or ""),
                 "httpMethod": str(item.get("http_method") or ""),

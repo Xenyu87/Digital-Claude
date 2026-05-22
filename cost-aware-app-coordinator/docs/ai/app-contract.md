@@ -12,7 +12,7 @@
 - Primary surface: generated `reports/skill-dashboard.html`.
 - Planned sections: Home, Lavagna, Azioni, Automazione, Diagnostica.
 - React surface: `data-blueprint-flow-root` mounts the interactive Blueprint canvas from built Vite assets.
-- Interactions: project select, background mode, runner controls, learning feedback, Blueprint design wizard, screenshot upload, layout save.
+- Interactions: project select, background mode, runner controls, learning feedback, Blueprint design wizard, screenshot upload, layout save, component expand/collapse on the Blueprint canvas.
 
 ## Blueprint Board Contract
 
@@ -21,6 +21,12 @@
 - Default visible scope: show at most 15-20 high-value nodes or flow objects before drill-down.
 - Primary objects: focus, flows, issues, actions, evidence, and confirmed/ignored learning feedback.
 - Technical nodes such as buttons, scripts, endpoints, and models are drill-down details unless they affect a user-facing flow.
+- UI structure nodes:
+  - Visible app buttons should become explicit `Button:` nodes when scanned.
+  - Charts should become `Chart:` nodes with subnodes for displayed data, visual form, and reading aids when detectable.
+  - Component nodes may expose `subnodes`, `parentId`, `uiRole`, and `actionDescription`.
+  - Parent component nodes should link to child UI nodes through `contains_ui`; child nodes should link back through `inside_component`.
+  - Internal dashboard controls such as zoom, line filters, expand/collapse controls, and feedback buttons are known noise and must not become top issues.
 - Issue classes:
   - `real_issue`: high-confidence problem or confirmed user-facing break.
   - `scanner_hypothesis`: plausible scanner signal that needs confirmation.
@@ -43,5 +49,7 @@
 
 - Minimum check: `python3 scripts/test_all.py --json --no-write`.
 - Frontend build: `npm run build:blueprint-flow`.
+- Visual check: `npm run test:visual` runs Playwright against a deterministic fixture app and validates that the Lavagna loads, exposes UI detail controls, and can open/close component UI detail nodes.
+- Playwright setup: install Node dependency with `npm install --save-dev @playwright/test`, install Chromium with `npx playwright install chromium`, and install system browser dependencies with `npx playwright install-deps chromium` when the host lacks them.
 - Manual acceptance: Home fits in one useful screen; Lavagna is primary for graph work; automation and diagnostics are not mixed with next-action guidance.
 - Lavagna acceptance: next step is understandable within 10 seconds; default board has fewer than 20 nodes; toolbar/internal canvas controls are not promoted as top problems.
