@@ -1,41 +1,39 @@
 # AI Resume
 
-Last updated: 2026-05-22T05:03:08
+Last updated: 2026-05-22T05:15:00
 Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Current State
 
 - Goal: Lavagna come centro operativo semplice e potente
 - Branch: master
-- Git state: modifiche locali in corso su pulizia renderer dashboard
-- Last commit: 98a2806 make blueprint board action focused
+- Git state: modifiche locali in corso su split `render_html()`
+- Last commit: 58690f9 clean dashboard board renderer
 
 ## Latest Work
 
 - Done: Lavagna orientata ad azioni con view model `blueprint-view-v1`.
 - Done: filtri scanner per ridurre rumore da controlli interni dashboard.
 - Done: dashboard divisa in tab Home, Lavagna, Azioni, Automazione, Diagnostica.
-- In progress: pulizia renderer legacy e duplicazioni nelle sezioni dashboard.
+- Done: renderer legacy rimosso e sezioni dashboard duplicate ripulite.
+- In progress: split incrementale di `render_html()` in helper di sezione.
 
 ## Changed Or Untracked Files
 
 - `M AI_RESUME.md`
 - `M AI_HANDOFF.md`
-- `M scripts/dashboard_components.py`
 - `M scripts/generate_dashboard.py`
-- `M scripts/dashboard_smoke_test.py`
 
 ## Recent Commits
 
+- `58690f9 clean dashboard board renderer`
 - `98a2806 make blueprint board action focused`
 - `53373f6 chore: sync completo skill locale -> repo (major cleanup + nuovi file)`
 - `73bb221 feat: allineamento skill a CLI v2.1.142-145 e baseline modelli 2026-05`
-- `4b2c291 organize dashboard into sections`
-- `b1ec30d add project context and clean blueprint warnings`
 
 ## Next Step
 
-- Fase 6: completare verifica della pulizia renderer, poi spezzare `render_html()` in funzioni di sezione.
+- Continuare lo split con `render_automation_section`, `render_lavagna_section`, `render_actions_section`, `render_diagnostics_section`.
 
 ## Read Next Only If Needed
 

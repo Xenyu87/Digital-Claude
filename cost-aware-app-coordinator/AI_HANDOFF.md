@@ -8,16 +8,14 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 
 - Done: Lavagna has action-focused `blueprint-view-v1` payload and React Flow UI.
 - Done: dashboard tabs exist: Home, Lavagna, Azioni, Automazione, Diagnostica.
-- In progress: renderer cleanup after the remote major cleanup merge.
-- Next target: split `render_html()` into section render helpers.
+- Done: renderer cleanup after the remote major cleanup merge.
+- In progress: split `render_html()` into section render helpers.
 
 ## Changed Files
 
 - `AI_RESUME.md`: cheap latest-state entry point.
 - `AI_HANDOFF.md`: current handoff.
-- `scripts/dashboard_components.py`: removed legacy SVG Blueprint graph implementation.
-- `scripts/generate_dashboard.py`: merged duplicate Azioni sections into one tab section.
-- `scripts/dashboard_smoke_test.py`: checks each dashboard section appears exactly once.
+- `scripts/generate_dashboard.py`: extracted dashboard header, tabs, guidance cards, and Home section helper.
 
 ## Decisions
 
@@ -32,7 +30,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 
 ## Next Step
 
-Run verification, commit/push, then split `render_html()` into `render_home_section`, `render_lavagna_section`, `render_actions_section`, `render_automation_section`, `render_diagnostics_section`.
+Run verification, commit/push, then split `render_html()` into `render_automation_section`, `render_lavagna_section`, `render_actions_section`, `render_diagnostics_section`.
 
 ## Do Not Repeat
 
