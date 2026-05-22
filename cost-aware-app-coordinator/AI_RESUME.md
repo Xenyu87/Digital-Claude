@@ -1,14 +1,14 @@
 # AI Resume
 
-Last updated: 2026-05-22T05:30:00
+Last updated: 2026-05-22T09:45:00
 Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Current State
 
 - Goal: Lavagna come centro operativo semplice e potente
 - Branch: master
-- Git state: modifiche locali in corso su `render_automation_section()`
-- Last commit: 4810712 extract dashboard runner config form
+- Git state: modifiche locali in corso su `render_lavagna_section()`
+- Last commit: 99ab40b split dashboard automation renderer
 
 ## Latest Work
 
@@ -17,7 +17,7 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 - Done: dashboard divisa in tab Home, Lavagna, Azioni, Automazione, Diagnostica.
 - Done: renderer legacy rimosso e sezioni dashboard duplicate ripulite.
 - In progress: split incrementale di `render_html()` in helper di sezione.
-- Done in current step: estratta tab Automazione in `render_automation_section()`.
+- Done in current step: estratta tab Lavagna in `render_lavagna_section()` mantenendo React Flow, wizard e screenshot paste.
 
 ## Changed Or Untracked Files
 
@@ -27,14 +27,14 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Recent Commits
 
+- `99ab40b split dashboard automation renderer`
 - `4810712 extract dashboard runner config form`
 - `d44b512 split dashboard home renderer`
 - `58690f9 clean dashboard board renderer`
-- `98a2806 make blueprint board action focused`
 
 ## Next Step
 
-- Estrarre `render_lavagna_section()` mantenendo React Flow e wizard invariati; poi `render_actions_section()` e `render_diagnostics_section()`.
+- Estrarre `render_actions_section()`, poi `render_diagnostics_section()`.
 
 ## Read Next Only If Needed
 

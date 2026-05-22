@@ -12,12 +12,13 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 - In progress: split `render_html()` into section render helpers.
 - Done in current step: extracted `render_runner_config_form()` from the Automazione section.
 - Done in current step: extracted full `render_automation_section()`.
+- Done in current step: extracted full `render_lavagna_section()` while preserving React Flow, design wizard, and screenshot paste markup.
 
 ## Changed Files
 
 - `AI_RESUME.md`: cheap latest-state entry point.
 - `AI_HANDOFF.md`: current handoff.
-- `scripts/generate_dashboard.py`: extracted dashboard header, tabs, guidance cards, Home section helper, runner config form, and Automazione section helper.
+- `scripts/generate_dashboard.py`: extracted dashboard header, tabs, guidance cards, Home section helper, runner config form, Automazione section helper, and Lavagna section helper.
 
 ## Decisions
 
@@ -32,7 +33,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 
 ## Next Step
 
-Run verification, commit/push, then continue with `render_lavagna_section`, `render_actions_section`, `render_diagnostics_section`.
+Run verification, commit/push, then continue with `render_actions_section` and `render_diagnostics_section`.
 
 ## Do Not Repeat
 

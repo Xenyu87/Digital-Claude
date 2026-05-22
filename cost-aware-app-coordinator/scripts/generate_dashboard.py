@@ -951,63 +951,8 @@ def render_automation_section(
     """
 
 
-def render_html(report: dict[str, object], refresh_seconds: int | None = None) -> str:
-    checks = report["checks"]
-    validate = checks["validate_skill"]
-    self_test = checks["self_test"]
-    sync_check = checks["sync_check"]
-    context_scan = checks["context_budget_scan"]
-    skill_intake = checks["external_skill_intake"]
-    bootstrap_preview = checks["bootstrap_project_context"]
-    docs_audit = checks["project_docs_audit"]
-    pr_readiness = checks["pr_readiness_check"]
-    estimates = report["token_estimates"]
-    sessions = report["recent_codex_sessions"]
-    analytics = report["session_analytics"]
-    discovered_projects = report["discovered_projects"]
-    project_audit = report["project_audit"]
-    monitored_project = report["monitored_project"]
-    docs_json = project_audit.get("docs") or {}
-    pr_json = project_audit.get("pr_readiness") or {}
-    copilot_json = project_audit.get("project_copilot") or {}
-    agent_json = project_audit.get("agent_activity") or {}
-    action_pack_json = project_audit.get("action_pack") or {}
-    maintenance_json = project_audit.get("maintenance_advisor") or {}
-    expert_feedback_json = project_audit.get("expert_feedback") or {}
-    blueprint_json = project_audit.get("blueprint_board") or report.get("blueprint_board") or {}
-    background_json = report.get("background_sentinel") or project_audit.get("background_sentinel") or {}
-    runner_json = report.get("persistent_runner") or project_audit.get("persistent_runner") or {}
-    runner_config = runner_json.get("runner_config", {}) if isinstance(runner_json.get("runner_config"), dict) else {}
-    active_task = report.get("active_task") or project_audit.get("active_task") or {}
-    auto_pilot_json = report.get("auto_pilot") or project_audit.get("auto_pilot") or {}
-    project_memory = report["project_memory"]
-    event_log = report["event_log"]
-    skill_learning = report.get("skill_learning") or {}
-    files = report["files"]
-    git = report["git"]
-    warning_tasks = action_pack_json.get("warning_tasks", []) or []
-    doctor = blueprint_json.get("doctor") or {}
-    findings_count = background_json.get("findings_count", 0)
-    new_count = background_json.get("new_count", 0)
-    nodes_checked = doctor.get("nodes_checked", 0)
-    guidance_items = project_guidance(docs_json, pr_json, background_json, blueprint_json, warning_tasks)
-    guidance_html = render_guidance_cards(guidance_items)
-    return f"""<!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cost-Aware App Coordinator Dashboard</title>
-  <style>
-{DASHBOARD_CSS}
-  </style>
-</head>
-<body>
-{render_dashboard_header(report, monitored_project, auto_pilot_json)}
-  <main>
-{render_dashboard_tabs()}
-{render_home_section(discovered_projects, monitored_project, auto_pilot_json, pr_json, warning_tasks, findings_count, new_count, nodes_checked, guidance_html)}
-{render_automation_section(background_json, runner_json, runner_config)}
+def render_lavagna_section(blueprint_json: dict[str, object], monitored_project: object) -> str:
+    return f"""
     <section class="dashboard-section" data-dashboard-section="lavagna">
     <h2 id="lavagna-app">Lavagna App</h2>
     <p class="section-kicker">Area principale per capire il progetto come flussi: React Flow, nodi, relazioni, audit e piano fix.</p>
@@ -1163,6 +1108,67 @@ def render_html(report: dict[str, object], refresh_seconds: int | None = None) -
     </section>
 
     </section>
+    """
+
+
+def render_html(report: dict[str, object], refresh_seconds: int | None = None) -> str:
+    checks = report["checks"]
+    validate = checks["validate_skill"]
+    self_test = checks["self_test"]
+    sync_check = checks["sync_check"]
+    context_scan = checks["context_budget_scan"]
+    skill_intake = checks["external_skill_intake"]
+    bootstrap_preview = checks["bootstrap_project_context"]
+    docs_audit = checks["project_docs_audit"]
+    pr_readiness = checks["pr_readiness_check"]
+    estimates = report["token_estimates"]
+    sessions = report["recent_codex_sessions"]
+    analytics = report["session_analytics"]
+    discovered_projects = report["discovered_projects"]
+    project_audit = report["project_audit"]
+    monitored_project = report["monitored_project"]
+    docs_json = project_audit.get("docs") or {}
+    pr_json = project_audit.get("pr_readiness") or {}
+    copilot_json = project_audit.get("project_copilot") or {}
+    agent_json = project_audit.get("agent_activity") or {}
+    action_pack_json = project_audit.get("action_pack") or {}
+    maintenance_json = project_audit.get("maintenance_advisor") or {}
+    expert_feedback_json = project_audit.get("expert_feedback") or {}
+    blueprint_json = project_audit.get("blueprint_board") or report.get("blueprint_board") or {}
+    background_json = report.get("background_sentinel") or project_audit.get("background_sentinel") or {}
+    runner_json = report.get("persistent_runner") or project_audit.get("persistent_runner") or {}
+    runner_config = runner_json.get("runner_config", {}) if isinstance(runner_json.get("runner_config"), dict) else {}
+    active_task = report.get("active_task") or project_audit.get("active_task") or {}
+    auto_pilot_json = report.get("auto_pilot") or project_audit.get("auto_pilot") or {}
+    project_memory = report["project_memory"]
+    event_log = report["event_log"]
+    skill_learning = report.get("skill_learning") or {}
+    files = report["files"]
+    git = report["git"]
+    warning_tasks = action_pack_json.get("warning_tasks", []) or []
+    doctor = blueprint_json.get("doctor") or {}
+    findings_count = background_json.get("findings_count", 0)
+    new_count = background_json.get("new_count", 0)
+    nodes_checked = doctor.get("nodes_checked", 0)
+    guidance_items = project_guidance(docs_json, pr_json, background_json, blueprint_json, warning_tasks)
+    guidance_html = render_guidance_cards(guidance_items)
+    return f"""<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cost-Aware App Coordinator Dashboard</title>
+  <style>
+{DASHBOARD_CSS}
+  </style>
+</head>
+<body>
+{render_dashboard_header(report, monitored_project, auto_pilot_json)}
+  <main>
+{render_dashboard_tabs()}
+{render_home_section(discovered_projects, monitored_project, auto_pilot_json, pr_json, warning_tasks, findings_count, new_count, nodes_checked, guidance_html)}
+{render_automation_section(background_json, runner_json, runner_config)}
+{render_lavagna_section(blueprint_json, monitored_project)}
     <section class="dashboard-section" data-dashboard-section="azioni">
     <h2>Azioni Progetto</h2>
     <p class="section-kicker">Task dai warning, prompt pronti, analisi progetto ed esperti consigliati.</p>
