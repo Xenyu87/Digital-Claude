@@ -94,7 +94,9 @@ def complete_tbd_entries(project_path: str) -> dict:
     )
 
     code, out, err = run(
-        ["claude", "--model", "haiku", "--print", prompt],
+        # --permission-mode default evita lo skip dangerous (rifiutato da root via systemd).
+        # Niente tool call previste: il drain applica le sostituzioni in Python.
+        ["claude", "--permission-mode", "default", "--model", "haiku", "--print", prompt],
         cwd=project_path,
     )
     if code != 0:
@@ -218,8 +220,8 @@ def run_compaction(project_path: str) -> dict:
     return result
 
 
-def validate_skill_drift() -> dict:
-    """Esegue validate_skill.py e check_handoff_drift.py."""
+def validate_skill_drift(project_path: str) -> dict:
+    """Esegue validate_skill.py (sulla skill) e check_handoff_drift.py (sul progetto)."""
     result = {"name": "validate_skill_drift", "status": "skip", "detail": ""}
 
     validator = SKILL_DIR / "scripts" / "validate_skill.py"
@@ -231,7 +233,9 @@ def validate_skill_drift() -> dict:
         outputs.append(f"validator: {'OK' if code == 0 else 'FAIL'}\n{out[:500]}")
         result["status"] = "ok" if code == 0 else "error"
     if drift_check.exists():
-        code2, out2, _ = run([sys.executable, str(drift_check)], cwd=str(SKILL_DIR))
+        # drift checker usa Path.cwd(): va eseguito nel progetto target,
+        # non nella skill (altrimenti segnala drift su file della skill).
+        code2, out2, _ = run([sys.executable, str(drift_check)], cwd=project_path)
         outputs.append(f"drift: {'OK' if code2 == 0 else 'FAIL'}\n{out2[:500]}")
 
     result["detail"] = "\n".join(outputs)
@@ -390,7 +394,7 @@ def main() -> int:
         lambda: complete_tbd_entries(project_path),
         lambda: analyze_tool_errors(project_path),
         lambda: run_compaction(project_path),
-        lambda: validate_skill_drift(),
+        lambda: validate_skill_drift(project_path),
     ]:
         try:
             r = fn()
