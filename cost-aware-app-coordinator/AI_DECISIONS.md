@@ -13,8 +13,8 @@
 
 - Decision: add a side-by-side frontend preview to the Lavagna.
 - Why: graph nodes are much more useful when the user can see the UI element or component they represent.
-- First slice: prefer configured live URLs from `app-blueprint.json` (`frontend_preview_url` or `preview_url`), otherwise serve a generated preview from scanner nodes at `/frontend-preview?project=...`.
-- Interaction: canvas node selection sends `highlight-node` to the preview; generated preview elements can also emit `preview-node-click`.
+- First slice: prefer configured live URLs from `app-blueprint.json` (`frontend_preview_url` or `preview_url`), otherwise render a generated preview directly in React from scanner nodes. `/frontend-preview?project=...` remains compatibility/debug output.
+- Interaction: canvas node selection highlights generated preview elements; live iframe previews receive `highlight-node` messages when supported.
 - Constraint: live iframe previews may be blocked by app frame policy or auth. The generated preview is the reliable fallback and the Playwright target.
 
 Record durable choices only.

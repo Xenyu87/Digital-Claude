@@ -20,7 +20,7 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 - Done in current step: scanner Lavagna ora crea nodi distinti per bottoni UI e grafici, collega i figli al componente padre, e passa sotto-nodi/descrizioni precise al dettaglio React Flow.
 - Done in current step: Playwright installato/configurato; Lavagna ha controlli canvas `Apri tutti`/`Chiudi tutti` e toggle sui nodi componente per mostrare/nascondere figli UI.
 - Done in current step: quando un componente viene espanso, bottoni/grafici figli vengono posizionati accanto al padre; Playwright controlla anche questa relazione spaziale.
-- Done in current step: Lavagna split-view con preview frontend laterale; fallback `/frontend-preview` generato dai nodi scanner; selezionare un nodo UI evidenzia l'elemento corrispondente nella preview.
+- Done in current step: Lavagna split-view con preview frontend laterale; fallback generato direttamente in React dai nodi scanner per evitare 404; selezionare un nodo UI evidenzia l'elemento corrispondente nella preview.
 
 ## Changed Or Untracked Files
 

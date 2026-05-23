@@ -39,7 +39,7 @@ The Playwright config starts the dashboard server on `127.0.0.1:3102` with `scri
 - the React Flow board is visible;
 - the `Dettagli UI` controls are present;
 - `Apri tutti` and `Chiudi tutti` change the visible node set without breaking the canvas;
-- the side-by-side frontend preview iframe loads from `/frontend-preview`;
+- the side-by-side generated frontend preview renders without needing `/frontend-preview`;
 - selecting `Button: Salva ordine` on the canvas highlights the matching preview element;
 - clicking a generated preview element selects the matching node in the Lavagna detail panel;
 - child UI nodes are positioned near and to the right of their parent component when expanded;

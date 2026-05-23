@@ -39,7 +39,7 @@ Cost-aware Codex coordinator skill for app work. It provides operating rules, pr
 - Blueprint canvas: React Flow assets built into `reports/blueprint-flow-assets`.
 - Blueprint scanner contract: visible UI buttons and charts should become granular frontend nodes; component nodes may expose `subnodes`, `uiRole`, `actionDescription`, and parent/child `contains_ui` relations.
 - Lavagna canvas supports component expand/collapse for child UI nodes and positions expanded children beside the parent component.
-- Lavagna can show a side-by-side frontend preview. Live preview comes from `frontend_preview_url`/`preview_url` in `app-blueprint.json`; fallback generated preview is served by `/frontend-preview?project=...` and supports node highlight messages.
+- Lavagna can show a side-by-side frontend preview. Live preview comes from `frontend_preview_url`/`preview_url` in `app-blueprint.json`; fallback generated preview is rendered directly in React from scanner nodes, avoiding iframe 404s.
 - Automation: safe/report-only by default; AI autonomous execution remains disabled.
 - Project memory: use `AI_RESUME.md` as the cheap first-read file for new chats.
 

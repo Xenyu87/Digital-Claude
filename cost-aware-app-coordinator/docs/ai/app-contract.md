@@ -13,7 +13,7 @@
 - Planned sections: Home, Lavagna, Azioni, Automazione, Diagnostica.
 - React surface: `data-blueprint-flow-root` mounts the interactive Blueprint canvas from built Vite assets.
 - Interactions: project select, background mode, runner controls, learning feedback, Blueprint design wizard, screenshot upload, layout save, component expand/collapse on the Blueprint canvas.
-- Frontend preview: Lavagna may show a side-by-side preview of the scanned frontend. If `app-blueprint.json` defines `frontend_preview_url` or `preview_url`, the live URL is embedded; otherwise the local dashboard serves `/frontend-preview?project=...` as a generated preview from scanner nodes.
+- Frontend preview: Lavagna may show a side-by-side preview of the scanned frontend. If `app-blueprint.json` defines `frontend_preview_url` or `preview_url`, the live URL is embedded; otherwise React renders an in-dashboard generated preview from scanner nodes, so the fallback does not depend on a server endpoint.
 
 ## Blueprint Board Contract
 
@@ -47,7 +47,7 @@
 - Dashboard state: `reports/skill-dashboard.json`, `reports/dashboard-config.json`, `reports/*status*.json`, `reports/*events*.jsonl`.
 - Validation: scripts should cap output, tolerate missing state files, and avoid autonomous code edits.
 - Blueprint view model: dashboard graph payload should expose `blueprintView` with `focus`, `stats`, `nodes`, `edges`, `flows`, `issues`, `actions`, and `views`.
-- Frontend preview endpoint: `scripts/serve_dashboard.py` handles `/frontend-preview?project=...` and renders a generated, clickable preview from frontend Blueprint nodes. The generated preview listens for `postMessage({type: "highlight-node", id})` and emits `postMessage({type: "preview-node-click", id})` on element click.
+- Frontend preview endpoint: `scripts/serve_dashboard.py` still handles `/frontend-preview?project=...` as compatibility/debug output, but the default generated fallback is rendered directly by React. Live iframe previews listen for `postMessage({type: "highlight-node", id})` when supported.
 
 ## Verification
 

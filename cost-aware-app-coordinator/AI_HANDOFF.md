@@ -18,7 +18,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 - Done in current step: Lavagna first panel is now action-first; wizard/screenshot moved under `Strumenti lavagna`; React Flow shows a `Prossima azione` bar above counters.
 - Done in current step: Blueprint scanner creates granular UI nodes for visible buttons and charts, adds component parent/child relations, and exposes chart/button subnodes in the React Flow detail panel.
 - Done in current step: Playwright installed and configured; Lavagna canvas now supports opening/closing child UI nodes from global controls and component node toggles, with expanded children positioned beside their parent component.
-- Done in current step: Lavagna now has a side-by-side frontend preview pane. It embeds a live `frontend_preview_url`/`preview_url` when configured, otherwise uses `/frontend-preview?project=...` generated from scanner nodes. Node selection highlights matching generated preview elements.
+- Done in current step: Lavagna now has a side-by-side frontend preview pane. It embeds a live `frontend_preview_url`/`preview_url` when configured; otherwise React renders a generated preview from scanner nodes. Node selection highlights matching generated preview elements.
 
 ## Changed Files
 

@@ -88,6 +88,104 @@ function BlueprintNode({ data, selected }) {
 
 const nodeTypes = { blueprint: BlueprintNode };
 
+function GeneratedPreview({ nodes, selectedId, onSelect }) {
+  const frontendNodes = nodes.filter((node) => node.data?.domain === 'frontend');
+  const childrenByParent = useMemo(() => {
+    const grouped = new Map();
+    frontendNodes.forEach((node) => {
+      const parentId = node.data?.parentId;
+      if (!parentId) return;
+      if (!grouped.has(parentId)) grouped.set(parentId, []);
+      grouped.get(parentId).push(node);
+    });
+    return grouped;
+  }, [frontendNodes]);
+  const roots = frontendNodes.filter((node) => {
+    const kind = node.data?.kind;
+    return !node.data?.parentId && (kind === 'component' || kind === 'screen' || node.data?.title?.startsWith('Screen/Component:'));
+  });
+  const previewRoots = roots.length ? roots : frontendNodes.filter((node) => !node.data?.parentId).slice(0, 8);
+
+  const renderChild = (node) => {
+    const isSelected = node.id === selectedId;
+    const selectChild = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelect(node.id);
+    };
+    if (node.data?.kind === 'chart') {
+      return (
+        <section
+          key={node.id}
+          className={`bf-preview-chart ${isSelected ? 'is-highlighted' : ''}`}
+          data-blueprint-node-id={node.id}
+          tabIndex={0}
+          onClick={selectChild}
+          onPointerDown={selectChild}
+        >
+          <strong>{node.data.title}</strong>
+          <div className="bf-chart-bars"><i /><i /><i /><i /></div>
+          <small>{node.data.actionDescription || node.data.summary || 'Grafico rilevato nella UI.'}</small>
+        </section>
+      );
+    }
+    return (
+      <button
+        key={node.id}
+        type="button"
+        className={`bf-preview-action ${isSelected ? 'is-highlighted' : ''}`}
+        data-blueprint-node-id={node.id}
+        onClick={selectChild}
+        onPointerDown={selectChild}
+      >
+        <span>{node.data.title}</span>
+        <small>{node.data.actionDescription || node.data.summary || 'Elemento UI rilevato.'}</small>
+        {node.data.uiRoute && <em>{node.data.uiRoute}</em>}
+      </button>
+    );
+  };
+
+  return (
+    <div
+      className="bf-generated-preview"
+      onPointerDownCapture={(event) => {
+        const target = event.target.closest('[data-blueprint-node-id]');
+        if (target?.dataset?.blueprintNodeId) {
+          event.stopPropagation();
+          onSelect(target.dataset.blueprintNodeId);
+        }
+      }}
+    >
+      <h4>Preview frontend generata</h4>
+      {previewRoots.length ? (
+        previewRoots.slice(0, 10).map((root) => {
+          const children = childrenByParent.get(root.id) || [];
+          const isSelected = root.id === selectedId;
+          return (
+            <article
+              key={root.id}
+              className={`bf-preview-card ${isSelected ? 'is-highlighted' : ''}`}
+              data-blueprint-node-id={root.id}
+              tabIndex={0}
+            >
+              <header>
+                <span>Componente</span>
+                <h5>{root.data.title}</h5>
+              </header>
+              <p>{root.data.summary || root.data.description || 'Componente frontend rilevato.'}</p>
+              <div className="bf-preview-grid">
+                {children.length ? children.slice(0, 12).map(renderChild) : <p className="bf-empty">Nessun elemento UI figlio rilevato.</p>}
+              </div>
+            </article>
+          );
+        })
+      ) : (
+        <p className="bf-empty">Nessuna UI frontend rilevata nello scan.</p>
+      )}
+    </div>
+  );
+}
+
 function readPayload(root) {
   const script = root.querySelector('script[type="application/json"]');
   if (!script) return { nodes: [], edges: [], projectPath: '', domains: [] };
@@ -291,13 +389,13 @@ function FlowBoard({ root }) {
     [viewFiltered.edges, visibleNodeIds],
   );
 
-  const selectedNode = visibleNodes.find((node) => node.id === selectedId) || visibleNodes.find((node) => !node.hidden);
+  const selectedNode = visibleNodes.find((node) => node.id === selectedId) || nodes.find((node) => node.id === selectedId) || visibleNodes.find((node) => !node.hidden);
   const preview = payload.preview || {};
 
   useEffect(() => {
-    if (!selectedNode?.id || !previewRef.current?.contentWindow) return;
+    if (preview.mode !== 'live' || !selectedNode?.id || !previewRef.current?.contentWindow) return;
     previewRef.current.contentWindow.postMessage({ type: 'highlight-node', id: selectedNode.id }, '*');
-  }, [selectedNode]);
+  }, [preview.mode, selectedNode]);
 
   useEffect(() => {
     const receivePreviewSelection = (event) => {
@@ -506,6 +604,15 @@ function FlowBoard({ root }) {
     setSelectedId(item.id);
   }, [nodes]);
 
+  const selectPreviewNode = useCallback((nodeId) => {
+    if (!nodeId) return;
+    const node = nodes.find((item) => item.id === nodeId);
+    if (node?.data?.parentId) {
+      setExpandedParents((current) => new Set(current).add(node.data.parentId));
+    }
+    setSelectedId(nodeId);
+  }, [nodes]);
+
   const copyTaskPrompt = useCallback(async () => {
     if (!taskPrompt) return;
     try {
@@ -634,7 +741,7 @@ function FlowBoard({ root }) {
                 <button type="button" onClick={() => { previewRef.current.src = preview.generatedUrl; }}>Fallback</button>
               )}
             </div>
-            {preview.url ? (
+            {preview.mode === 'live' && preview.url ? (
               <iframe
                 ref={previewRef}
                 title="Preview frontend progetto"
@@ -643,7 +750,7 @@ function FlowBoard({ root }) {
                 onLoad={() => selectedNode?.id && previewRef.current?.contentWindow?.postMessage({ type: 'highlight-node', id: selectedNode.id }, '*')}
               />
             ) : (
-              <p className="bf-empty">Nessuna preview frontend disponibile per questo progetto.</p>
+              <GeneratedPreview nodes={nodes} selectedId={selectedNode?.id || ''} onSelect={selectPreviewNode} />
             )}
           </section>
           <aside className="bf-detail">
