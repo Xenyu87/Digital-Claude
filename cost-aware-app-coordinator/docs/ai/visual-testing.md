@@ -39,6 +39,7 @@ The Playwright config starts the dashboard server on `127.0.0.1:3102` with `scri
 - the React Flow board is visible;
 - the `Dettagli UI` controls are present;
 - `Apri tutti` and `Chiudi tutti` change the visible node set without breaking the canvas;
+- child UI nodes are positioned near and to the right of their parent component when expanded;
 - a screenshot is written to `reports/playwright-blueprint-board.png` for manual inspection.
 
 ## When To Add More

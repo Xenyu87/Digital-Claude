@@ -17,7 +17,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 - Done in current step: extracted full `render_diagnostics_section()` and removed the unused `estimates` local from `render_html()`.
 - Done in current step: Lavagna first panel is now action-first; wizard/screenshot moved under `Strumenti lavagna`; React Flow shows a `Prossima azione` bar above counters.
 - Done in current step: Blueprint scanner creates granular UI nodes for visible buttons and charts, adds component parent/child relations, and exposes chart/button subnodes in the React Flow detail panel.
-- Done in current step: Playwright installed and configured; Lavagna canvas now supports opening/closing child UI nodes from global controls and component node toggles.
+- Done in current step: Playwright installed and configured; Lavagna canvas now supports opening/closing child UI nodes from global controls and component node toggles, with expanded children positioned beside their parent component.
 
 ## Changed Files
 
@@ -44,7 +44,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 
 ## Next Step
 
-Commit/push the expand/collapse and Playwright work. Next functional step: improve child-node layout when expanded and continue reducing scanner noise from internal controls.
+Commit/push the expanded-child layout refinement. Next functional step: continue reducing scanner noise and improve flow grouping labels for real user journeys.
 
 ## Do Not Repeat
 

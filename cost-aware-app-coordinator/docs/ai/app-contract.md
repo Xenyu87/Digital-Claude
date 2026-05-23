@@ -26,6 +26,7 @@
   - Charts should become `Chart:` nodes with subnodes for displayed data, visual form, and reading aids when detectable.
   - Component nodes may expose `subnodes`, `parentId`, `uiRole`, and `actionDescription`.
   - Parent component nodes should link to child UI nodes through `contains_ui`; child nodes should link back through `inside_component`.
+  - When expanded on the canvas, child UI nodes should appear close to their parent component instead of staying in unrelated lane positions.
   - Internal dashboard controls such as zoom, line filters, expand/collapse controls, and feedback buttons are known noise and must not become top issues.
 - Issue classes:
   - `real_issue`: high-confidence problem or confirmed user-facing break.

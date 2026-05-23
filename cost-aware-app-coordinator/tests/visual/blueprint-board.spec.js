@@ -9,8 +9,19 @@ test('Blueprint board exposes expandable UI details', async ({ page }) => {
   await expect(page.getByText('Dettagli UI')).toBeVisible();
 
   const visibleBefore = await page.locator('.react-flow__node:visible').count();
+  await page.getByRole('button', { name: 'Tutto' }).click();
   await page.getByRole('button', { name: 'Apri tutti' }).click();
   await expect(page.locator('.bf-node-toggle').first()).toBeVisible();
+  const parentNode = page.locator('.react-flow__node:has-text("Screen/Component: AdminDashboard")').first();
+  const childNode = page.locator('.react-flow__node:has-text("Button: Salva ordine")').first();
+  await expect(parentNode).toBeVisible();
+  await expect(childNode).toBeVisible();
+  const parentBox = await parentNode.boundingBox();
+  const childBox = await childNode.boundingBox();
+  expect(parentBox).not.toBeNull();
+  expect(childBox).not.toBeNull();
+  expect(childBox.x).toBeGreaterThan(parentBox.x + 40);
+  expect(Math.abs(childBox.y - parentBox.y)).toBeLessThan(260);
   const visibleAfterOpen = await page.locator('.react-flow__node:visible').count();
   expect(visibleAfterOpen).toBeGreaterThanOrEqual(visibleBefore);
 

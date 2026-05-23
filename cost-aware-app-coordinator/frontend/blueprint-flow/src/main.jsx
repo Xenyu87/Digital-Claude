@@ -222,6 +222,14 @@ function FlowBoard({ root }) {
     return grouped;
   }, [nodes]);
 
+  const childIndexById = useMemo(() => {
+    const indexes = new Map();
+    childrenByParent.forEach((children) => {
+      children.forEach((childId, index) => indexes.set(childId, index));
+    });
+    return indexes;
+  }, [childrenByParent]);
+
   const toggleParent = useCallback((parentId) => {
     setExpandedParents((current) => {
       const next = new Set(current);
@@ -246,8 +254,17 @@ function FlowBoard({ root }) {
       const parentCollapsed = node.data?.parentId && !expandedParents.has(node.data.parentId) && !term;
       const match = !node.hidden && !parentCollapsed && (!term || text.includes(term)) && (!domain || node.data.domain === domain);
       const childCount = childrenByParent.get(node.id)?.length || 0;
+      const parentNode = node.data?.parentId ? nodes.find((item) => item.id === node.data.parentId) : null;
+      const childIndex = childIndexById.get(node.id) || 0;
+      const expandedPosition = parentNode && expandedParents.has(node.data.parentId)
+        ? {
+            x: parentNode.position.x + 310,
+            y: parentNode.position.y + childIndex * 155 - Math.min(220, Math.max(0, (childrenByParent.get(node.data.parentId)?.length || 1) - 1) * 55),
+          }
+        : node.position;
       return {
         ...node,
+        position: expandedPosition,
         hidden: !match,
         data: {
           ...node.data,
@@ -257,7 +274,7 @@ function FlowBoard({ root }) {
         },
       };
     });
-  }, [viewFiltered.nodes, search, domain, expandedParents, childrenByParent, toggleParent]);
+  }, [viewFiltered.nodes, search, domain, expandedParents, childrenByParent, childIndexById, nodes, toggleParent]);
 
   const visibleNodeIds = useMemo(
     () => new Set(visibleNodes.filter((node) => !node.hidden).map((node) => node.id)),
@@ -503,7 +520,7 @@ function FlowBoard({ root }) {
         ))}
       </div>
       <div className="bf-toolbar">
-          <div className="bf-tool-group bf-tool-search">
+        <div className="bf-tool-group bf-tool-search">
           <span>Cerca</span>
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nodo, file, funzione o route" />
         </div>

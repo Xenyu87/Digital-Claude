@@ -38,7 +38,7 @@ Cost-aware Codex coordinator skill for app work. It provides operating rules, pr
 - Dashboard architecture: generated static report plus small local Python server for forms/actions.
 - Blueprint canvas: React Flow assets built into `reports/blueprint-flow-assets`.
 - Blueprint scanner contract: visible UI buttons and charts should become granular frontend nodes; component nodes may expose `subnodes`, `uiRole`, `actionDescription`, and parent/child `contains_ui` relations.
-- Lavagna canvas supports component expand/collapse for child UI nodes.
+- Lavagna canvas supports component expand/collapse for child UI nodes and positions expanded children beside the parent component.
 - Automation: safe/report-only by default; AI autonomous execution remains disabled.
 - Project memory: use `AI_RESUME.md` as the cheap first-read file for new chats.
 
