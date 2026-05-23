@@ -44,7 +44,9 @@ def run(cmd: list[str], cwd: str | Path | None = None, capture: bool = True) -> 
 
 
 def proj_slug(project_path: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9]", "-", project_path).strip("-")
+    # Claude Code usa lo slug con leading dash (es. -root-Progetti-foo).
+    # Non strippare il dash iniziale, altrimenti i path non matchano la directory reale.
+    return re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
 
 
 def drain_log_path(project_path: str) -> Path:

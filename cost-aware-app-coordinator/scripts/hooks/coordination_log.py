@@ -32,7 +32,8 @@ from pathlib import Path
 
 def _find_latest_session_jsonl(project_path: str) -> Path | None:
     """Trova il jsonl di sessione piu' recente per il progetto."""
-    slug = re.sub(r"[^a-zA-Z0-9]", "-", project_path).strip("-")
+    # Claude Code usa slug con leading dash. Non strippare a sinistra.
+    slug = re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
     proj_dir = Path.home() / ".claude" / "projects" / slug
     if not proj_dir.exists():
         return None

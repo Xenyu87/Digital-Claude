@@ -29,7 +29,8 @@ from pathlib import Path
 def _proj_slug(project_path: str) -> str:
     """Converte il path progetto nel formato slug usato da Claude Code."""
     import re
-    return re.sub(r"[^a-zA-Z0-9]", "-", project_path).strip("-")
+    # Claude Code usa slug con leading dash (es. -root-Progetti-foo). Non strippare a sinistra.
+    return re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
 
 
 def _coordination_log_path(project_path: str) -> Path:
