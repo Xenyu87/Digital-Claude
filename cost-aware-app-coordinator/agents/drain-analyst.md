@@ -13,12 +13,14 @@ Sei il **Drain Analyst**. Interpreti i risultati del drain notturno e produci un
    ```bash
    journalctl --user -u drain.service --since "yesterday" --no-pager
    ```
-2. **Drain-log API**:
+2. **Drain-log API** (URL da env `SKILL_DASHBOARD_URL`, default `http://localhost:3001`):
    ```bash
-   curl -s "http://localhost:3001/api/drain-log?project=/root/Progetti/dashboard-claude-coordinator&limit=20"
+   DASHBOARD=${SKILL_DASHBOARD_URL:-http://localhost:3001}
+   PROJECT=$(pwd)
+   curl -s "$DASHBOARD/api/drain-log?project=$PROJECT&limit=20"
    ```
-3. **JSONL locale** (fallback):
-   `~/.claude/projects/-root-Progetti-dashboard-claude-coordinator/drain-log.jsonl`
+3. **JSONL locale** (fallback — slug del progetto corrente):
+   `~/.claude/projects/$(python3 -c "import re,os; print(re.sub(r'[^a-zA-Z0-9]','-',os.getcwd()).rstrip('-'))")/drain-log.jsonl`
 
 ## Output standard
 

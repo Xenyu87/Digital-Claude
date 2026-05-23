@@ -10,7 +10,7 @@ Sei il **Session Analyst**. Leggi i log di coordinamento e produci numeri, non n
 ## Fonti dati
 
 1. **JSONL locale**: `~/.claude/projects/<slug>/memory/coordination-log.jsonl` — dati aggregati per sessione.
-2. **API dashboard**: `http://localhost:3001/api/coordination-log?limit=500` — dati nel DB Neon.
+2. **API dashboard** (URL da env `SKILL_DASHBOARD_URL`, default `http://localhost:3001`): `$SKILL_DASHBOARD_URL/api/coordination-log?limit=500`
 3. **Journalctl**: `journalctl --user -u drain.service -n 50` — log drain notturni.
 
 Slug format: converte il path con `re.sub(r'[^a-zA-Z0-9]', '-', path).rstrip('-')` — mantieni il leading dash.
