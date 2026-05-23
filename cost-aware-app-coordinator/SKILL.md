@@ -90,6 +90,11 @@ In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallis
 |---|---|---|
 | `Explore` (built-in) | haiku | grep/glob, "dove sta X", lettura veloce file noti |
 | `ops-runner` | haiku | systemctl/journalctl/cron/ss/df: comandi rapidi, niente decisioni |
+| `homelab-admin` | sonnet | decisioni sysadmin: configurare servizi, LXC, rete, Proxmox, port allocation, deploy workflow |
+| `security-hardener` | sonnet | audit sicurezza server/LXC: SSH, firewall, porte, permessi — solo lettura e raccomandazioni |
+| `bypass-guardian` | sonnet | revisione pre-esecuzione quando bypass-permissions è ON e ci sono azioni rischiose/irreversibili |
+| `dependency-checker` | haiku | audit npm/pip: versioni obsolete, CVE note, pacchetti non mantenuti — solo lettura |
+| `db-migrator` | sonnet | migrazioni DB sicure con rollback: ALTER/DROP/ADD, conversioni SQLite↔Postgres, schema iniziale |
 | `code-implementer` | sonnet | edit 1-5 file con scope deciso, refactor locale, wire-up |
 | `qa-tester` | sonnet | scrittura/run di test, regression test su bug |
 | `code-debugger` | sonnet | bug rescue: riproduci → isola → fix → verifica |
@@ -135,6 +140,8 @@ Quattro gate che il main agent deve rispettare prima di eseguire inline. Bypassa
 **Gate 4 — ops + Economico**: categoria ops + budget Economico → `ops-runner` (haiku) per comandi systemctl/journalctl/cron/ss/df. Niente bash inline se l'output va parsato.
 
 **Override esplicito**: se l'utente scrive "fallo tu", "non delegare", "rimani sul main", il gate è bypassato per quel turno. Indicare nella risposta: `[gate bypassato su richiesta utente]`. Dettagli ed esempi: `references/auto-delegation-gate.md`.
+
+**Gate 5 — bypass-guardian in modalità bypass**: se l'utente ha attivato bypass-permissions (`/permission 3` o equivalente) **e** il task contiene azioni rischiose/irreversibili (rm, force-push, DROP, modifica `/etc/`, credenziali, deploy su stable), spawna `bypass-guardian` (sonnet) **prima** di eseguire. Procedi solo dopo verdetto 🟢 GREEN o 🟡 YELLOW con raccomandazioni seguite. Su 🔴 RED fermati e chiedi conferma esplicita utente. Questo gate NON è bypassabile da "fallo tu" — richiede conferma esplicita sul rischio specifico.
 
 ## 4. Lettura iniziale del contesto
 
