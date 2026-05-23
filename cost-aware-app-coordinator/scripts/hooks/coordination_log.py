@@ -49,9 +49,11 @@ def _find_latest_session_jsonl(project_path: str) -> Path | None:
     return None
 
 
-def _extract_tokens(jsonl_path: Path) -> dict:
-    """Aggrega token da un file jsonl di sessione Claude Code."""
+def _extract_tokens_and_models(jsonl_path: Path) -> tuple[dict, list[str], dict[str, dict]]:
+    """Aggrega token + lista modelli reali + token-per-modello da una sessione."""
     tokens = {"input": 0, "output": 0, "cache_read": 0, "cache_creation": 0}
+    models_seen: list[str] = []
+    per_model: dict[str, dict] = {}
     try:
         for line in jsonl_path.read_text(encoding="utf-8", errors="ignore").splitlines():
             if not line.strip():
@@ -60,24 +62,64 @@ def _extract_tokens(jsonl_path: Path) -> dict:
                 entry = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            usage = entry.get("usage") or entry.get("message", {}).get("usage", {})
+            msg = entry.get("message") or {}
+            usage = entry.get("usage") or msg.get("usage", {})
+            model = entry.get("model") or msg.get("model") or ""
+            # skip <synthetic> e simili
+            if model and not model.startswith("<"):
+                if model not in models_seen:
+                    models_seen.append(model)
+                per_model.setdefault(model, {"input": 0, "output": 0, "cache_read": 0, "cache_creation": 0})
             if not usage:
                 continue
-            tokens["input"]          += usage.get("input_tokens", 0)
-            tokens["output"]         += usage.get("output_tokens", 0)
-            tokens["cache_read"]     += usage.get("cache_read_input_tokens", 0)
-            tokens["cache_creation"] += usage.get("cache_creation_input_tokens", 0)
+            t_in   = usage.get("input_tokens", 0)
+            t_out  = usage.get("output_tokens", 0)
+            t_cr   = usage.get("cache_read_input_tokens", 0)
+            t_cc   = usage.get("cache_creation_input_tokens", 0)
+            tokens["input"]          += t_in
+            tokens["output"]         += t_out
+            tokens["cache_read"]     += t_cr
+            tokens["cache_creation"] += t_cc
+            if model and not model.startswith("<"):
+                per_model[model]["input"]          += t_in
+                per_model[model]["output"]         += t_out
+                per_model[model]["cache_read"]     += t_cr
+                per_model[model]["cache_creation"] += t_cc
     except Exception:
         pass
-    return tokens
+    return tokens, models_seen, per_model
 
 
-def _estimate_cost(tokens: dict) -> float:
-    """Stima costo Sonnet 4.6 (default conservativo)."""
-    prices = {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_creation": 3.75}
-    total = 0.0
-    for k, price in prices.items():
-        total += tokens.get(k, 0) * price / 1_000_000
+def _model_family(model_id: str) -> str:
+    """Mappa un model id Anthropic alla famiglia haiku/sonnet/opus."""
+    m = model_id.lower()
+    if "haiku" in m: return "haiku"
+    if "opus"  in m: return "opus"
+    if "sonnet" in m: return "sonnet"
+    return "sonnet"  # fallback conservativo
+
+
+# Prezzi $/1M token, baseline 2026-05 (Anthropic public pricing).
+# Famiglia: input, output, cache_read, cache_creation.
+_PRICING = {
+    "haiku":  {"input": 0.80, "output":  4.00, "cache_read": 0.08, "cache_creation": 1.00},
+    "sonnet": {"input": 3.00, "output": 15.00, "cache_read": 0.30, "cache_creation": 3.75},
+    "opus":   {"input": 15.0, "output": 75.00, "cache_read": 1.50, "cache_creation": 18.75},
+}
+
+
+def _estimate_cost(per_model: dict[str, dict], tokens: dict) -> float:
+    """Stima costo per-modello quando disponibile, fallback a Sonnet."""
+    if per_model:
+        total = 0.0
+        for model_id, tk in per_model.items():
+            prices = _PRICING[_model_family(model_id)]
+            for k, price in prices.items():
+                total += tk.get(k, 0) * price / 1_000_000
+        return round(total, 6)
+    # Fallback: nessun modello rilevato, stima Sonnet conservativa
+    prices = _PRICING["sonnet"]
+    total = sum(tokens.get(k, 0) * price / 1_000_000 for k, price in prices.items())
     return round(total, 6)
 
 
@@ -127,14 +169,20 @@ def main() -> int:
         if jsonl_path is None:
             return 0
 
-        tokens = _extract_tokens(jsonl_path)
+        tokens, models, per_model = _extract_tokens_and_models(jsonl_path)
         # Salta sessioni banali (<1000 token totali)
         total = sum(tokens.values())
         if total < 1000:
             return 0
 
-        cost = _estimate_cost(tokens)
+        cost = _estimate_cost(per_model, tokens)
         category = _detect_category(jsonl_path)
+        # Famiglie (haiku/sonnet/opus), unicizzate mantenendo ordine.
+        families = []
+        for m in models:
+            f = _model_family(m)
+            if f not in families:
+                families.append(f)
 
         script = Path(__file__).resolve().parent.parent / "log_coordination.py"
         cmd = [
@@ -145,6 +193,7 @@ def main() -> int:
             "--category", category,
             "--outcome", "ok",
             "--cost", str(cost),
+            "--models", ",".join(families),
             "--input-tokens", str(tokens["input"]),
             "--output-tokens", str(tokens["output"]),
             "--cache-read", str(tokens["cache_read"]),
