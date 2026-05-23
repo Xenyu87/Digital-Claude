@@ -1,14 +1,14 @@
 # AI Resume
 
-Last updated: 2026-05-23T06:20:00
+Last updated: 2026-05-23T07:05:00
 Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Current State
 
 - Goal: Lavagna come centro operativo semplice e potente
 - Branch: master
-- Git state: modifiche locali in corso su expand/collapse Lavagna e Playwright
-- Last commit: ba6819f make blueprint nodes show UI structure
+- Git state: modifiche locali doc-only su Homelab/reference ops; output generati non tracciati in `reports/`
+- Last commit: 45695e1 render generated frontend preview client side
 
 ## Latest Work
 
@@ -21,27 +21,19 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 - Done in current step: Playwright installato/configurato; Lavagna ha controlli canvas `Apri tutti`/`Chiudi tutti` e toggle sui nodi componente per mostrare/nascondere figli UI.
 - Done in current step: quando un componente viene espanso, bottoni/grafici figli vengono posizionati accanto al padre; Playwright controlla anche questa relazione spaziale.
 - Done in current step: Lavagna split-view con preview frontend laterale; fallback generato direttamente in React dai nodi scanner per evitare 404; selezionare un nodo UI evidenzia l'elemento corrispondente nella preview.
+- Done in current step: Homelab aggiornato con procedura Codex Skill per build Lavagna/React Flow, rigenerazione dashboard e troubleshooting preview/404.
 
 ## Changed Or Untracked Files
 
-- `M scripts/blueprint_board.py`
-- `M scripts/dashboard_components.py`
-- `M frontend/blueprint-flow/src/main.jsx`
-- `M frontend/blueprint-flow/src/styles.css`
-- `M scripts/blueprint_board_test.py`
-- `M package.json`
-- `M package-lock.json`
-- `A playwright.config.js`
-- `A tests/visual/blueprint-board.spec.js`
-- `A tests/fixtures/visual-blueprint-app/...`
-- `A docs/ai/visual-testing.md`
+- `M references/homelab-ops.md`
 - `M AI_RESUME.md`
-- `M AI_HANDOFF.md`
-- `M AI_CONTEXT.md`
-- `M docs/ai/app-contract.md`
+- external: `/root/Progetti/homelab/HOMELAB.md`
+- untracked generated/output: `reports/`, `../.system/`
 
 ## Recent Commits
 
+- `45695e1 render generated frontend preview client side`
+- `3309a6d add blueprint frontend preview pane`
 - `ba6819f make blueprint nodes show UI structure`
 - `969727a make board first panel action focused`
 - `84ee003 split dashboard diagnostics renderer`
@@ -49,7 +41,7 @@ Project: /root/.codex/skills/cost-aware-app-coordinator
 
 ## Next Step
 
-- Commit/push della split-view frontend preview. Prossimo step naturale: click inverso preview -> nodo e supporto dev server live piu guidato.
+- Commit/push eventuale della nota Homelab se vuoi versionarla nella skill. Prossimo step naturale: supporto piu guidato per `frontend_preview_url`/dev server live e mapping DOM reale -> nodi Lavagna.
 
 ## Read Next Only If Needed
 

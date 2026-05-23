@@ -21,6 +21,7 @@ Per dettagli completi → `/root/Progetti/homelab/HOMELAB.md` (indice topico in 
 
 | Servizio | LXC | Note |
 |---|---|---|
+| `codex-skill-dashboard.service` | dev | Dashboard Codex Skill, porta 3002, serve `reports/skill-dashboard.html` |
 | `dashboard-claude-coordinator-dev.service` | dev | Next.js, porta 3001, `npm start` dopo `npm run build` |
 | `syncthing.service` | dev | GUI 3003, sync TCP 22000, config `/root/.config/syncthing/config.xml` |
 
@@ -34,11 +35,17 @@ journalctl -u <nome> -n 50 --no-pager
 journalctl -u <nome> -f          # follow live
 
 # Verifica porte in ascolto (preferisci ss a netstat)
-ss -tlnp | grep -E ':(3001|3003|22000)\s'
+ss -tlnp | grep -E ':(3001|3002|3003|22000)\s'
 
 # Hot-reload dashboard dopo modifica sorgenti
 cd /root/Progetti/dashboard-claude-coordinator
 npm run build && systemctl restart dashboard-claude-coordinator-dev.service
+
+# Hot-reload dashboard Codex Skill dopo modifica Lavagna/React Flow
+cd /root/Progetti/codex-skill-dashboard
+npm run build:blueprint-flow
+python3 scripts/generate_dashboard.py --refresh 15
+scripts/manage_dashboard.sh restart
 ```
 
 ## Pattern ricorrenti (lezioni)
@@ -50,6 +57,20 @@ Quasi sempre **cache del browser**, non server. Ordine di indagine:
 1. `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3001/<path>` — se 200, server OK
 2. `curl -s http://localhost:3001/<path> | grep -c '<tag>'` — verifica che il contenuto atteso sia nell'HTML
 3. Solo se 1+2 OK → istruisci utente **Ctrl+Shift+R** (hard refresh) o incognito
+
+### "Preview/Lavagna Codex mostra 404"
+
+Di solito il browser sta parlando con un vecchio processo o con asset React Flow non ricompilati.
+
+Ordine di indagine:
+
+1. `cd /root/Progetti/codex-skill-dashboard`
+2. `npm run build:blueprint-flow`
+3. `python3 scripts/generate_dashboard.py --refresh 15`
+4. `scripts/manage_dashboard.sh restart`
+5. Apri `http://192.168.1.148:3002/reports/skill-dashboard.html` e fai hard refresh.
+
+Nota: la preview frontend generata della Lavagna non dovrebbe piu' dipendere dall'iframe `/frontend-preview`; il fallback viene renderizzato direttamente da React. L'endpoint `/frontend-preview?project=...` resta solo per compatibilita'/debug.
 
 ### "VS Code Remote-SSH forwarda porte fantasma"
 
