@@ -26,6 +26,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+def _parse_share(s: str) -> dict[str, float]:
+    """Parsa "haiku:0.1,sonnet:0.3,opus:0.6" in dict. Best-effort, fail-safe."""
+    out: dict[str, float] = {}
+    if not s:
+        return out
+    for tok in s.split(","):
+        if ":" not in tok:
+            continue
+        k, v = tok.split(":", 1)
+        try:
+            out[k.strip()] = round(float(v), 4)
+        except ValueError:
+            continue
+    return out
+
+
 def _proj_slug(project_path: str) -> str:
     """Converte il path progetto nel formato slug usato da Claude Code."""
     import re
@@ -64,6 +80,7 @@ def main() -> int:
     ap.add_argument("--files", type=int, default=0)
     ap.add_argument("--agents", default="", help="agenti usati, separati da virgola")
     ap.add_argument("--models", default="", help="modelli usati, separati da virgola")
+    ap.add_argument("--models-share", default="", help='share token per famiglia, formato "haiku:0.1,sonnet:0.3,opus:0.6"')
     ap.add_argument("--keywords", default="", help="trigger keywords, separati da virgola")
     ap.add_argument("--input-tokens", type=int, default=0)
     ap.add_argument("--output-tokens", type=int, default=0)
@@ -90,6 +107,7 @@ def main() -> int:
             "trigger_keywords": [k.strip() for k in args.keywords.split(",") if k.strip()],
             "agents_used": [a.strip() for a in args.agents.split(",") if a.strip()],
             "models": [m.strip() for m in args.models.split(",") if m.strip()],
+            "models_share": _parse_share(args.models_share),
             "tokens": {
                 "input": args.input_tokens,
                 "output": args.output_tokens,

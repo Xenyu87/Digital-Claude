@@ -123,13 +123,23 @@ def _estimate_cost(per_model: dict[str, dict], tokens: dict) -> float:
     return round(total, 6)
 
 
+_OPS_RE       = re.compile(r"\b(systemd|journalctl|ssh|lxc|porta|servizio|syncthing|deploy|riavvia|restart|cron|systemctl)\b", re.I)
+_AUDIT_RE     = re.compile(r"\b(rivedi|review|controlla|sicurezza|audit|verifica)\b", re.I)
+_BUG_RE       = re.compile(r"\b(non funziona|errore|crash|bug|fix|broken|rotto|fallisce)\b", re.I)
+_NEW_APP_RE   = re.compile(r"\b(crea|scaffold|parti da zero|nuova app|nuovo progetto|init)\b", re.I)
+_SKILL_RE     = re.compile(r"automiglior|\bmigliorati\b|(aggiorna|modifica|migliora) la skill", re.I)
+# Categoria "domanda": prompt corti, interrogativi, senza imperativi forti
+_INTERR_RE    = re.compile(r"^(cos[aà'’]|come|perch[éè]|quando|dove|chi|quale|quanto|spiega|dimmi|raccont|mostr[ai]?\b)", re.I)
+_IMPERATIVE_RE = re.compile(r"\b(aggiungi|modifica|crea|implementa|scrivi|aggiorna|sposta|togli|rimuovi|cambia|refactor|integra|installa)\b", re.I)
+
+
 def _detect_category(jsonl_path: Path) -> str:
-    """Euristica: legge il primo prompt utente e classifica la categoria."""
-    ops_re = re.compile(r"systemd|journalctl|ssh|lxc|porta|servizio|syncthing|deploy|riavvia|cron", re.I)
-    audit_re = re.compile(r"rivedi|review|controlla|sicurezza|audit", re.I)
-    bug_re = re.compile(r"non funziona|errore|crash|bug|fix|broken", re.I)
-    new_app_re = re.compile(r"crea|scaffold|parti da zero|nuova app|nuovo progetto", re.I)
-    skill_re = re.compile(r"skill|automiglior|aggiorna la skill", re.I)
+    """Euristica multi-segnale sul primo prompt utente reale.
+
+    Ordine di priorita': ops > bug > audit > new_app > skill > domanda > modifica.
+    "domanda" intercetta prompt corti/interrogativi senza verbi imperativi
+    (es. "cosa fa X", "come funziona Y", "dimmi Z") che prima cadevano in "modifica".
+    """
     try:
         for line in jsonl_path.read_text(encoding="utf-8", errors="ignore").splitlines():
             try:
@@ -139,18 +149,29 @@ def _detect_category(jsonl_path: Path) -> str:
             role = entry.get("role") or entry.get("message", {}).get("role", "")
             if role != "user":
                 continue
-            content = str(entry.get("content") or entry.get("message", {}).get("content", ""))
-            if ops_re.search(content):
-                return "ops"
-            if audit_re.search(content):
-                return "audit"
-            if bug_re.search(content):
-                return "bug_rescue"
-            if new_app_re.search(content):
-                return "nuova_app"
-            if skill_re.search(content):
-                return "miglioramento_skill"
-            # primo prompt trovato, categoria default
+            raw = entry.get("content") or entry.get("message", {}).get("content", "")
+            content = str(raw).strip()
+            # Salta prompt vuoti, comandi system o slash-only
+            if not content or content.startswith("<") or content.startswith("/"):
+                continue
+            if len(content) < 3:
+                continue
+            # Trigger forti per categoria
+            if _OPS_RE.search(content):     return "ops"
+            if _BUG_RE.search(content):     return "bug_rescue"
+            if _AUDIT_RE.search(content):   return "audit"
+            if _NEW_APP_RE.search(content): return "nuova_app"
+            if _SKILL_RE.search(content):   return "miglioramento_skill"
+            # Distinzione domanda vs modifica:
+            # - corto (<120 char) e interrogativo e SENZA verbi imperativi -> domanda
+            # - finisce con ? e nessun imperativo -> domanda
+            short = len(content) < 120
+            has_question = "?" in content or _INTERR_RE.match(content)
+            has_imperative = bool(_IMPERATIVE_RE.search(content))
+            if has_question and not has_imperative and short:
+                return "domanda"
+            if content.endswith("?") and not has_imperative:
+                return "domanda"
             return "modifica"
     except Exception:
         pass
@@ -179,10 +200,16 @@ def main() -> int:
         category = _detect_category(jsonl_path)
         # Famiglie (haiku/sonnet/opus), unicizzate mantenendo ordine.
         families = []
+        family_tokens: dict[str, int] = {}
         for m in models:
             f = _model_family(m)
             if f not in families:
                 families.append(f)
+            family_tokens[f] = family_tokens.get(f, 0) + sum(per_model.get(m, {}).values())
+        # Share % per famiglia (basato su token totali).
+        total_fam = sum(family_tokens.values()) or 1
+        share_parts = [f"{f}:{family_tokens[f]/total_fam:.4f}" for f in families]
+        models_share = ",".join(share_parts)
 
         script = Path(__file__).resolve().parent.parent / "log_coordination.py"
         cmd = [
@@ -194,6 +221,7 @@ def main() -> int:
             "--outcome", "ok",
             "--cost", str(cost),
             "--models", ",".join(families),
+            "--models-share", models_share,
             "--input-tokens", str(tokens["input"]),
             "--output-tokens", str(tokens["output"]),
             "--cache-read", str(tokens["cache_read"]),
