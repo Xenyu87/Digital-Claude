@@ -95,6 +95,7 @@ In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallis
 | `bypass-guardian` | sonnet | revisione pre-esecuzione quando bypass-permissions è ON e ci sono azioni rischiose/irreversibili |
 | `dependency-checker` | haiku | audit npm/pip: versioni obsolete, CVE note, pacchetti non mantenuti — solo lettura |
 | `db-migrator` | sonnet | migrazioni DB sicure con rollback: ALTER/DROP/ADD, conversioni SQLite↔Postgres, schema iniziale |
+| `disaster-recovery` | sonnet | recupero ambiente dopo perdita catastrofica: LXC distrutto, config persa, servizi scomparsi |
 | `code-implementer` | sonnet | edit 1-5 file con scope deciso, refactor locale, wire-up |
 | `qa-tester` | sonnet | scrittura/run di test, regression test su bug |
 | `code-debugger` | sonnet | bug rescue: riproduci → isola → fix → verifica |
