@@ -24,7 +24,7 @@ Cost-aware Codex coordinator skill for app work. It provides operating rules, pr
 | dashboard local server/actions | scripts/serve_dashboard.py |
 | Blueprint scanner/audit/flow logic | scripts/blueprint_board.py |
 | Blueprint React canvas | frontend/blueprint-flow/src/main.jsx, frontend/blueprint-flow/src/styles.css |
-| Lavagna visual tests | playwright.config.js, tests/visual/blueprint-board.spec.js, tests/fixtures/visual-blueprint-app, docs/ai/visual-testing.md |
+| Lavagna preview and visual tests | scripts/serve_dashboard.py, frontend/blueprint-flow/src/main.jsx, playwright.config.js, tests/visual/blueprint-board.spec.js, tests/fixtures/visual-blueprint-app, docs/ai/visual-testing.md |
 | project context scaffolding | scripts/bootstrap_project_context.py, scripts/update_ai_resume.py |
 | runner/background automation | scripts/persistent_runner.py, scripts/background_sentinel.py |
 | task resume/checkpoints | scripts/task_checkpoint.py |
@@ -39,6 +39,7 @@ Cost-aware Codex coordinator skill for app work. It provides operating rules, pr
 - Blueprint canvas: React Flow assets built into `reports/blueprint-flow-assets`.
 - Blueprint scanner contract: visible UI buttons and charts should become granular frontend nodes; component nodes may expose `subnodes`, `uiRole`, `actionDescription`, and parent/child `contains_ui` relations.
 - Lavagna canvas supports component expand/collapse for child UI nodes and positions expanded children beside the parent component.
+- Lavagna can show a side-by-side frontend preview. Live preview comes from `frontend_preview_url`/`preview_url` in `app-blueprint.json`; fallback generated preview is served by `/frontend-preview?project=...` and supports node highlight messages.
 - Automation: safe/report-only by default; AI autonomous execution remains disabled.
 - Project memory: use `AI_RESUME.md` as the cheap first-read file for new chats.
 

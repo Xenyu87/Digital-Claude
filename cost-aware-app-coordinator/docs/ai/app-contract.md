@@ -13,6 +13,7 @@
 - Planned sections: Home, Lavagna, Azioni, Automazione, Diagnostica.
 - React surface: `data-blueprint-flow-root` mounts the interactive Blueprint canvas from built Vite assets.
 - Interactions: project select, background mode, runner controls, learning feedback, Blueprint design wizard, screenshot upload, layout save, component expand/collapse on the Blueprint canvas.
+- Frontend preview: Lavagna may show a side-by-side preview of the scanned frontend. If `app-blueprint.json` defines `frontend_preview_url` or `preview_url`, the live URL is embedded; otherwise the local dashboard serves `/frontend-preview?project=...` as a generated preview from scanner nodes.
 
 ## Blueprint Board Contract
 
@@ -27,6 +28,7 @@
   - Component nodes may expose `subnodes`, `parentId`, `uiRole`, and `actionDescription`.
   - Parent component nodes should link to child UI nodes through `contains_ui`; child nodes should link back through `inside_component`.
   - When expanded on the canvas, child UI nodes should appear close to their parent component instead of staying in unrelated lane positions.
+  - Selecting a UI node should highlight the matching element in the frontend preview when the preview supports node messages.
   - Internal dashboard controls such as zoom, line filters, expand/collapse controls, and feedback buttons are known noise and must not become top issues.
 - Issue classes:
   - `real_issue`: high-confidence problem or confirmed user-facing break.
@@ -45,12 +47,13 @@
 - Dashboard state: `reports/skill-dashboard.json`, `reports/dashboard-config.json`, `reports/*status*.json`, `reports/*events*.jsonl`.
 - Validation: scripts should cap output, tolerate missing state files, and avoid autonomous code edits.
 - Blueprint view model: dashboard graph payload should expose `blueprintView` with `focus`, `stats`, `nodes`, `edges`, `flows`, `issues`, `actions`, and `views`.
+- Frontend preview endpoint: `scripts/serve_dashboard.py` handles `/frontend-preview?project=...` and renders a generated, clickable preview from frontend Blueprint nodes. The generated preview listens for `postMessage({type: "highlight-node", id})` and emits `postMessage({type: "preview-node-click", id})` on element click.
 
 ## Verification
 
 - Minimum check: `python3 scripts/test_all.py --json --no-write`.
 - Frontend build: `npm run build:blueprint-flow`.
-- Visual check: `npm run test:visual` runs Playwright against a deterministic fixture app and validates that the Lavagna loads, exposes UI detail controls, and can open/close component UI detail nodes.
+- Visual check: `npm run test:visual` runs Playwright against a deterministic fixture app and validates that the Lavagna loads, exposes UI detail controls, can open/close component UI detail nodes, shows the frontend preview, and highlights a preview element from node selection.
 - Playwright setup: install Node dependency with `npm install --save-dev @playwright/test`, install Chromium with `npx playwright install chromium`, and install system browser dependencies with `npx playwright install-deps chromium` when the host lacks them.
 - Manual acceptance: Home fits in one useful screen; Lavagna is primary for graph work; automation and diagnostics are not mixed with next-action guidance.
 - Lavagna acceptance: next step is understandable within 10 seconds; default board has fewer than 20 nodes; toolbar/internal canvas controls are not promoted as top problems.

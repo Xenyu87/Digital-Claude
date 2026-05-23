@@ -9,6 +9,14 @@
 - Command: `npm run test:visual`.
 - Environment note: minimal Linux hosts need `npx playwright install chromium` and `npx playwright install-deps chromium`; restricted sandboxes may need elevated permission for local server sockets.
 
+## 2026-05-23 - Lavagna Frontend Preview
+
+- Decision: add a side-by-side frontend preview to the Lavagna.
+- Why: graph nodes are much more useful when the user can see the UI element or component they represent.
+- First slice: prefer configured live URLs from `app-blueprint.json` (`frontend_preview_url` or `preview_url`), otherwise serve a generated preview from scanner nodes at `/frontend-preview?project=...`.
+- Interaction: canvas node selection sends `highlight-node` to the preview; generated preview elements can also emit `preview-node-click`.
+- Constraint: live iframe previews may be blocked by app frame policy or auth. The generated preview is the reliable fallback and the Playwright target.
+
 Record durable choices only.
 
 ## Decisions

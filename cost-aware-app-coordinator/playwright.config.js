@@ -25,7 +25,7 @@ module.exports = defineConfig({
   webServer: {
     command: `python3 scripts/serve_dashboard.py --host 127.0.0.1 --port 3102 --interval 999 --project ${visualFixture} --no-open`,
     url: 'http://127.0.0.1:3102/reports/skill-dashboard.html',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 20000,
   },
 });

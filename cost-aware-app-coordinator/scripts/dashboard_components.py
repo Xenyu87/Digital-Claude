@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import html
 import json
+import urllib.parse
 from pathlib import Path
 
 
@@ -414,10 +415,28 @@ def render_blueprint_graph(doctor: dict[str, object]) -> str:
             )
 
     project_path = str(Path(str(doctor.get("path") or "")).parent) if doctor.get("path") else ""
+    generated_preview_url = f"/frontend-preview?project={urllib.parse.quote(project_path)}" if project_path else ""
+    live_preview_url = ""
+    if project_path:
+        blueprint = Path(project_path) / "app-blueprint.json"
+        try:
+            blueprint_data = json.loads(blueprint.read_text(encoding="utf-8")) if blueprint.exists() else {}
+        except (OSError, json.JSONDecodeError):
+            blueprint_data = {}
+        if isinstance(blueprint_data, dict):
+            candidate = str(blueprint_data.get("frontend_preview_url") or blueprint_data.get("preview_url") or "").strip()
+            if candidate.startswith(("http://", "https://", "/")):
+                live_preview_url = candidate
     payload = {
         "projectPath": project_path,
         "nodes": flow_nodes,
         "edges": flow_edges,
+        "preview": {
+            "url": live_preview_url or generated_preview_url,
+            "generatedUrl": generated_preview_url,
+            "mode": "live" if live_preview_url else "generated",
+            "label": "Preview live" if live_preview_url else "Preview generata",
+        },
         "blueprintView": build_blueprint_view_model(doctor, flow_nodes, flow_edges),
         "auditPlan": (((doctor.get("audit") or {}) if isinstance(doctor.get("audit"), dict) else {}).get("fix_plan", []) or [])[:10],
         "flows": (((doctor.get("flows") or {}) if isinstance(doctor.get("flows"), dict) else {}).get("items", []) or [])[:16],

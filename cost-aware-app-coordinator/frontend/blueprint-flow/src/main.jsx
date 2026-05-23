@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Background,
@@ -209,6 +209,7 @@ function FlowBoard({ root }) {
   const [feedbackLabel, setFeedbackLabel] = useState('');
   const [taskLabel, setTaskLabel] = useState('');
   const [expandedParents, setExpandedParents] = useState(() => new Set());
+  const previewRef = useRef(null);
   const flow = useReactFlow();
 
   const childrenByParent = useMemo(() => {
@@ -291,6 +292,27 @@ function FlowBoard({ root }) {
   );
 
   const selectedNode = visibleNodes.find((node) => node.id === selectedId) || visibleNodes.find((node) => !node.hidden);
+  const preview = payload.preview || {};
+
+  useEffect(() => {
+    if (!selectedNode?.id || !previewRef.current?.contentWindow) return;
+    previewRef.current.contentWindow.postMessage({ type: 'highlight-node', id: selectedNode.id }, '*');
+  }, [selectedNode]);
+
+  useEffect(() => {
+    const receivePreviewSelection = (event) => {
+      if (event.data?.type !== 'preview-node-click' || !event.data.id) return;
+      const nextId = String(event.data.id);
+      const node = nodes.find((item) => item.id === nextId);
+      if (node?.data?.parentId) {
+        setExpandedParents((current) => new Set(current).add(node.data.parentId));
+      }
+      setSelectedId(nextId);
+    };
+    window.addEventListener('message', receivePreviewSelection);
+    return () => window.removeEventListener('message', receivePreviewSelection);
+  }, [nodes]);
+
   const selectedRelations = useMemo(() => {
     if (!selectedNode) return [];
     return visibleEdges
@@ -601,7 +623,30 @@ function FlowBoard({ root }) {
             </Panel>
           </ReactFlow>
         </div>
-        <aside className="bf-detail">
+        <div className="bf-side">
+          <section className="bf-preview">
+            <div className="bf-preview-head">
+              <div>
+                <span>Frontend</span>
+                <strong>{preview.label || 'Preview UI'}</strong>
+              </div>
+              {preview.generatedUrl && preview.url !== preview.generatedUrl && (
+                <button type="button" onClick={() => { previewRef.current.src = preview.generatedUrl; }}>Fallback</button>
+              )}
+            </div>
+            {preview.url ? (
+              <iframe
+                ref={previewRef}
+                title="Preview frontend progetto"
+                src={preview.url}
+                className="bf-preview-frame"
+                onLoad={() => selectedNode?.id && previewRef.current?.contentWindow?.postMessage({ type: 'highlight-node', id: selectedNode.id }, '*')}
+              />
+            ) : (
+              <p className="bf-empty">Nessuna preview frontend disponibile per questo progetto.</p>
+            )}
+          </section>
+          <aside className="bf-detail">
           <div className="bf-detail-kicker">{selectedNode?.data?.origin || 'nodo'} / {LAYER_LABELS[selectedNode?.data?.layer] || selectedNode?.data?.layer || selectedNode?.data?.domain || 'nodo'} / {selectedNode?.data?.kind || 'feature'}</div>
           <h3>{selectedNode?.data?.title || 'Seleziona un nodo'}</h3>
           <p>{selectedNode?.data?.summary || 'Clicca un nodo per vedere cosa fa e con chi parla.'}</p>
@@ -728,7 +773,8 @@ function FlowBoard({ root }) {
             </div>
             {feedbackLabel && <p className="bf-empty">{feedbackLabel}</p>}
           </div>
-        </aside>
+          </aside>
+        </div>
       </div>
     </div>
   );

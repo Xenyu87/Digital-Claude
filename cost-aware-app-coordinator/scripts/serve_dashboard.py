@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import http.server
 import subprocess
@@ -16,7 +17,7 @@ from pathlib import Path
 
 from expert_feedback import record_feedback
 from skill_learning import record_learning
-from blueprint_board import apply_design_wizard
+from blueprint_board import apply_design_wizard, doctor as blueprint_doctor
 from persistent_runner import enqueue_job, pause_runner, run_once as runner_run_once, start_runner, stop_runner, update_runner_config
 
 
@@ -127,6 +128,107 @@ def save_blueprint_layout(project: Path, payload: dict[str, object]) -> dict[str
     return {"ok": True, "path": str(blueprint), "saved": saved}
 
 
+def render_frontend_preview(project: Path) -> str:
+    try:
+        report = blueprint_doctor(project)
+    except Exception as exc:  # pragma: no cover - defensive server fallback
+        safe_error = html.escape(str(exc))
+        return f"<!doctype html><meta charset='utf-8'><body><p>Preview non disponibile: {safe_error}</p></body>"
+    nodes = [item for item in report.get("nodes", []) if isinstance(item, dict)]
+    by_parent: dict[str, list[dict[str, object]]] = {}
+    roots = []
+    for node in nodes:
+        if str(node.get("domain") or "") != "frontend":
+            continue
+        parent_id = str(node.get("parent_id") or "")
+        if parent_id:
+            by_parent.setdefault(parent_id, []).append(node)
+        elif str(node.get("kind") or "") in {"screen", "component"} or str(node.get("title") or "").startswith("Screen/Component:"):
+            roots.append(node)
+    if not roots:
+        roots = [item for item in nodes if str(item.get("domain") or "") == "frontend"][:6]
+
+    def node_attr(node: dict[str, object]) -> str:
+        return html.escape(str(node.get("id") or ""), quote=True)
+
+    def node_title(node: dict[str, object]) -> str:
+        return html.escape(str(node.get("title") or "Nodo UI"))
+
+    def child_html(child: dict[str, object]) -> str:
+        kind = str(child.get("kind") or "")
+        title = node_title(child)
+        node_id = node_attr(child)
+        summary = html.escape(str(child.get("action_description") or child.get("plain_summary") or child.get("description") or "Elemento UI rilevato."))
+        route = html.escape(str(child.get("ui_route") or child.get("api_route") or ""))
+        if kind == "chart":
+            return f"<section class='preview-chart' data-blueprint-node-id='{node_id}' tabindex='0'><strong>{title}</strong><div class='chart-bars'><i></i><i></i><i></i><i></i></div><small>{summary}</small></section>"
+        return f"<button class='preview-action' type='button' data-blueprint-node-id='{node_id}'><span>{title}</span><small>{summary}</small>{f'<em>{route}</em>' if route else ''}</button>"
+
+    sections = []
+    for root in roots[:10]:
+        children = by_parent.get(str(root.get("id") or ""), [])
+        if not children and root not in nodes:
+            continue
+        child_markup = "\n".join(child_html(child) for child in children[:12]) or "<p class='muted'>Nessun elemento UI figlio rilevato.</p>"
+        sections.append(
+            f"<article class='preview-card' data-blueprint-node-id='{node_attr(root)}' tabindex='0'>"
+            f"<header><span>Componente</span><h2>{node_title(root)}</h2></header>"
+            f"<p>{html.escape(str(root.get('plain_summary') or root.get('description') or 'Componente frontend rilevato.'))}</p>"
+            f"<div class='preview-grid'>{child_markup}</div>"
+            "</article>"
+        )
+    body = "\n".join(sections) or "<p class='muted'>Nessuna UI frontend rilevata nello scan.</p>"
+    return f"""<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {{ color-scheme: light; --ink:#17212f; --muted:#5c6876; --line:#d7e1ec; --accent:#2563a8; --soft:#f4f8fc; }}
+    * {{ box-sizing: border-box; }}
+    body {{ margin:0; font-family:Inter, Segoe UI, Arial, sans-serif; color:var(--ink); background:#eef4fa; }}
+    main {{ padding:16px; display:grid; gap:14px; }}
+    .preview-card {{ border:1px solid var(--line); border-radius:8px; background:#fff; padding:14px; box-shadow:0 8px 24px rgba(23,33,47,.08); }}
+    .preview-card header {{ display:flex; justify-content:space-between; gap:10px; align-items:start; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:10px; }}
+    .preview-card span {{ color:var(--accent); font-size:12px; font-weight:900; text-transform:uppercase; }}
+    h1 {{ margin:0; font-size:18px; }}
+    h2 {{ margin:2px 0 0; font-size:18px; }}
+    p, small {{ color:var(--muted); line-height:1.35; }}
+    .preview-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:9px; }}
+    .preview-action, .preview-chart {{ min-height:96px; border:1px solid var(--line); border-radius:7px; background:var(--soft); color:var(--ink); padding:10px; text-align:left; }}
+    .preview-action span, .preview-chart strong {{ display:block; font-weight:900; margin-bottom:5px; }}
+    .preview-action small, .preview-chart small, .preview-action em {{ display:block; font-size:12px; color:var(--muted); overflow-wrap:anywhere; }}
+    .preview-action em {{ margin-top:6px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-style:normal; }}
+    .chart-bars {{ display:flex; align-items:end; gap:7px; height:52px; margin:6px 0 8px; }}
+    .chart-bars i {{ flex:1; min-width:16px; border-radius:4px 4px 0 0; background:linear-gradient(180deg,#56a0df,#2563a8); }}
+    .chart-bars i:nth-child(1) {{ height:45%; }} .chart-bars i:nth-child(2) {{ height:78%; }} .chart-bars i:nth-child(3) {{ height:58%; }} .chart-bars i:nth-child(4) {{ height:92%; }}
+    [data-blueprint-node-id].is-highlighted {{ outline:4px solid #f2b84b; outline-offset:3px; box-shadow:0 0 0 8px rgba(242,184,75,.22); }}
+    .muted {{ color:var(--muted); }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Preview frontend generata</h1>
+    {body}
+  </main>
+  <script>
+    function selectNode(id) {{
+      document.querySelectorAll('[data-blueprint-node-id]').forEach((item) => item.classList.toggle('is-highlighted', item.dataset.blueprintNodeId === id));
+      const selected = document.querySelector('[data-blueprint-node-id="' + CSS.escape(id) + '"]');
+      if (selected) selected.scrollIntoView({{ block: 'center', inline: 'center', behavior: 'smooth' }});
+    }}
+    window.addEventListener('message', (event) => {{
+      if (event.data && event.data.type === 'highlight-node') selectNode(String(event.data.id || ''));
+    }});
+    document.addEventListener('click', (event) => {{
+      const target = event.target.closest('[data-blueprint-node-id]');
+      if (target) window.parent.postMessage({{ type: 'preview-node-click', id: target.dataset.blueprintNodeId }}, '*');
+    }});
+  </script>
+</body>
+</html>"""
+
+
 def regenerate(interval: int, project: str | None, save_config: bool, stop: threading.Event) -> None:
     while not stop.is_set():
         current_project = project or str(load_config().get("project_path") or "")
@@ -159,6 +261,21 @@ def handler_class(interval: int) -> type[http.server.SimpleHTTPRequestHandler]:
             parsed = urllib.parse.urlparse(self.path)
             if parsed.path in {"", "/"}:
                 self.redirect_to_dashboard()
+                return
+            if parsed.path == "/frontend-preview":
+                params = urllib.parse.parse_qs(parsed.query)
+                project = (params.get("project") or [""])[0].strip().strip('"')
+                target = Path(project).resolve() if project else Path(str(load_config().get("project_path") or ROOT)).resolve()
+                if not target.exists():
+                    self.send_error(404, "Project not found")
+                    return
+                content = render_frontend_preview(target).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(content)
                 return
             if parsed.path == "/select-project":
                 params = urllib.parse.parse_qs(parsed.query)

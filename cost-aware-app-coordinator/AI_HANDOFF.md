@@ -18,12 +18,14 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 - Done in current step: Lavagna first panel is now action-first; wizard/screenshot moved under `Strumenti lavagna`; React Flow shows a `Prossima azione` bar above counters.
 - Done in current step: Blueprint scanner creates granular UI nodes for visible buttons and charts, adds component parent/child relations, and exposes chart/button subnodes in the React Flow detail panel.
 - Done in current step: Playwright installed and configured; Lavagna canvas now supports opening/closing child UI nodes from global controls and component node toggles, with expanded children positioned beside their parent component.
+- Done in current step: Lavagna now has a side-by-side frontend preview pane. It embeds a live `frontend_preview_url`/`preview_url` when configured, otherwise uses `/frontend-preview?project=...` generated from scanner nodes. Node selection highlights matching generated preview elements.
 
 ## Changed Files
 
 - `AI_RESUME.md`, `AI_HANDOFF.md`, `AI_CONTEXT.md`: latest state and scanner contract memory.
 - `scripts/blueprint_board.py`: button/chart scanner, action descriptions, UI hierarchy relations, subnodes in doctor output.
 - `scripts/dashboard_components.py`: passes `uiRole`, `actionDescription`, and `subnodes` to React Flow.
+- `scripts/serve_dashboard.py`: serves `/frontend-preview` generated from Blueprint frontend nodes and supports highlight/selection messages.
 - `frontend/blueprint-flow/src/main.jsx`, `frontend/blueprint-flow/src/styles.css`: node footer shows subnode count; detail panel shows "Cosa fa" and clickable "Sotto-nodi"; canvas supports expand/collapse of child UI nodes.
 - `package.json`, `package-lock.json`, `playwright.config.js`: Playwright visual test setup.
 - `tests/visual/blueprint-board.spec.js`, `tests/fixtures/visual-blueprint-app`: deterministic visual regression for Lavagna UI details.
@@ -44,7 +46,7 @@ Make the Lavagna the main simple/powerful dashboard area and keep the dashboard 
 
 ## Next Step
 
-Commit/push the expanded-child layout refinement. Next functional step: continue reducing scanner noise and improve flow grouping labels for real user journeys.
+Commit/push the frontend preview split-view. Next functional step: make preview click select/focus the canvas node reliably for live previews, then add guided dev-server URL setup.
 
 ## Do Not Repeat
 
