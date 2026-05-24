@@ -202,6 +202,7 @@ Reference activation map:
 - MCP integrations (GitHub/Linear/Slack/Notion/...) → `references/mcp-integrations.md`
 - maintenance → `references/maintenance-compaction.md`, `references/compression-pass.md`, `references/skill-sync.md`, `references/improvement-log.md`, `references/release-notes.md`
 - coordinator safety → `references/coordinator-safety.md`
+- prompt caching (Anthropic API) → `references/prompt-caching.md`
 - self-improvement → `references/self-improvement.md`, `references/reflexion-loop.md`
 - drain / auto-curriculum / overnight maintenance → `references/background-drain.md`
 - coordination log / sedimentation → `references/coordination-sedimentation.md`
