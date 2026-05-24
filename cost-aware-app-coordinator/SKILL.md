@@ -1,149 +1,149 @@
 ---
 name: cost-aware-app-coordinator
-description: Coordina task software non triviali (nuova app, audit, bug rescue, migrazione, deploy, refactor cross-modulo, miglioramento skill). Attiva quando serve pianificazione, scelta stack, multi-agente, file AI_*.md. NON usare per fix di una stringa, rename locale, cambio colore, modifica isolata di 1 file noto, domande concettuali.
+description: Coordinates non-trivial software tasks (new app, audit, bug rescue, migration, deploy, cross-module refactor, skill improvement). Activates when planning, stack choice, multi-agent, AI_*.md files are needed. DO NOT use for single-string fix, local rename, color change, isolated single-file edit, conceptual questions.
 ---
 
 # Cost-Aware App Coordinator
 
-Coordina lavoro su progetti software riducendo spreco di token e output troppo lunghi. Supporta handoff multi-agente tramite file `AI_*.md`.
+Coordinates software project work while reducing token waste and excessive output length. Supports multi-agent handoff via `AI_*.md` files.
 
-## Lingua
+## Language
 
-Default: italiano. Cambia solo se l'utente scrive in altra lingua.
+Default: English. Change only if the user writes in another language.
 
-## Quando NON usare questa skill
+## When NOT to use this skill
 
-- domanda concettuale che non richiede modifiche
-- compito banale di una riga
-- skill più specifica già attiva (es. `claude-api`, `init`, `security-review`)
-- conversazione fuori dominio software
+- Conceptual question that doesn't require modifications
+- One-line trivial task
+- More specific skill already active (e.g., `claude-api`, `init`, `security-review`)
+- Conversation outside software domain
 
-In questi casi rispondi diretto, senza protocollo.
+In these cases, respond directly without protocol.
 
-## 0. Fast path (modifiche piccole)
+## 0. Fast path (small modifications)
 
-Se il task è una modifica locale (1-3 file noti, scope chiaro, niente auth/dati/migrazioni/deploy):
+If the task is a local change (1-3 known files, clear scope, no auth/data/migrations/deploy):
 
-- non aprire `references/`, non aprire `recipes/`, non spawnare `Agent`
-- modifica e basta
-- output in 2 righe: `Fatto: ... / Verifica: ...`
+- do not open `references/`, do not open `recipes/`, do not spawn `Agent`
+- just modify
+- output in 2 lines: `Done: ... / Verify: ...`
 
-Tutto il resto della skill (sezioni 1-19) è per task che NON rientrano qui. Nel dubbio, parti dal fast path; sali al protocollo completo solo se scopri scope o rischio maggiori.
+All remaining sections (1-19) are for tasks that do NOT fall here. When in doubt, start with fast path; escalate to full protocol only if you discover greater scope or risk.
 
-## 1. Classificazione del task
+## 1. Task classification
 
-Categorie (interne, non stampare): **nuova app**, **modifica app**, **audit**, **bug rescue**, **miglioramento skill**, **ops**.
+Categories (internal, do not print): **new app**, **modify app**, **audit**, **bug rescue**, **skill improvement**, **ops**.
 
-Trigger tipici → categoria:
-- "crea/scaffold/parti da zero" → nuova app
-- "aggiungi/cambia/refactor/sposta" → modifica app
-- "rivedi/review/controlla sicurezza" → audit
-- "systemd/journalctl/ssh/lxc/porta/servizio/syncthing/deploy/riavvia" → ops (sistema, non codice)
-- "non funziona/errore/crash" → bug rescue
-- "aggiorna la skill/automigliorati" → miglioramento skill
+Typical triggers → category:
+- "create/scaffold/start from scratch" → new app
+- "add/change/refactor/move" → modify app
+- "review/audit/check security" → audit
+- "systemd/journalctl/ssh/lxc/port/service/syncthing/deploy/restart" → ops (infrastructure, not code)
+- "not working/error/crash" → bug rescue
+- "update the skill/self-improve" → skill improvement
 
-Anche senza dichiarazione esplicita, classifica dal verbo principale e dallo stato del repo. Dettagli: `references/task-routing.md`.
+Even without explicit declaration, classify from the main verb and repo state. Details: `references/task-routing.md`.
 
 ### 1.5 Auto-trigger: Scope Checkpoint
 
-**Attiva automaticamente** `references/scope-checkpoint.md` se il brief contiene 2+ dei seguenti pattern:
+**Automatically activates** `references/scope-checkpoint.md` if the brief contains 2+ of the following patterns:
 
-- **2+ verbi separati di azione**: "aggiungi X *e* modifica Y *e* refactor Z" → 🚩 multi-layer
-- **Parole vaghe senza contesto**: "migliora", "rendi", "ottimizza", "pulisci" → ambiguous
-- **Scope temporale incerto**: stimato >400k token o >1 sessione → high risk
-- **File count incerto** (>5): "controlla tutto", "rivedi il modulo" → vague
+- **2+ separate action verbs**: "add X *and* modify Y *and* refactor Z" → 🚩 multi-layer
+- **Vague words without context**: "improve", "make", "optimize", "clean" → ambiguous
+- **Uncertain time scope**: estimated >400k tokens or >1 session → high risk
+- **Uncertain file count** (>5): "check everything", "review the module" → vague
 
-**Procedura**: conta verbi di azione nel brief. Se N ≥ 2:
-1. Attiva **debate scope interno** con 2 Haiku (scope minimo vs. espanso)
-2. Se convergenza >70% → procedi con scope minimo
-3. Se <70% → rispecchia all'utente e chiedi scelta
+**Procedure**: count action verbs in the brief. If N ≥ 2:
+1. Activate **internal scope debate** with 2 Haikus (minimal vs. expanded scope)
+2. If convergence >70% → proceed with minimal scope
+3. If <70% → mirror back to user and ask choice
 
-**Costo preventivo** (~$0.01) vs. **rischio scope creep** (~100k token wastage = ~$5). Trade-off favorevole.
+**Preventive cost** (~$0.01) vs. **scope creep risk** (~100k token wastage = ~$5). Favorable trade-off.
 
 ## 2. Budget mode
 
-- **Economico** (default): minimo letture, output corto
-- **Bilanciato**: letture mirate sui file impattati
-- **Massima sicurezza**: letture estese, doppio check, audit
+- **Economical** (default): minimal reads, short output
+- **Balanced**: targeted reads on impacted files
+- **Maximum safety**: extended reads, double-check, audit
 
-Default Economico, escalation automatica per gate di rischio. L'utente può forzare. Default specifici per categoria di task (nuova app/audit/miglioramento skill = Bilanciato; modifica/bug rescue = Economico) in `references/task-routing.md`. Dettagli budget: `references/budget-modes.md`.
+Default Economical, automatic escalation on risk gates. User can force. Category-specific defaults (new app/audit/skill improvement = Balanced; modify/bug rescue = Economical) in `references/task-routing.md`. Budget details: `references/budget-modes.md`.
 
-## 3. Selezione del modello
+## 3. Model selection
 
-Modello più piccolo capace di chiudere il task (`haiku` < `sonnet` < `opus` per costo).
+Smallest model capable of closing the task (`haiku` < `sonnet` < `opus` by cost).
 
-**Baseline 2026-05**: Haiku 4.5 · Sonnet 4.6 · Opus 4.7. Le regole di escalation si riferiscono alla famiglia, non alla minor version.
+**Baseline 2026-05**: Haiku 4.5 · Sonnet 4.6 · Opus 4.7. Escalation rules refer to family, not minor version.
 
-**Main agent**: scelto dall'utente, non cambiabile dalla skill. Se il rischio sale (auth, migrazioni), suggerisci di cambiare modello con `/model` (tasto `d` nel picker per renderlo default nella sessione), non assumere.
+**Main agent**: chosen by user, not changeable by skill. If risk rises (auth, migrations), suggest changing model with `/model` (press `d` in picker to make it default in session), don't assume.
 
-**Sub-agent (routing per categoria di sotto-task)**: imposta automaticamente `model` su `Agent`:
+**Sub-agent (routing by sub-task category)**: automatically sets `model` on `Agent`:
 
-| Sotto-task | Modello | Quando |
+| Sub-task | Model | When |
 |---|---|---|
-| esplorazione file (grep ampio, lettura README/struttura, "dove sta X") | `haiku` | rispondi al main agent in 1-2 paragrafi, niente patch |
-| QA test runner, lint, type-check, riepilogo log | `haiku` | output strutturato, deterministico |
-| modifica isolata 1-3 file con scope chiaro | `sonnet` | edits diretti, niente design |
-| audit security/cross-module review | `sonnet` | salvo gate di rischio attivo |
-| design architetturale, scelta stack, piano migrazione | `opus` | solo se main agent è già Opus o gate Massima sicurezza |
-| sintesi finale / review pre-commit di un piano lungo | `opus` | quando il costo del retry > costo Opus |
+| file exploration (wide grep, README/structure read, "where is X") | `haiku` | respond to main agent in 1-2 paragraphs, no patch |
+| QA test runner, lint, type-check, log summary | `haiku` | structured, deterministic output |
+| isolated 1-3 file edit with clear scope | `sonnet` | direct edits, no design |
+| security audit/cross-module review | `sonnet` | except if risk gate active |
+| architectural design, stack choice, migration plan | `opus` | only if main agent is already Opus or Maximum Safety gate |
+| final synthesis / pre-commit review of long plan | `opus` | when retry cost > Opus cost |
 
-Heuristica di scoring (per scegliere fra due opzioni vicine): `quality × 1 / log(1 + cost_relativo)`. Favorisce cheap-and-good sopra expensive-and-marginally-better.
+Scoring heuristic (choose between nearby options): `quality × 1 / log(1 + cost_ratio)`. Favors cheap-and-good over expensive-and-marginally-better.
 
-Default per categoria principale (combinato con budget §2):
+Default per main category (combined with budget §2):
 
-- **ops** + Economico → Haiku per main agent suggerito (comandi e log)
-- **modifica** + Economico → Sonnet, Haiku per esplorazione preliminare
-- **audit** + Bilanciato → Sonnet per scan, Opus solo per sintesi finale se il finding lo richiede
-- **nuova app** + Bilanciato → Sonnet per scaffolding, Opus solo per design iniziale dello stack
-- **bug rescue** → Sonnet; Haiku per riproduzione/log; Opus solo se la causa resta opaca dopo 2 tentativi
-- **miglioramento skill** → Sonnet; Opus per ridisegno di sezione, mai per piccoli edit
+- **ops** + Economical → Haiku for main agent suggested (commands and logs)
+- **modify** + Economical → Sonnet, Haiku for preliminary exploration
+- **audit** + Balanced → Sonnet for scan, Opus only for final synthesis if finding requires it
+- **new app** + Balanced → Sonnet for scaffolding, Opus only for initial stack design
+- **bug rescue** → Sonnet; Haiku for reproduction/logs; Opus only if cause unclear after 2 attempts
+- **skill improvement** → Sonnet; Opus for section redesign, never for small edits
 
-In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallisce, sali a Sonnet con il contesto del fallimento, non ripartire da zero. Tabella estesa per agente specialista in `references/specialist-agents.md`.
+When in doubt choose the smallest. Single escalation per turn: if Haiku fails, escalate to Sonnet with context of failure, don't restart from scratch. Extended table for specialist agent in `references/specialist-agents.md`.
 
-**Catalogo subagent locali** (in `~/.claude/agents/`, ognuno con `model:` esplicito):
+**Local subagent catalog** (in `~/.claude/agents/`, each with explicit `model:`):
 
-| Subagent | Modello | Usalo per |
+| Subagent | Model | Use for |
 |---|---|---|
-| `Explore` (built-in) | haiku | grep/glob, "dove sta X", lettura veloce file noti |
-| `ops-runner` | haiku | systemctl/journalctl/cron/ss/df: comandi rapidi, niente decisioni |
-| `homelab-admin` | sonnet | decisioni sysadmin: configurare servizi, LXC, rete, Proxmox, port allocation, deploy workflow |
-| `security-hardener` | sonnet | audit sicurezza server/LXC: SSH, firewall, porte, permessi — solo lettura e raccomandazioni |
-| `bypass-guardian` | sonnet | revisione pre-esecuzione quando bypass-permissions è ON e ci sono azioni rischiose/irreversibili |
-| `dependency-checker` | haiku | audit npm/pip: versioni obsolete, CVE note, pacchetti non mantenuti — solo lettura |
-| `db-migrator` | sonnet | migrazioni DB sicure con rollback: ALTER/DROP/ADD, conversioni SQLite↔Postgres, schema iniziale |
-| `disaster-recovery` | sonnet | recupero ambiente dopo perdita catastrofica: LXC distrutto, config persa, servizi scomparsi |
-| `code-implementer` | sonnet | edit 1-5 file con scope deciso, refactor locale, wire-up |
-| `qa-tester` | sonnet | scrittura/run di test, regression test su bug |
-| `code-debugger` | sonnet | bug rescue: riproduci → isola → fix → verifica |
-| `doc-writer` | sonnet | AI_*.md / README / handoff dopo modifiche non banali |
-| `code-reviewer` | opus | review pre-commit di diff non triviale (giudizio indipendente) |
-| `mar-reviewer` | opus | audit cross-modulo + review pre-commit di diff non triviale (3 critici + aggregator) |
-| `architect` | opus | nuova feature, scelta stack, design data model |
-| `scope-verifier` | sonnet | monitor continuo se lavoro è allineato al brief (v1.1.0) |
+| `Explore` (built-in) | haiku | grep/glob, "where is X", fast file read on known paths |
+| `ops-runner` | haiku | systemctl/journalctl/cron/ss/df: quick commands, no decisions |
+| `homelab-admin` | sonnet | sysadmin decisions: configure services, LXC, network, Proxmox, port allocation, deploy workflow |
+| `security-hardener` | sonnet | server/LXC security audit: SSH, firewall, ports, permissions — read-only and recommendations |
+| `bypass-guardian` | sonnet | pre-execution review when bypass-permissions is ON and risky/irreversible actions present |
+| `dependency-checker` | haiku | npm/pip audit: obsolete versions, known CVEs, unmaintained packages — read-only |
+| `db-migrator` | sonnet | safe DB migrations with rollback: ALTER/DROP/ADD, SQLite↔Postgres conversions, initial schema |
+| `disaster-recovery` | sonnet | environment recovery after catastrophic loss: LXC destroyed, config lost, services missing |
+| `code-implementer` | sonnet | edit 1-5 files with decided scope, local refactor, wire-up |
+| `qa-tester` | sonnet | test writing/run, regression testing on bugs |
+| `code-debugger` | sonnet | bug rescue: reproduce → isolate → fix → verify |
+| `doc-writer` | sonnet | AI_*.md / README / handoff after non-trivial modifications |
+| `code-reviewer` | opus | pre-commit review of non-trivial diff (independent judgment) |
+| `mar-reviewer` | opus | cross-module audit + pre-commit review of non-trivial diff (3 reviewers + aggregator) |
+| `architect` | opus | new feature, stack choice, data model design |
+| `scope-verifier` | sonnet | continuous monitor if work aligns with brief (v1.1.0) |
 
-**Flag per subagent dispatched**: i subagent accettano `--model`, `--permission-mode` per override puntuale. Fast mode usa Opus 4.7 by default. Esempi pratici in `references/specialist-agents.md`.
+**Flags for dispatched subagent**: subagents accept `--model`, `--permission-mode` for one-off override. Fast mode uses Opus 4.7 by default. Practical examples in `references/specialist-agents.md`.
 
-**Pre-selezione modello (v1.1.0)**: prima di applicare la tabella, estrai difficoltà dal brief con `scripts/difficulty_estimator.py`. Baseline score 0.5, aggiusta per keyword (hard +0.3, easy -0.15, vague +0.2). Vedi `references/difficulty-routing.md`.
+**Model pre-selection (v1.1.0)**: before applying the table, extract difficulty from brief with `scripts/difficulty_estimator.py`. Baseline score 0.5, adjust for keywords (hard +0.3, easy -0.15, vague +0.2). See `references/difficulty-routing.md`.
 
-**Budget-Aware Override (v1.1.0)**: se `tokens_residui < 20k`, ignora la scelta per task-type e forza Haiku. Script: `scripts/budget_aware_router.py`. Consulta prima di far partire un task big.
+**Budget-Aware Override (v1.1.0)**: if `tokens_residual < 20k`, ignore task-type choice and force Haiku. Script: `scripts/budget_aware_router.py`. Check before starting big task.
 
-**Regola di delega** (anti-pattern: "lo faccio io con Opus perché ce l'ho"):
-- Esplorazione codice/grep/find su >2 file → `Explore`. Mai leggere 10 file in main session.
-- Comando ops semplice (status/restart/tail) → `ops-runner`. Mai bash inline in main session se l'output va parsato.
-- Edit con scope già deciso → `code-implementer`. Main session NON dovrebbe editare codice di prodotto: pianifica + delega.
-- Bug non banale → `code-debugger`. Main session NON dovrebbe debuggare a sentimento.
-- Decisione architetturale → `architect` (anche se main è già Opus: l'agent isolato non sporca il contesto principale).
+**Delegation rule** (anti-pattern: "I'll do it with Opus because I have it"):
+- Code exploration/grep/find on >2 files → `Explore`. Never read 10 files in main session.
+- Simple ops command (status/restart/tail) → `ops-runner`. Never bash inline in main session if output needs parsing.
+- Edit with decided scope → `code-implementer`. Main session should NOT edit production code: plan + delegate.
+- Non-trivial bug → `code-debugger`. Main session should NOT debug by feel.
+- Architectural decision → `architect` (even if main is already Opus: isolated agent doesn't pollute main context).
 
 ### External routing (opt-in)
 
-Disabilitato di default (`EXTERNAL_ROUTER_ENABLED=false`). Se attivo, instrada chiamate per categoria `ops` o esplorazioni Haiku-equivalenti a OpenRouter/DeepSeek. **Mai** per codice di prodotto, credenziali, dati personali, categorie modifica/audit/bug_rescue. Al primo uso stampa un warning non silenziabile e logga in `coordination-log.jsonl` con `external_router: true`. Dettagli: `references/external-routing.md`.
+Disabled by default (`EXTERNAL_ROUTER_ENABLED=false`). If active, routes calls for `ops` category or Haiku-equivalent explorations to OpenRouter/DeepSeek. **Never** for production code, credentials, personal data, modify/audit/bug_rescue categories. On first use prints non-silenceable warning and logs in `coordination-log.jsonl` with `external_router: true`. Details: `references/external-routing.md`.
 
-**Trigger automatici da contesto** (la dashboard emette `<routing-hint>` nel prompt via UserPromptSubmit hook — quando vedi un blocco di quel tipo, rispetta `suggested_subagent` salvo motivo esplicito di non farlo):
+**Automatic context triggers** (dashboard emits `<routing-hint>` in prompt via UserPromptSubmit hook — when you see that block, respect `suggested_subagent` unless explicit reason not to):
 
 ```
 <routing-hint>
 classified: <category>
-suggested_subagent: <nome>
+suggested_subagent: <name>
 model: <haiku|sonnet|opus>
 budget_max: <token>
 </routing-hint>
@@ -151,216 +151,216 @@ budget_max: <token>
 
 ### Auto-delegation gate (enforcement)
 
-Quattro gate che il main agent deve rispettare prima di eseguire inline. Bypassabili solo con override esplicito (vedi sotto).
+Four gates that main agent must respect before executing inline. Bypassable only with explicit override (see below).
 
-**Gate 1 — routing-hint ha priorità**: se il prompt contiene `<routing-hint>` con `suggested_subagent` non vuoto e `model: sonnet|haiku`, il main agent NON esegue il task inline — anche se è già Opus. Spawna immediatamente `Agent(subagent_type=<suggested>, model=<suggested_model>)`. Eccezione: task banale (<2 file, <1 turno, fast path conclamato).
+**Gate 1 — routing-hint has priority**: if prompt contains `<routing-hint>` with non-empty `suggested_subagent` and `model: sonnet|haiku`, main agent does NOT execute inline — even if already Opus. Immediately spawn `Agent(subagent_type=<suggested>, model=<suggested_model>)`. Exception: trivial task (<2 files, <1 turn, clear fast path).
 
-**Gate 2 — tetto Opus per categoria modifica**: se il task richiede edit su >3 file, la delega a `code-implementer` (sonnet) è obbligatoria. Il main agent fa solo planning + verifica del risultato; non tocca direttamente i file di prodotto.
+**Gate 2 — Opus ceiling for modify category**: if task requires edits on >3 files, delegation to `code-implementer` (sonnet) is mandatory. Main agent only does planning + result verification; does not directly touch production files.
 
-**Gate 3 — Haiku per esplorazione**: pattern "grep/find su >2 file", "leggi README/struttura", "dove sta X" → `Explore` (haiku) sempre. Il main agent non esegue grep inline su più di 2 file.
+**Gate 3 — Haiku for exploration**: pattern "grep/find on >2 files", "read README/structure", "where is X" → `Explore` (haiku) always. Main agent does not execute grep inline on >2 files.
 
-**Gate 4 — ops + Economico**: categoria ops + budget Economico → `ops-runner` (haiku) per comandi systemctl/journalctl/cron/ss/df. Niente bash inline se l'output va parsato.
+**Gate 4 — ops + Economical**: ops category + Economical budget → `ops-runner` (haiku) for systemctl/journalctl/cron/ss/df commands. No bash inline if output needs parsing.
 
-**Override esplicito**: se l'utente scrive "fallo tu", "non delegare", "rimani sul main", il gate è bypassato per quel turno. Indicare nella risposta: `[gate bypassato su richiesta utente]`. Dettagli ed esempi: `references/auto-delegation-gate.md`.
+**Explicit override**: if user writes "do it yourself", "don't delegate", "stay on main", gate is bypassed for that turn. Indicate in response: `[gate bypassed on user request]`. Details and examples: `references/auto-delegation-gate.md`.
 
-**Gate 5 — bypass-guardian in modalità bypass**: se l'utente ha attivato bypass-permissions (`/permission 3` o equivalente) **e** il task contiene azioni rischiose/irreversibili (rm, force-push, DROP, modifica `/etc/`, credenziali, deploy su stable), spawna `bypass-guardian` (sonnet) **prima** di eseguire. Procedi solo dopo verdetto 🟢 GREEN o 🟡 YELLOW con raccomandazioni seguite. Su 🔴 RED fermati e chiedi conferma esplicita utente. Questo gate NON è bypassabile da "fallo tu" — richiede conferma esplicita sul rischio specifico.
+**Gate 5 — bypass-guardian in bypass mode**: if user activated bypass-permissions (`/permission 3` or equivalent) **and** task contains risky/irreversible actions (rm, force-push, DROP, modify `/etc/`, credentials, deploy to stable), spawn `bypass-guardian` (sonnet) **before** executing. Proceed only after verdict 🟢 GREEN or 🟡 YELLOW with recommendations followed. On 🔴 RED stop and ask explicit user confirmation. This gate is NOT bypassable by "do it yourself" — requires explicit confirmation on specific risk.
 
-## 4. Lettura iniziale del contesto
+## 4. Initial context reading
 
-Solo questi file se esistono, in ordine:
+Only these files if they exist, in order:
 
-1. `AI_HANDOFF.md` (se subentri da un altro agente)
+1. `AI_HANDOFF.md` (if taking over from another agent)
 2. `AI_CONTEXT.md`
 3. `AGENTS.md`
 4. `CLAUDE.md`
-5. `AI_STRUCTURE.md` (solo se il task tocca moduli o contratti)
-6. `AI_DECISIONS.md` (solo se la decisione corrente ne incrocia una passata)
-7. `README.md` (solo se i precedenti non bastano)
+5. `AI_STRUCTURE.md` (only if task touches modules or contracts)
+6. `AI_DECISIONS.md` (only if current decision crosses past one)
+7. `README.md` (only if previous ones insufficient)
 
-Non leggere tutta la repo: la lettura preventiva brucia contesto su file mai usati.
+Don't read entire repo: preventive reading burns context on unused files.
 
 ## 5. Progressive loading
 
-`SKILL.md` è il core sempre caricato. I `references/*.md` solo quando un trigger concreto è presente. Se una reference è già stata letta in questo turno, riusa la comprensione invece di rileggerla.
+`SKILL.md` is core always loaded. `references/*.md` only when concrete trigger present. If reference already read in this turn, reuse understanding instead of re-reading.
 
-Mappa attivazione reference:
+Reference activation map:
 
 - task → `references/task-routing.md`
 - budget → `references/budget-modes.md`, `references/response-economy.md`
-- gate decisionali → `references/decision-risk-gates.md`
-- scope ambiguo o utente non programmer → `references/scope-checkpoint.md`
-- drift detection in-flight → `references/in-flight-scope-monitor.md`
-- difficulty estimation e routing → `references/difficulty-routing.md` (v1.1.0+)
-- auto-scope-checkpoint per multi-layer brief → `references/in-flight-scope-monitor.md` (v1.1.0+)
-- ruoli → `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`
-- gate di delega / drift modello → `references/auto-delegation-gate.md`
+- decision gates → `references/decision-risk-gates.md`
+- ambiguous scope or non-programmer user → `references/scope-checkpoint.md`
+- in-flight drift detection → `references/in-flight-scope-monitor.md`
+- difficulty estimation and routing → `references/difficulty-routing.md` (v1.1.0+)
+- auto-scope-checkpoint for multi-layer brief → `references/in-flight-scope-monitor.md` (v1.1.0+)
+- roles → `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`
+- delegation gate / model drift → `references/auto-delegation-gate.md`
 - handoff → `references/agent-handoff.md`, `references/cross-agent-handoff-template.md`
-- creazione app → `references/app-creation-blueprint.md`, `references/default-stacks.md`, `references/project-context-template.md`, `references/structure-memory-template.md`, `references/second-brain-template.md`, `references/agent-autolog-template.md`; ricette pronte in `recipes/`
-- deploy app → `references/deploy-paths.md` + script in `assets/scripts/deploy-*.sh`
-- testing visivo (UI) → `references/visual-first-testing.md`
-- task **ops** (systemd, journalctl, ssh, lxc, proxmox, syncthing, cron, firewall, deploy, porte) → `references/homelab-ops.md`
-- integrazioni MCP (GitHub/Linear/Slack/Notion/...) → `references/mcp-integrations.md`
-- manutenzione → `references/maintenance-compaction.md`, `references/compression-pass.md`, `references/skill-sync.md`, `references/improvement-log.md`, `references/release-notes.md`
-- sicurezza coordinatore → `references/coordinator-safety.md`
+- app creation → `references/app-creation-blueprint.md`, `references/default-stacks.md`, `references/project-context-template.md`, `references/structure-memory-template.md`, `references/second-brain-template.md`, `references/agent-autolog-template.md`; ready recipes in `recipes/`
+- app deploy → `references/deploy-paths.md` + scripts in `assets/scripts/deploy-*.sh`
+- UI visual testing → `references/visual-first-testing.md`
+- **ops** tasks (systemd, journalctl, ssh, lxc, proxmox, syncthing, cron, firewall, deploy, ports) → `references/homelab-ops.md`
+- MCP integrations (GitHub/Linear/Slack/Notion/...) → `references/mcp-integrations.md`
+- maintenance → `references/maintenance-compaction.md`, `references/compression-pass.md`, `references/skill-sync.md`, `references/improvement-log.md`, `references/release-notes.md`
+- coordinator safety → `references/coordinator-safety.md`
 - self-improvement → `references/self-improvement.md`, `references/reflexion-loop.md`
-- drain / auto-curriculum / manutenzione notturna → `references/background-drain.md`
+- drain / auto-curriculum / overnight maintenance → `references/background-drain.md`
 - coordination log / sedimentation → `references/coordination-sedimentation.md`
-- pipeline DAG di subagent → `references/pipeline-dsl.md`
-- routing esterno opt-in → `references/external-routing.md`
-- tuning del loading → `references/progressive-loading.md`
+- DAG pipeline of subagents → `references/pipeline-dsl.md`
+- external routing opt-in → `references/external-routing.md`
+- loading tuning → `references/progressive-loading.md`
 
 ## 6. Working loop
 
-Per task non banali: budget+modello internamente → contesto minimo → mini-piano se serve → patch piccole → verifica mirata → chiusura corta. Smetti di pianificare quando il prossimo passo è ovvio.
+For non-trivial tasks: budget+model internally → minimal context → mini-plan if needed → small patches → targeted verification → short closure. Stop planning when next step is obvious.
 
 ### 6.5 In-Flight Scope Drift Check
 
-Ogni 3 turni (o su trigger: file +3, token burn >150% atteso, categoria shift): calcola drift score fra brief originale e lavoro compiuto.
+Every 3 turns (or on trigger: files +3, token burn >150% expected, category shift): calculate drift score between original brief and completed work.
 
-**Soglie**:
-- 0.0–0.3: ✅ ON_TRACK continua
-- 0.3–0.6: ⚠️ DRIFT_WARNING → log + chiedi conferma utente prima di proseguire
-- >0.6: 🛑 HARD_DIVERGENCE → proponi "fermi? apro task2 per il resto?"
+**Thresholds**:
+- 0.0–0.3: ✅ ON_TRACK continue
+- 0.3–0.6: ⚠️ DRIFT_WARNING → log + ask user confirmation before proceeding
+- >0.6: 🛑 HARD_DIVERGENCE → offer "should we stop? can I open task2 for the rest?"
 
-**Script**: `scripts/scope_drift_detector.py` (calcola score con euristica file divergence, category shift, token burn, semantic divergence).
+**Script**: `scripts/scope_drift_detector.py` (calculates score with file divergence heuristic, category shift, token burn, semantic divergence).
 
-**Agent monitor** (v1.1.0): per task non-triviale (>2h, >5 file), chiama `scope-verifier` agent (Sonnet) ogni 3 turni. Fornisce verdetto indipendente: ON_TRACK, DRIFT, DIVERGE con score e suggestion. Per task piccoli, drift detector inline è sufficiente.
+**Agent monitor** (v1.1.0): for non-trivial task (>2h, >5 files), call `scope-verifier` agent (Sonnet) every 3 turns. Provides independent verdict: ON_TRACK, DRIFT, DIVERGE with score and suggestion. For small tasks, inline drift detector sufficient.
 
-**Log**: aggiungi a coordination-log la sezione `drift_check` con score, severity, reason. Vedi `references/in-flight-scope-monitor.md`.
+**Log**: add to coordination-log the `drift_check` section with score, severity, reason. See `references/in-flight-scope-monitor.md`.
 
 ## 7. Output economy
 
 Default:
 
 ```
-Fatto: <azione concisa>
-Verifica: <come l'utente controlla>
+Done: <concise action>
+Verify: <how user checks>
 ```
 
-Dettagli solo per: rischi, scelte non banali, blocchi, azioni utente. Quando l'utente deve configurare/scegliere/confermare/pagare/testare, aggiungi un blocco `Da fare per te:`.
+Details only for: risks, non-obvious choices, blockers, user actions. When user must configure/choose/confirm/pay/test, add a `For you:` section.
 
-**Annuncio attivazione**: al primo turno di una sessione non banale (categoria classificata, budget scelto), apri con una sola riga del tipo: `🛠 Skill: cost-aware-app-coordinator · cat:<categoria> · budget:<mode>`. Solo prima riga, niente preamboli aggiuntivi. Salta sul fast path.
+**Activation announcement**: on first turn of non-trivial session (classified category, budget chosen), open with single line like: `🛠 Skill: cost-aware-app-coordinator · cat:<category> · budget:<mode>`. Only first line, no extra preambles. Skip to fast path.
 
-Regole complete: `references/response-economy.md`.
+Complete rules: `references/response-economy.md`.
 
-## 8. Gate decisionali e rischio
+## 8. Decision gates and risk
 
-Prima di azioni rischiose o irreversibili (delete, force-push, modifica DB, migrazioni, rimozione dipendenze, segreti) fermati e chiedi.
+Before risky or irreversible actions (delete, force-push, DB modification, migrations, dependency removal, secrets), stop and ask.
 
-Confidenza: alta → procedi; media → verifica/specialista; bassa → chiedi/red team. Vedi `references/decision-risk-gates.md`.
+Confidence: high → proceed; medium → verify/specialist; low → ask/red team. See `references/decision-risk-gates.md`.
 
-**Scope ambiguo**: se il task è vago, ha più obiettivi mescolati, o l'utente non è programmatore con scelte tecniche aperte, attiva il protocollo in `references/scope-checkpoint.md` prima di scrivere codice.
+**Ambiguous scope**: if task is vague, mixes multiple goals, or user is non-programmer with open technical choices, activate protocol in `references/scope-checkpoint.md` before writing code.
 
-## 9. Specialisti
+## 9. Specialists
 
-Sub-agent solo se il rischio o il tempo risparmiato giustifica il costo in token. **Mai parallelizzare per default**: il costo cresce non-lineare con il numero di agent.
+Sub-agent only if risk or time saved justifies token cost. **Never parallelize by default**: cost grows non-linearly with agent count.
 
-**Attiva** per: ricerca cross-file ampia, secondo parere, slice indipendente, audit ampio. **NON attivare** per: <3 file, fix locale, copy change, single-fact lookup ispezionabile dal main.
+**Activate** for: wide cross-file search, second opinion, independent slice, wide audit. **DO NOT activate** for: <3 files, local fix, copy change, single-fact lookup checkable by main.
 
-In Claude Code: tool `Agent` con `subagent_type` — la lista dipende dall'ambiente, vedi `references/specialist-agents.md`. Briefing autocontenuto: obiettivo, contesto minimo, formato. Mai "decidi tu".
+In Claude Code: tool `Agent` with `subagent_type` — list depends on environment, see `references/specialist-agents.md`. Self-contained briefing: objective, minimal context, format. Never "you decide".
 
-Profili: `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`.
+Profiles: `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`.
 
-### 9.1 Quando parallelizzare (v1.1.0)
+### 9.1 When to parallelize (v1.1.0)
 
-**Parallel swarm** (lanciare 2-3 agenti contemporaneamente) solo se tutte le 4 condizioni vere:
+**Parallel swarm** (launch 2-3 agents simultaneously) only if all 4 conditions true:
 
-1. **Task indipendenti** — nessuno dipende dall'output dell'altro
-2. **File set non overlapping** — nessun file toccato da 2+ agenti
-3. **Budget disponibile** — `tokens_residui > (cost_A + cost_B) * 1.5`
-4. **Entrambi completabili <1 sessione**
+1. **Independent tasks** — none depends on other's output
+2. **Non-overlapping file set** — no file touched by 2+ agents
+3. **Budget available** — `tokens_residual > (cost_A + cost_B) * 1.5`
+4. **Both completable <1 session**
 
-Default: sequenziale. Vedi `recipes/parallel-swarm.md` per esempi e anti-pattern.
+Default: sequential. See `recipes/parallel-swarm.md` for examples and anti-patterns.
 
-## 10. Handoff tra agenti
+## 10. Handoff between agents
 
-Due livelli:
+Two levels:
 
-- **tra agenti diversi** (sessioni separate, altri tool): file condivisi nella repo (`AI_CONTEXT.md`, `AI_STRUCTURE.md`, `AI_DECISIONS.md`, `AI_AGENT_LOG.md`, `AI_HANDOFF.md`).
-- **tra sub-agent stessa sessione**: non si parlano direttamente, il coordinator è router. Task brevi: passa il risultato di A nel prompt di B (filtrato). Task lunghi: usa `AI_HANDOFF.md` come bacheca. Riprendere agent attivo: `SendMessage`.
+- **between different agents** (separate sessions, other tools): shared files in repo (`AI_CONTEXT.md`, `AI_STRUCTURE.md`, `AI_DECISIONS.md`, `AI_AGENT_LOG.md`, `AI_HANDOFF.md`).
+- **between sub-agents same session**: don't talk directly, coordinator is router. Short tasks: pass result of A in prompt of B (filtered). Long tasks: use `AI_HANDOFF.md` as bulletin board. Resume active agent: `SendMessage`.
 
-Quando subentri leggi `AI_HANDOFF.md` per primo. Aggiornalo dopo modifiche non banali. Decisioni durevoli → promosse a `AI_DECISIONS.md`.
+When taking over read `AI_HANDOFF.md` first. Update it after non-trivial modifications. Durable decisions → promote to `AI_DECISIONS.md`.
 
-Dettagli: `references/agent-handoff.md`, `references/cross-agent-handoff-template.md`.
+Details: `references/agent-handoff.md`, `references/cross-agent-handoff-template.md`.
 
 ## 11. Definition of Done
 
-Task chiuso quando: il comportamento è gestito, file toccati limitati al task, check rilevanti eseguiti (o motivo di skip dichiarato), output finale corto. Per UI/funzionale a rischio medio/alto: l'utente conferma in linguaggio piano + valuta screenshot Playwright.
+Task closed when: behavior handled, files touched limited to task, relevant checks executed (or skip reason declared), final output short. For UI/functional at medium/high risk: user confirms in plain language + evaluates Playwright screenshot.
 
-## 12. Creazione di una nuova app
+## 12. Creating a new app
 
-- **Step 0** — riconosci ricetta in `recipes/` (landing, CRUD, dashboard, blog, bot). Se non c'è match, scegli da `references/default-stacks.md` (A/B/C) — non chiedere "quale framework".
-- **Step 1** — scaffolding minimo: struttura + `AI_CONTEXT.md`, `AI_STRUCTURE.md`, `AGENTS.md`, `CLAUDE.md`. Niente "per il futuro", niente test/CI non richiesti.
-- **Step 2** — deploy presto: subito dopo il primo `npm run dev` che gira in locale, configura il deploy su Vercel/Netlify/Railway. Vedi `references/deploy-paths.md` + `assets/scripts/`.
-- **Step 3** — test visivo: dopo cambi UI usa il pattern di `references/visual-first-testing.md`.
+- **Step 0** — recognize recipe in `recipes/` (landing, CRUD, dashboard, blog, bot). If no match, choose from `references/default-stacks.md` (A/B/C) — don't ask "which framework".
+- **Step 1** — minimal scaffolding: structure + `AI_CONTEXT.md`, `AI_STRUCTURE.md`, `AGENTS.md`, `CLAUDE.md`. No "for the future", no unrequested test/CI.
+- **Step 2** — deploy early: right after first `npm run dev` works locally, configure deploy on Vercel/Netlify/Railway. See `references/deploy-paths.md` + `assets/scripts/`.
+- **Step 3** — visual testing: after UI changes use pattern from `references/visual-first-testing.md`.
 
-File `AI_*.md`, `AGENTS.md`, `CLAUDE.md` pronti in `assets/templates/`. Regole d'uso nei reference `*-template.md`. Blueprint completo: `references/app-creation-blueprint.md`.
+Files `AI_*.md`, `AGENTS.md`, `CLAUDE.md` ready in `assets/templates/`. Usage rules in reference `*-template.md`. Complete blueprint: `references/app-creation-blueprint.md`.
 
-## 13. Modifica di app esistente
+## 13. Modifying existing app
 
-1. Leggi `AI_HANDOFF.md` o `AI_CONTEXT.md`.
-2. Identifica il minimo set di file impattati.
-3. Modifica solo ciò che serve. Niente refactor opportunistico (aumenta diff e rischio senza valore).
-4. Aggiorna `AI_HANDOFF.md` se la modifica non è banale.
-5. Output corto come da §7.
+1. Read `AI_HANDOFF.md` or `AI_CONTEXT.md`.
+2. Identify minimal impacted file set.
+3. Modify only what's needed. No opportunistic refactor (increases diff and risk without value).
+4. Update `AI_HANDOFF.md` if modification is non-trivial.
+5. Short output per §7.
 
 ## 14. Audit
 
-Solo lettura, no modifiche senza ok. Output: findings con severità, file:riga, fix proposto. Niente narrazione.
+Read-only, no modifications without OK. Output: findings with severity, file:line, proposed fix. No narration.
 
 ## 15. Bug rescue
 
-Riproduci con minime letture → proponi fix se causa non ovvia → aggiorna `AI_AGENT_LOG.md` se pattern ricorrente.
+Reproduce with minimal reads → propose fix if cause non-obvious → update `AI_AGENT_LOG.md` if recurring pattern.
 
-## 16. Miglioramento skill
+## 16. Skill improvement
 
-Per modifiche a skill: `references/skill-sync.md` per il drift, `references/improvement-log.md` per le voci, `references/release-notes.md` se cambia comportamento, `python scripts/validate_skill.py` prima di chiudere.
+For skill modifications: `references/skill-sync.md` for drift, `references/improvement-log.md` for entries, `references/release-notes.md` if behavior changes, `python scripts/validate_skill.py` before closing.
 
-La skill **non si modifica senza approvazione esplicita** ("procedi"/"automigliorati" valgono per la sessione corrente). Template di proposta e flow completo in `references/self-improvement.md`.
+Skill **not modified without explicit approval** ("proceed"/"self-improve" valid for current session only). Proposal template and complete flow in `references/self-improvement.md`.
 
-**Loop incident → knowledge update**: quando l'utente corregge il comportamento della skill, applica subito il fix, aggiungi voce in `improvement-log.md`, registra il pattern in `AI_AGENT_LOG.md` del progetto sorgente; dopo 3 occorrenze promuovi la regola in `SKILL.md` o nella reference rilevante. Pattern completo: `references/reflexion-loop.md`. Helper: `python scripts/propose_lesson.py` (scrive automaticamente voci `<TBD ...>` in `AI_AGENT_LOG.md` al termine di task non banali).
+**Incident → knowledge update loop**: when user corrects skill behavior, immediately apply fix, add entry in `improvement-log.md`, register pattern in `AI_AGENT_LOG.md` of source project; after 3 occurrences promote rule in `SKILL.md` or relevant reference. Complete pattern: `references/reflexion-loop.md`. Helper: `python scripts/propose_lesson.py` (automatically writes `<TBD ...>` entries in `AI_AGENT_LOG.md` at end of non-trivial tasks).
 
-**Completamento voci TBD**: al primo turno di una nuova sessione, se `AI_AGENT_LOG.md` del progetto attivo contiene voci con segnaposto `<TBD ...>`, compilale subito basandoti su: lista dei file toccati nella voce, commit message, `git diff HEAD~1 HEAD --stat`. Una lezione per voce, due righe. Se non c'è abbastanza contesto per una lezione preventiva utile, cancella la voce (meglio nulla che rumore). Non chiedere conferma per la singola voce; mostra solo un riassunto a chiusura turno.
+**Complete TBD entries**: on first turn of new session, if `AI_AGENT_LOG.md` of active project contains entries with `<TBD ...>` placeholders, complete them immediately based on: list of touched files in entry, commit message, `git diff HEAD~1 HEAD --stat`. One lesson per entry, two lines. If insufficient context for useful preventive lesson, delete entry (nothing beats wrong). Don't ask confirmation per entry; show only summary at turn end.
 
-**Skill library** (snippet Voyager riusabili): `skill_library/` accoglie frammenti emersi da uso reale. Promozione a `recipes/` o reference dopo 3+ usi.
+**Skill library** (reusable Voyager snippets): `skill_library/` holds fragments from real use. Promote to `recipes/` or reference after 3+ uses.
 
-Per dettagli su drain e auto-curriculum: `references/background-drain.md`.
+For details on drain and auto-curriculum: `references/background-drain.md`.
 
-## 17. Manutenzione
+## 17. Maintenance
 
-Compattazione periodica dei file `AI_*.md`. Vedi `references/maintenance-compaction.md` e `references/compression-pass.md`.
+Periodic compaction of `AI_*.md` files. See `references/maintenance-compaction.md` and `references/compression-pass.md`.
 
-**Review della skill stessa**: a ogni release minor (vedi `references/release-notes.md`) ri-esegui `python scripts/validate_skill.py` e leggi `references/progressive-loading.md` per controllare drift fra mappa trigger e reference effettive. Se la copia installata diverge dalla canonica, `references/skill-sync.md` + `scripts/sync_skill.py`.
+**Skill self-review**: at each minor release (see `references/release-notes.md`) re-run `python scripts/validate_skill.py` and read `references/progressive-loading.md` to check drift between trigger map and actual references. If installed copy diverges from canonical, use `references/skill-sync.md` + `scripts/sync_skill.py`.
 
-## 18. Sicurezza del coordinatore
+## 18. Coordinator safety
 
-Regole anti-loop, anti-overwrite, anti-spreco: `references/coordinator-safety.md`.
+Anti-loop, anti-overwrite, anti-waste rules: `references/coordinator-safety.md`.
 
-**Hard cap di token per task**: la dashboard (`/api/log`) accetta `tokens_budget_max`. Se la sessione corrente supera il cap, il task viene marcato `budget_exceeded` e il logger Python segnala l'evento al successivo Stop. Imposta cap di default in linea con la categoria (esempio: ops 50k, modifica 200k, audit 400k, nuova app 600k, bug rescue 250k); l'utente può forzare. Sentinel runtime: a metà cap (50%) emetti una riga `⚠ budget al 50% (X/Y tok · ~$Y.YY)` nel turno corrente; a 80% chiedi conferma prima di nuove letture costose.
+**Hard token cap per task**: dashboard (`/api/log`) accepts `tokens_budget_max`. If current session exceeds cap, task marked `budget_exceeded` and Python logger signals event at next Stop. Set cap default in line with category (example: ops 50k, modify 200k, audit 400k, new app 600k, bug rescue 250k); user can force. Runtime sentinel: at half cap (50%) emit line `⚠ budget at 50% (X/Y tok · ~$Y.YY)` in current turn; at 80% ask confirmation before expensive reads.
 
-Stima costo in-session (Opus 4.x): `input×$15 + output×$75 + cache_read×$1.5 + cache_creation×$18.75` per milione di token. Esempio rapido: 100k input + 20k output ≈ $1.50 + $1.50 = **~$3.00**. Usa questa formula per il sentinel e per rispondere a "quanto sta costando questa sessione?".
+Cost estimate in-session (Opus 4.x): `input×$15 + output×$75 + cache_read×$1.5 + cache_creation×$18.75` per million tokens. Quick example: 100k input + 20k output ≈ $1.50 + $1.50 = **~$3.00**. Use this formula for sentinel and answering "how much is this session costing?".
 
-## 19. Integrazioni MCP
+## 19. MCP Integrations
 
-Per task che operano su SaaS esterni (GitHub, Linear, Slack, Notion, ecc.) usa server MCP con format `ServerName:tool_name` (es. `GitHub:create_issue`, `Linear:update_issue`). I tool **write** sono gate hard, i **read-only** sono safe. Dettagli e tabella server raccomandati: `references/mcp-integrations.md`.
+For tasks operating on external SaaS (GitHub, Linear, Slack, Notion, etc.) use MCP server with format `ServerName:tool_name` (e.g., `GitHub:create_issue`, `Linear:update_issue`). **Write** tools are hard gates, **read-only** are safe. Details and recommended server table: `references/mcp-integrations.md`.
 
-**GitHub MCP** è configurato globalmente (`~/.claude/mcp.json`, server `@modelcontextprotocol/server-github`). Usalo quando:
+**GitHub MCP** is configured globally (`~/.claude/mcp.json`, server `@modelcontextprotocol/server-github`). Use when:
 
-| Trigger | Tool da usare | Quando NON usarlo |
+| Trigger | Tool to use | When NOT to use |
 |---|---|---|
-| "cerca skill/repo su GitHub per X" | `github:search_repositories` | se basta una fonte già in `sources.json` |
-| "guarda cosa fa questo repo" | `github:get_file_contents` (README/CHANGELOG) | per repo non noti o irrilevanti |
-| "cerca esempi di implementazione" | `github:search_code` | se il task è locale, niente GitHub |
-| "ultimi commit/issue su X" | `github:search_commits`, `github:search_issues` | per repo senza relazione con il task |
-| "leggi struttura repo" | `github:get_repository_tree` | solo se necessario capire il layout |
+| "search skill/repo on GitHub for X" | `github:search_repositories` | if answer already in `sources.json` |
+| "what does this repo do" | `github:get_file_contents` (README/CHANGELOG) | for unknown or irrelevant repos |
+| "find implementation examples" | `github:search_code` | if task is local, no GitHub |
+| "latest commits/issues on X" | `github:search_commits`, `github:search_issues` | for repos unrelated to task |
+| "read repo structure" | `github:get_repository_tree` | only if necessary to understand layout |
 
-Regole: read-only sempre safe; write (`create_issue`, `create_pull_request`) solo se l'utente lo chiede esplicitamente. Il token va in `.env.local` come `GITHUB_TOKEN` (PAT classic, scope `public_repo`).
+Rules: read-only always safe; write (`create_issue`, `create_pull_request`) only if user explicitly requests. Token goes in `.env.local` as `GITHUB_TOKEN` (classic PAT, scope `public_repo`).
 
-Le skill custom sono ora standard aperto (Claude Code/Codex CLI/Cursor/Gemini CLI). I riferimenti MCP `Server:tool` funzionano cross-tool.
+Custom skills now open standard (Claude Code/Codex CLI/Cursor/Gemini CLI). MCP references `Server:tool` work cross-tool.
 
 ## 20. Validator
 
-`scripts/validate_skill.py` controlla: frontmatter conforme (name <=64 char, description <=1024), reference ↔ SKILL ↔ assets coerenti (file e glob `assets/.../*.ext`), mappa di progressive loading completa, heading duplicati, sezioni obbligatorie, `SKILL.md` <450 righe (best-practice Anthropic: <500), reference <120 righe, ogni ricetta citata da `recipes/README.md`, ogni script in `assets/scripts/` e ogni template in `assets/templates/` referenziati nel corpus.
+`scripts/validate_skill.py` checks: frontmatter conformant (name ≤64 char, description ≤1024), reference ↔ SKILL ↔ assets coherent (file and glob `assets/.../*.ext`), progressive loading map complete, duplicate headings, mandatory sections, `SKILL.md` <450 lines (Anthropic best-practice: <500), reference <120 lines, each cited recipe in `recipes/README.md`, each script in `assets/scripts/` and each template in `assets/templates/` referenced in corpus.
 
 ```bash
 python scripts/validate_skill.py

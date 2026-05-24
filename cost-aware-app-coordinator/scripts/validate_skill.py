@@ -29,28 +29,29 @@ REFERENCE_MAX_LINES = 120
 DESCRIPTION_MAX_CHARS = 1024
 
 REQUIRED_FRONTMATTER_KEYS = {"name", "description"}
+# Support both Italian and English section names (v1.1.0: bilingual SKILL)
 REQUIRED_SECTIONS = [
-    "Lingua",
-    "Fast path",
-    "Classificazione del task",
-    "Budget mode",
-    "Selezione del modello",
-    "Lettura iniziale del contesto",
-    "Progressive loading",
-    "Working loop",
-    "Output economy",
-    "Gate decisionali e rischio",
-    "Specialisti",
-    "Handoff tra agenti",
-    "Definition of Done",
-    "Creazione di una nuova app",
-    "Modifica di app esistente",
-    "Audit",
-    "Bug rescue",
-    "Miglioramento skill",
-    "Manutenzione",
-    "Sicurezza del coordinatore",
-    "Validator",
+    ("Lingua", "Language"),
+    ("Fast path",),  # Same in both
+    ("Classificazione del task", "Task classification"),
+    ("Budget mode",),  # Same in both
+    ("Selezione del modello", "Model selection"),
+    ("Lettura iniziale del contesto", "Initial context reading"),
+    ("Progressive loading",),  # Same in both
+    ("Working loop",),  # Same in both
+    ("Output economy",),  # Same in both
+    ("Gate decisionali e rischio", "Decision gates and risk"),
+    ("Specialisti", "Specialists"),
+    ("Handoff tra agenti", "Handoff between agents"),
+    ("Definition of Done",),  # Same in both
+    ("Creazione di una nuova app", "Creating a new app"),
+    ("Modifica di app esistente", "Modifying existing app"),
+    ("Audit",),  # Same in both
+    ("Bug rescue",),  # Same in both
+    ("Miglioramento skill", "Skill improvement"),
+    ("Manutenzione", "Maintenance"),
+    ("Sicurezza del coordinatore", "Coordinator safety"),
+    ("Validator",),  # Same in both
 ]
 
 
@@ -194,9 +195,15 @@ def check_skill(messages: list[str]) -> tuple[str, set[str]]:
         messages.append("OK:     nessun heading duplicato in SKILL.md")
 
     missing_sections = []
-    for section in REQUIRED_SECTIONS:
-        if not any(section.lower() in t for t in titles):
-            missing_sections.append(section)
+    for section_variants in REQUIRED_SECTIONS:
+        # section_variants is a tuple of alternative names (e.g., ("Lingua", "Language"))
+        found = False
+        for variant in section_variants:
+            if any(variant.lower() in t for t in titles):
+                found = True
+                break
+        if not found:
+            missing_sections.append(section_variants[0])  # Report first variant
     if missing_sections:
         err(messages, f"sezioni obbligatorie mancanti: {missing_sections}")
     else:

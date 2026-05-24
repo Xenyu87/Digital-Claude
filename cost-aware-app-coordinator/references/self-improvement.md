@@ -40,6 +40,7 @@ Cerca questi sintomi prima di scrivere:
 - **rumore**: esempi che non aggiungono nulla rispetto al testo
 - **anti-pattern emersi**: pattern visti in `AI_AGENT_LOG.md` non ancora codificati
 - **piattaforma**: regole valide solo Unix in ambiente Windows o viceversa
+- **lingue**: SKILL.md è canonical English (v1.1.0+), SKILL_IT.md è Italian fallback. Se modifichi SKILL.md, aggiorna anche SKILL_IT.md per mantenerle allineate. References rimangono in italiano (load on-demand, non critico).
 
 ## Cosa NON fare
 

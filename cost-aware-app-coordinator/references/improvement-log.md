@@ -18,6 +18,9 @@ Diario sintetico delle modifiche alla skill. Una riga per modifica.
 - 2026-05-21 — SKILL.md §3 — aggiunta nota baseline modelli 2026-05 (Haiku 4.5/Sonnet 4.6/Opus 4.7) + /model per switch sessione — allineamento a CLI v2.1.142-145
 - 2026-05-21 — SKILL.md §3 — nota flag subagent dispatched (--model, --permission-mode) + Fast mode Opus 4.7 — da release notes CLI
 - 2026-05-21 — references/mcp-integrations.md — MCP Registry come fonte canonica, deprecazione Third-Party list, MCP_TOOL_TIMEOUT >60s fix — da commit modelcontextprotocol/servers
+- 2026-05-24 — Pillar 1: Decision Snapshot (SessionStart priming) — scripts/decision_snapshot_builder.py + inject_lessons.py esteso — SessionStart carica decisioni critiche dal MEMORY.md e le inietta in contesto, eliminando riscoperta di regole gia' decise (~10-20k token/sessione risparmiati)
+- 2026-05-24 — Pillar 2: Bilingual SKILL (Canonical English + Italian fallback) — SKILL.md tradotto in English (~367 righe), SKILL_IT.md backup italiano, self-improvement.md aggiornato — Model training ottimizzato per English, ~2-4% token savings on reference reads; references rimangono italiano (on-demand, non critico)
+- 2026-05-24 — Pillar 3: Memory Consolidation (automated compaction) — scripts/memory_consolidation.py + memory/archive/ + CONSOLIDATION_LOG.md — compatta MEMORY.md mergiando file simili (<3 giorni), archivia osservazioni >30gg, dedup fra auto-memory e claude-mem (~50-75% MEMORY.md size reduction post-consolidation)
 - 2026-05-21 — references/progressive-loading.md — nota /plugin projected context cost come segnale budget — da CLI v2.1.143
 - 2026-05-21 — references/specialist-agents.md — esempio flag dispatched + nota wshobson/agents (valutato, no adozione wholesale) — da research plan-1
 - 2026-05-21 — references/maintenance-compaction.md — reminder revisione baseline modelli ad ogni minor CLI — prevenzione drift versione

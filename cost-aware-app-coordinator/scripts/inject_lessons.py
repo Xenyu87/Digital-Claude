@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Fetch lezioni ed errori dalla dashboard e li stampa come contesto per la skill.
+"""Fetch lezioni, errori, e decision snapshot per SessionStart.
 
 Output su stdout → iniettato come <system-reminder> tramite hook SessionStart.
 Se la dashboard è down o non ci sono dati, stampa niente (silenzioso).
 
-Scopo: la skill usa automaticamente le lezioni passate per evitare errori già visti.
+Scopo: la skill usa automaticamente le lezioni passate, decision snapshot, e feedback per evitare errori già visti.
 """
 from __future__ import annotations
 
 import json
 import os
+import subprocess
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,10 +44,26 @@ def main() -> None:
     if not (Path.cwd() / "AI_HANDOFF.md").exists():
         return
 
+    lines: list[str] = []
+
+    # Pillar 1: Decision Snapshot (SessionStart priming)
+    try:
+        skill_dir = Path(__file__).parent.parent
+        snapshot_script = skill_dir / "scripts" / "decision_snapshot_builder.py"
+        if snapshot_script.exists():
+            result = subprocess.run(
+                ["python3", str(snapshot_script)],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            if result.stdout.strip():
+                lines.append(result.stdout.strip())
+    except Exception:
+        pass  # Silenzioso se fallisce
+
     lessons = fetch("/api/lessons?limit=8")
     errors = fetch("/api/errors?limit=5")
-
-    lines: list[str] = []
 
     if lessons:
         lines.append("📚 Lezioni dai task precedenti (evita questi errori):")
