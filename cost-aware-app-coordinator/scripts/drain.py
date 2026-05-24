@@ -104,15 +104,24 @@ def complete_tbd_entries(project_path: str) -> dict:
         result["detail"] = f"claude CLI: {err[:200]}"
         return result
 
-    # Applica le sostituzioni nel file
+    # Applica le sostituzioni nel file.
+    # Sicurezza: accetta solo sostituzioni dove `old` è una riga TBD nota
+    # e `new` non contiene pattern riservati (evita injection da output LLM).
+    _RESERVED = {"-->", "<TBD", "<script", "<%"}
     new_text = text
+    tbd_set = set(tbd_lines)
     for line in out.splitlines():
-        if "-->" in line:
-            parts = line.split("-->", 1)
-            old = parts[0].strip()
-            new = parts[1].strip()
-            if old in new_text:
-                new_text = new_text.replace(old, new, 1)
+        if "-->" not in line:
+            continue
+        parts = line.split("-->", 1)
+        old = parts[0].strip()
+        new = parts[1].strip()
+        if old not in tbd_set:
+            continue
+        if any(tok in new for tok in _RESERVED):
+            continue
+        if old in new_text:
+            new_text = new_text.replace(old, new, 1)
 
     log_file.write_text(new_text, encoding="utf-8")
     result["status"] = "ok"

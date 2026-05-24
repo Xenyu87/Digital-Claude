@@ -16,6 +16,8 @@ from pathlib import Path
 
 
 BASE = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+if not BASE.startswith(("http://", "https://")):
+    raise SystemExit(f"SKILL_DASHBOARD_URL schema non valido (deve essere http/https): {BASE}")
 
 
 def fetch(path: str) -> list[dict]:

@@ -439,10 +439,14 @@ def main() -> int:
     try:
         sid = jsonl.stem  # filename = "<session_id>.jsonl"
         route_file = Path(f"/tmp/claude-route-{sid}.json")
-        if route_file.exists():
-            route_data = json.loads(route_file.read_text(encoding="utf-8"))
-            if isinstance(route_data, dict):
-                payload["model_suggested"] = route_data.get("model_suggested")
+        # Apertura atomica (no TOCTOU): apri direttamente, gestisci FileNotFoundError.
+        with route_file.open(encoding="utf-8") as fh:
+            route_data = json.loads(fh.read())
+        if isinstance(route_data, dict):
+            suggested = route_data.get("model_suggested")
+            _ALLOWED_MODELS = {"haiku", "sonnet", "opus"}
+            if isinstance(suggested, str) and suggested in _ALLOWED_MODELS:
+                payload["model_suggested"] = suggested
     except (OSError, json.JSONDecodeError):
         pass
     # Cap esplicito via env (es. CAP_TOKENS=120000). Se omesso, la dashboard
