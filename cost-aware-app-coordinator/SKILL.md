@@ -119,8 +119,13 @@ In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallis
 | `code-reviewer` | opus | review pre-commit di diff non triviale (giudizio indipendente) |
 | `mar-reviewer` | opus | audit cross-modulo + review pre-commit di diff non triviale (3 critici + aggregator) |
 | `architect` | opus | nuova feature, scelta stack, design data model |
+| `scope-verifier` | sonnet | monitor continuo se lavoro è allineato al brief (v1.1.0) |
 
 **Flag per subagent dispatched**: i subagent accettano `--model`, `--permission-mode` per override puntuale. Fast mode usa Opus 4.7 by default. Esempi pratici in `references/specialist-agents.md`.
+
+**Pre-selezione modello (v1.1.0)**: prima di applicare la tabella, estrai difficoltà dal brief con `scripts/difficulty_estimator.py`. Baseline score 0.5, aggiusta per keyword (hard +0.3, easy -0.15, vague +0.2). Vedi `references/difficulty-routing.md`.
+
+**Budget-Aware Override (v1.1.0)**: se `tokens_residui < 20k`, ignora la scelta per task-type e forza Haiku. Script: `scripts/budget_aware_router.py`. Consulta prima di far partire un task big.
 
 **Regola di delega** (anti-pattern: "lo faccio io con Opus perché ce l'ho"):
 - Esplorazione codice/grep/find su >2 file → `Explore`. Mai leggere 10 file in main session.
@@ -185,6 +190,7 @@ Mappa attivazione reference:
 - gate decisionali → `references/decision-risk-gates.md`
 - scope ambiguo o utente non programmer → `references/scope-checkpoint.md`
 - drift detection in-flight → `references/in-flight-scope-monitor.md`
+- difficulty estimation e routing → `references/difficulty-routing.md` (v1.1.0+)
 - auto-scope-checkpoint per multi-layer brief → `references/in-flight-scope-monitor.md` (v1.1.0+)
 - ruoli → `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`
 - gate di delega / drift modello → `references/auto-delegation-gate.md`
@@ -217,6 +223,8 @@ Ogni 3 turni (o su trigger: file +3, token burn >150% atteso, categoria shift): 
 - >0.6: 🛑 HARD_DIVERGENCE → proponi "fermi? apro task2 per il resto?"
 
 **Script**: `scripts/scope_drift_detector.py` (calcola score con euristica file divergence, category shift, token burn, semantic divergence).
+
+**Agent monitor** (v1.1.0): per task non-triviale (>2h, >5 file), chiama `scope-verifier` agent (Sonnet) ogni 3 turni. Fornisce verdetto indipendente: ON_TRACK, DRIFT, DIVERGE con score e suggestion. Per task piccoli, drift detector inline è sufficiente.
 
 **Log**: aggiungi a coordination-log la sezione `drift_check` con score, severity, reason. Vedi `references/in-flight-scope-monitor.md`.
 
@@ -252,6 +260,17 @@ Sub-agent solo se il rischio o il tempo risparmiato giustifica il costo in token
 In Claude Code: tool `Agent` con `subagent_type` — la lista dipende dall'ambiente, vedi `references/specialist-agents.md`. Briefing autocontenuto: obiettivo, contesto minimo, formato. Mai "decidi tu".
 
 Profili: `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`.
+
+### 9.1 Quando parallelizzare (v1.1.0)
+
+**Parallel swarm** (lanciare 2-3 agenti contemporaneamente) solo se tutte le 4 condizioni vere:
+
+1. **Task indipendenti** — nessuno dipende dall'output dell'altro
+2. **File set non overlapping** — nessun file toccato da 2+ agenti
+3. **Budget disponibile** — `tokens_residui > (cost_A + cost_B) * 1.5`
+4. **Entrambi completabili <1 sessione**
+
+Default: sequenziale. Vedi `recipes/parallel-swarm.md` per esempi e anti-pattern.
 
 ## 10. Handoff tra agenti
 

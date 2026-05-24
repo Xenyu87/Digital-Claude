@@ -31,6 +31,7 @@ La skill apre la ricetta giusta automaticamente quando il task corrisponde. Tu p
 | [content-site.md](content-site.md) | blog o sito contenuti markdown | Astro + Vercel/Netlify | 0€ |
 | [bot.md](bot.md) | bot Telegram/Discord per automazioni | Node.js + Railway | ~5€ |
 | [mar-audit.md](mar-audit.md) | audit cross-modulo con 3 reviewer paralleli + aggregatore | agenti locali (mar-reviewer) | ~$0.05-0.15 per audit |
+| [parallel-swarm.md](parallel-swarm.md) | template per lanciare 2-3 subagent indipendenti in parallelo | agenti locali (code-implementer, qa-tester, ecc.) | variabile per agente |
 
 ## Struttura comune di una ricetta
 

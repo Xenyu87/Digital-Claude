@@ -50,22 +50,29 @@ Lo vedrai in browser tra 10 minuti. Se è quello che immaginavi, andiamo
 avanti col resto.
 ```
 
-## Protocollo debate prima di chiedere
+## Debate Automatico (scope minimo vs espanso)
 
-Se lo scope e' ambiguo ma vuoi evitare di interrompere l'utente, usa il debate a 2 persona:
+Spawna 2 `Agent` (haiku) con prompt opposti se lo scope è ambiguo:
+- **Minimo**: file/azioni strettamente necessari
+- **Espanso**: interpretazione ampia e completa
 
-### Come funziona
+### Step 2b — Referee Sonnet (NEW, v1.1.0)
 
-Spawna 2 `Agent` con `model: haiku`, prompt opposti:
+Se i due Haiku divergono (convergenza <80%), attiva un arbitro imparziale:
 
-**Agente Minimo**: "Interpreta il task come scope MINIMO: quali sono i file/azioni strettamente necessari? Lista compatta, niente extra."
+**Referee Sonnet** (read-only dei 2 output):
+- Prompt: "Sei un arbitro imparziale. Leggi i 2 argomenti su scope minimo vs espanso. Quale ha più senso per il brief originale? Verdetto in 2 righe: cosa e perché."
+- Output: `{winner: "minimo"|"espanso", confidence: float 0-1, reason: str}`
+- Se confidence > 0.7 → procedi con winner, indica: `[scope: <winner> per verdetto referee, confidence <N%>]`
+- Se confidence ≤ 0.7 → mostra all'utente il diff conciso + verdetto dubbioso, usa `AskUserQuestion`
 
-**Agente Espanso**: "Interpreta il task come scope ESPANSO: cosa potrebbe voler dire nella sua accezione piu' ampia? Lista completa di file/azioni."
+Costo aggiunto: ~1 Sonnet turn ≈ $0.005. Elimina echo-chamber e rhetoric bias del 2-way debate.
 
 ### Regola di convergenza
 
 - Se i due output condividono >80% di file/azioni → procedi con lo scope minimo, indica in 1 riga: `[scope: minimo per convergenza debate]`.
-- Se divergono → mostra all'utente il diff conciso (non i 2 output interi) e usa `AskUserQuestion`.
+- Se divergono → attiva Referee Sonnet (v1.1.0, step 2b sopra).
+- Se ancora incerto dopo referee → mostra all'utente il diff conciso (non i 2 output interi) e usa `AskUserQuestion`.
 
 ### Costo stimato
 
