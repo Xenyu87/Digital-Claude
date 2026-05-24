@@ -44,6 +44,22 @@ Trigger tipici → categoria:
 
 Anche senza dichiarazione esplicita, classifica dal verbo principale e dallo stato del repo. Dettagli: `references/task-routing.md`.
 
+### 1.5 Auto-trigger: Scope Checkpoint
+
+**Attiva automaticamente** `references/scope-checkpoint.md` se il brief contiene 2+ dei seguenti pattern:
+
+- **2+ verbi separati di azione**: "aggiungi X *e* modifica Y *e* refactor Z" → 🚩 multi-layer
+- **Parole vaghe senza contesto**: "migliora", "rendi", "ottimizza", "pulisci" → ambiguous
+- **Scope temporale incerto**: stimato >400k token o >1 sessione → high risk
+- **File count incerto** (>5): "controlla tutto", "rivedi il modulo" → vague
+
+**Procedura**: conta verbi di azione nel brief. Se N ≥ 2:
+1. Attiva **debate scope interno** con 2 Haiku (scope minimo vs. espanso)
+2. Se convergenza >70% → procedi con scope minimo
+3. Se <70% → rispecchia all'utente e chiedi scelta
+
+**Costo preventivo** (~$0.01) vs. **rischio scope creep** (~100k token wastage = ~$5). Trade-off favorevole.
+
 ## 2. Budget mode
 
 - **Economico** (default): minimo letture, output corto
@@ -168,6 +184,8 @@ Mappa attivazione reference:
 - budget → `references/budget-modes.md`, `references/response-economy.md`
 - gate decisionali → `references/decision-risk-gates.md`
 - scope ambiguo o utente non programmer → `references/scope-checkpoint.md`
+- drift detection in-flight → `references/in-flight-scope-monitor.md`
+- auto-scope-checkpoint per multi-layer brief → `references/in-flight-scope-monitor.md` (v1.1.0+)
 - ruoli → `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`
 - gate di delega / drift modello → `references/auto-delegation-gate.md`
 - handoff → `references/agent-handoff.md`, `references/cross-agent-handoff-template.md`
@@ -188,6 +206,19 @@ Mappa attivazione reference:
 ## 6. Working loop
 
 Per task non banali: budget+modello internamente → contesto minimo → mini-piano se serve → patch piccole → verifica mirata → chiusura corta. Smetti di pianificare quando il prossimo passo è ovvio.
+
+### 6.5 In-Flight Scope Drift Check
+
+Ogni 3 turni (o su trigger: file +3, token burn >150% atteso, categoria shift): calcola drift score fra brief originale e lavoro compiuto.
+
+**Soglie**:
+- 0.0–0.3: ✅ ON_TRACK continua
+- 0.3–0.6: ⚠️ DRIFT_WARNING → log + chiedi conferma utente prima di proseguire
+- >0.6: 🛑 HARD_DIVERGENCE → proponi "fermi? apro task2 per il resto?"
+
+**Script**: `scripts/scope_drift_detector.py` (calcola score con euristica file divergence, category shift, token burn, semantic divergence).
+
+**Log**: aggiungi a coordination-log la sezione `drift_check` con score, severity, reason. Vedi `references/in-flight-scope-monitor.md`.
 
 ## 7. Output economy
 
