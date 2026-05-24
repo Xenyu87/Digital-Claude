@@ -107,7 +107,7 @@ def complete_tbd_entries(project_path: str) -> dict:
     # Applica le sostituzioni nel file.
     # Sicurezza: accetta solo sostituzioni dove `old` è una riga TBD nota
     # e `new` non contiene pattern riservati (evita injection da output LLM).
-    _RESERVED = {"-->", "<TBD", "<script", "<%"}
+    _RESERVED = {"-->", "<TBD", "<script", "<%", "$(", "`"}
     new_text = text
     tbd_set = set(tbd_lines)
     for line in out.splitlines():
