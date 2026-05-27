@@ -38,6 +38,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+# Aggiungi scripts/ al path per importare helper
+sys.path.insert(0, str(Path(__file__).parent))
+from buffering_client import post_with_fallback, flush_queue
+
 
 CLAUDE_HOME = Path.home() / ".claude"
 PROJECTS_DIR = CLAUDE_HOME / "projects"
@@ -332,7 +336,7 @@ def post_errors(meta: dict, task_id: str | None, base: str, dry_run: bool) -> No
         pass
 
 
-def post_lessons(lessons: list[dict], task_id: str | None, base: str, dry_run: bool) -> None:
+def post_lessons(lessons: list[dict], task_id: str | None, dry_run: bool = False) -> None:
     if not lessons:
         return
     for l in lessons:
@@ -340,16 +344,7 @@ def post_lessons(lessons: list[dict], task_id: str | None, base: str, dry_run: b
     if dry_run:
         print(f"auto_log_task [dry-run]: {len(lessons)} lezioni da AI_AGENT_LOG.md")
         return
-    url = base.rstrip("/") + "/api/lessons"
-    data = json.dumps(lessons).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            j = json.loads(resp.read().decode())
-            if j.get("inserted", 0) > 0:
-                print(f"auto_log_task: {j['inserted']} lezioni inviate alla dashboard.")
-    except Exception:
-        pass  # non bloccante
+    post_with_fallback("/api/lessons", {"lessons": lessons})
 
 
 def detect_skill_version() -> str:
@@ -455,33 +450,23 @@ def main() -> int:
     if cap_env and cap_env.isdigit():
         payload["tokens_budget_max"] = int(cap_env)
 
-    base = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
-
     if args.dry_run:
         print(json.dumps(payload, indent=2))
         lessons = parse_lessons_from_log(cwd)
-        post_lessons(lessons, None, base, dry_run=True)
+        print(f"auto_log_task [dry-run]: {len(lessons)} lezioni da AI_AGENT_LOG.md")
         return 0
 
-    url = base.rstrip("/") + "/api/log"
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url, data=data, headers={"Content-Type": "application/json"}, method="POST"
-    )
+    # Invia log principale alla dashboard (con buffering automatico se offline)
     task_id: str | None = None
-    try:
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            body = json.loads(resp.read().decode())
-            task_id = body.get("task_id")
-            print(f"auto_log_task: ok ({resp.status}) tokens={usage['input_tokens']}/{usage['output_tokens']}")
-    except urllib.error.URLError as e:
-        print(f"auto_log_task: dashboard down ({e}). Skip.")
-    except Exception as e:
-        print(f"auto_log_task: errore ({e}). Skip.")
+    if post_with_fallback("/api/log", payload):
+        print(f"auto_log_task: ✓ inviato alla dashboard. tokens={usage['input_tokens']}/{usage['output_tokens']}")
+    else:
+        print(f"auto_log_task: ⚠️  offline, dati salvati localmente. Verranno inviati quando la dashboard si riconnette.")
 
     # Invia lezioni compilate da AI_AGENT_LOG.md (non bloccante)
     lessons = parse_lessons_from_log(cwd)
-    post_lessons(lessons, task_id, base, dry_run=False)
+    if lessons:
+        post_lessons(lessons, task_id, dry_run=False)
 
     # Invia errore se sessione parziale (non bloccante)
     post_errors(meta, task_id, base, dry_run=False)

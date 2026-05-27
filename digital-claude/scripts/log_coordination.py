@@ -6,7 +6,7 @@ Schema: {"ts","task_id","project","category","trigger_keywords","agents_used",
 
 Uso:
     python scripts/log_coordination.py \\
-        --project dashboard-claude-coordinator \\
+        --project digital-claude-dashboard \\
         --category modifica \\
         --outcome ok \\
         --cost 0.42 \\

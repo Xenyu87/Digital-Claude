@@ -13,7 +13,7 @@ Trigger speculari nella heuristic `detect_category` (vedi `scripts/auto_log_task
 - **Host Proxmox**: hypervisor
 - **LXC `dev`** `192.168.1.148` — workstation remota, dove gira Claude Code/Codex, dashboard `dev`, Syncthing GUI su porta **3003** (non 8384), porta sync TCP **22000**
 - **LXC `stable`** `192.168.1.147` — produzione (dashboard pubblica)
-- **LXC `dashboard-claude-coordinator`** — dashboard di produzione Claude
+- **LXC `digital-claude-dashboard`** — dashboard di produzione Claude
 
 Per dettagli completi → `/root/Progetti/homelab/HOMELAB.md` (indice topico in cima; **non leggerlo per intero**, usa `grep -n '^## '` + `Read offset/limit`).
 
@@ -22,7 +22,7 @@ Per dettagli completi → `/root/Progetti/homelab/HOMELAB.md` (indice topico in 
 | Servizio | LXC | Note |
 |---|---|---|
 | `codex-skill-dashboard.service` | dev | Dashboard Codex Skill, porta 3002, serve `reports/skill-dashboard.html` |
-| `dashboard-claude-coordinator-dev.service` | dev | Next.js, porta 3001, `npm start` dopo `npm run build` |
+| `digital-claude-dashboard-dev.service` | dev | Next.js, porta 3001, `npm start` dopo `npm run build` |
 | `syncthing.service` | dev | GUI 3003, sync TCP 22000, config `/root/.config/syncthing/config.xml` |
 
 ## Comandi quotidiani
@@ -38,8 +38,8 @@ journalctl -u <nome> -f          # follow live
 ss -tlnp | grep -E ':(3001|3002|3003|22000)\s'
 
 # Hot-reload dashboard dopo modifica sorgenti
-cd /root/Progetti/dashboard-claude-coordinator
-npm run build && systemctl restart dashboard-claude-coordinator-dev.service
+cd /root/Progetti/digital-claude-dashboard
+npm run build && systemctl restart digital-claude-dashboard-dev.service
 
 # Hot-reload dashboard Codex Skill dopo modifica Lavagna/React Flow
 cd /root/Progetti/codex-skill-dashboard
@@ -114,5 +114,5 @@ Hook in `/root/.claude/settings.json` → array `hooks.Stop`. Comandi shell eseg
 ## Riferimenti
 
 - `/root/Progetti/homelab/HOMELAB.md` — dossier completo (indice topico in cima)
-- `ops/README.md` dei singoli progetti (es. `dashboard-claude-coordinator/ops/README.md`)
+- `ops/README.md` dei singoli progetti (es. `digital-claude-dashboard/ops/README.md`)
 - `journalctl -u <servizio>` per la verità operativa di un servizio

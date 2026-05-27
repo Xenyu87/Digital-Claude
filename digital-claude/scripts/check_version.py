@@ -22,6 +22,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+# Aggiungi scripts/ al path per importare helper
+sys.path.insert(0, str(Path(__file__).parent))
+from buffering_client import post_with_fallback
+
 
 def detect_source_path() -> Path:
     env = os.environ.get("SKILL_SOURCE_PATH")
@@ -83,29 +87,14 @@ def main() -> int:
     if source_version != installed_version:
         print(f"  DRIFT: lancia `python3 scripts/sync_skill.py` per allineare.")
 
-    base = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
-    url = base.rstrip("/") + "/api/skill-version"
-
     payload = {
         "source_version": source_version,
         "installed_version": installed_version,
     }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            body = resp.read().decode("utf-8")
-            print(f"check_version: registrato ({resp.status}) {body}")
-    except urllib.error.URLError as e:
-        print(f"check_version: dashboard non raggiungibile a {url} ({e}). Skip.")
-    except Exception as e:
-        print(f"check_version: errore inatteso ({e}). Skip.")
+    if post_with_fallback("/api/skill-version", payload):
+        print(f"check_version: ✓ registrato sulla dashboard centralizzata.")
+    else:
+        print(f"check_version: ⚠️  offline, dati salvati localmente per invio futuro.")
 
     return 0
 

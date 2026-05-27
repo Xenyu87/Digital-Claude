@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 # Sostituisci <PROJECT_PATH> con il path assoluto del progetto
-# Es: /root/Progetti/dashboard-claude-coordinator
+# Es: /root/Progetti/digital-claude-dashboard
 Environment=PROJECT_PATH=<PROJECT_PATH>
 Environment=SKILL_DASHBOARD_URL=http://localhost:3001
 

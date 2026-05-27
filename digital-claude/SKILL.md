@@ -1,5 +1,5 @@
 ---
-name: cost-aware-app-coordinator
+name: digital-claude
 description: Coordinates non-trivial software tasks (new app, audit, bug rescue, migration, deploy, cross-module refactor, skill improvement). Activates when planning, stack choice, multi-agent, AI_*.md files are needed. DO NOT use for single-string fix, local rename, color change, isolated single-file edit, conceptual questions.
 ---
 
@@ -240,7 +240,7 @@ Verify: <how user checks>
 
 Details only for: risks, non-obvious choices, blockers, user actions. When user must configure/choose/confirm/pay/test, add a `For you:` section.
 
-**Activation announcement**: on first turn of non-trivial session (classified category, budget chosen), open with single line like: `🛠 Skill: cost-aware-app-coordinator · cat:<category> · budget:<mode>`. Only first line, no extra preambles. Skip to fast path.
+**Activation announcement**: on first turn of non-trivial session (classified category, budget chosen), open with single line like: `🛠 Skill: digital-claude · cat:<category> · budget:<mode>`. Only first line, no extra preambles. Skip to fast path.
 
 Complete rules: `references/response-economy.md`.
 

@@ -12,7 +12,7 @@ Ogni task non banale viene serializzato in un file JSONL locale, poi consumato d
 ~/.claude/projects/<proj-slug>/memory/coordination-log.jsonl
 ```
 
-Il `<proj-slug>` è il path del progetto codificato come fa Claude Code: caratteri non alfanumerici sostituiti con `-` (es. `-root-Progetti-dashboard-claude-coordinator`).
+Il `<proj-slug>` è il path del progetto codificato come fa Claude Code: caratteri non alfanumerici sostituiti con `-` (es. `-root-Progetti-digital-claude-dashboard`).
 
 ## Schema JSONL (una riga per task chiuso)
 
@@ -20,7 +20,7 @@ Il `<proj-slug>` è il path del progetto codificato come fa Claude Code: caratte
 {
   "ts": "2026-05-22T19:30:00Z",
   "task_id": "uuid-v4",
-  "project": "dashboard-claude-coordinator",
+  "project": "digital-claude-dashboard",
   "category": "modifica",
   "trigger_keywords": ["bug", "fix"],
   "agents_used": ["code-implementer"],

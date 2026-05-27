@@ -93,15 +93,15 @@ In `~/.claude/projects/*/memory/` — perse se LXC distrutto. Non critiche, si r
 ## Livello 3 — Applicazioni (LXC dev .148 e stable .147)
 
 ### Dashboard Claude Coordinator (LXC dev .148, porta 3001)
-- **Backup**: `Xenyu87/dashboard-claude-coordinator`
+- **Backup**: `Xenyu87/digital-claude-dashboard`
 - **Ripristino**:
   ```bash
-  git clone git@github.com:Xenyu87/dashboard-claude-coordinator.git \
-    /root/Progetti/dashboard-claude-coordinator
-  cd /root/Progetti/dashboard-claude-coordinator
+  git clone git@github.com:Xenyu87/digital-claude-dashboard.git \
+    /root/Progetti/digital-claude-dashboard
+  cd /root/Progetti/digital-claude-dashboard
   npm install && npm run build
   # Ricreare .env.local (vedi AI_HANDOFF.md del progetto)
-  systemctl restart dashboard-claude-coordinator-dev.service
+  systemctl restart digital-claude-dashboard-dev.service
   ```
 
 ### Submi (LXC stable .147, porta 3000)
@@ -155,7 +155,7 @@ ls ~/.claude/agents/ 2>/dev/null | wc -l
 ls ~/.claude/skills/ 2>/dev/null
 
 # Servizi
-systemctl is-active dashboard-claude-coordinator-dev.service 2>/dev/null
+systemctl is-active digital-claude-dashboard-dev.service 2>/dev/null
 ssh root@192.168.1.147 "pm2 status" 2>/dev/null
 ```
 
