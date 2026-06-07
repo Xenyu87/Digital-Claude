@@ -642,6 +642,77 @@ def evaluate_lessons(project_path: str) -> dict:
     return result
 
 
+def create_lessons_from_failed_tasks(project_path: str) -> dict:
+    """Crea lezioni automatiche dai task partial/failed delle ultime 24h.
+
+    Chiamata solo se autopilot attivo. Le lezioni vengono create via POST /api/lessons
+    che gestisce deduplicazione (upsert su rule), quindi è idempotente.
+    """
+    import urllib.request
+    import urllib.error
+
+    result = {"name": "create_lessons_from_failed_tasks", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret:
+        result["detail"] = "ADMIN_SECRET non impostato, skip"
+        return result
+
+    # Fetch task partial/failed ultime 24h
+    try:
+        req = urllib.request.Request(
+            f"{dashboard_url}/api/tasks?status=partial,failed&hours=24&limit=20"
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except Exception as e:
+        result["detail"] = f"fetch tasks fallito: {e}"
+        return result
+
+    tasks = data.get("rows", [])
+    tasks = [t for t in tasks if (t.get("summary") or "").strip()]
+    if not tasks:
+        result["detail"] = "nessun task partial/failed con summary nelle ultime 24h"
+        return result
+
+    created = skipped = 0
+    for t in tasks:
+        summary = t["summary"].strip()
+        category = t.get("category", "")
+        status = t.get("status", "")
+        rule = summary[:300]
+        description = (
+            f"Task {status} ({category}): {summary[:120]}"
+        )
+        try:
+            body = json.dumps({
+                "pattern_type": "errore",
+                "description": description,
+                "rule": rule,
+                "task_id": t.get("id"),
+                "source": "drain_failed_tasks",
+            }).encode()
+            req = urllib.request.Request(
+                f"{dashboard_url}/api/lessons",
+                data=body,
+                headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                resp_data = json.loads(resp.read())
+            if resp_data.get("inserted", 0) > 0:
+                created += 1
+            else:
+                skipped += 1
+        except Exception:
+            skipped += 1
+
+    result["status"] = "ok"
+    result["detail"] = f"{created} lezioni create, {skipped} già esistenti o saltate"
+    return result
+
+
 def promote_acknowledged_feedback(project_path: str) -> dict:
     """Scrive in references/auto-promoted-lessons.md le regole confermate dall'utente.
 
@@ -764,6 +835,7 @@ def main() -> int:
         lambda: run_compaction(project_path),
         lambda: validate_skill_drift(project_path),
         lambda: evaluate_lessons(project_path) if _autopilot_enabled(dashboard_url) else {"name": "evaluate_lessons", "status": "skip", "detail": "autopilot disabilitato"},
+        lambda: create_lessons_from_failed_tasks(project_path) if _autopilot_enabled(dashboard_url) else {"name": "create_lessons_from_failed_tasks", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
     ]:
         try:
