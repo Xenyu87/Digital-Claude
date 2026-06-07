@@ -599,6 +599,82 @@ def evaluate_lessons(project_path: str) -> dict:
     return result
 
 
+def promote_acknowledged_feedback(project_path: str) -> dict:
+    """Scrive in references/auto-promoted-lessons.md le regole confermate dall'utente.
+
+    Legge skill_feedback con status=acknowledged e applied_to_skill_at=null,
+    appende ogni regola nel file di riferimento, poi segna applied_to_skill_at.
+    """
+    import urllib.request
+    import urllib.error
+
+    result = {"name": "promote_acknowledged_feedback", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret:
+        result["detail"] = "ADMIN_SECRET non impostato, skip"
+        return result
+
+    try:
+        req = urllib.request.Request(f"{dashboard_url}/api/skill-feedback?status=acknowledged&limit=20")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except Exception as e:
+        result["detail"] = f"fetch skill_feedback fallito: {e}"
+        return result
+
+    rows = data.get("rows", [])
+    to_promote = [r for r in rows if not r.get("applied_to_skill_at")]
+    if not to_promote:
+        result["detail"] = "nessun feedback da promuovere"
+        return result
+
+    auto_file = SKILL_DIR / "references" / "auto-promoted-lessons.md"
+    today = date.today().isoformat()
+    promoted = 0
+
+    for item in to_promote:
+        title = item.get("title", "").strip()
+        detail = item.get("detail", "").strip()
+        source = item.get("source", "drain")
+        confirmed = (item.get("acknowledged_at") or today)[:10]
+
+        if not title:
+            continue
+
+        entry = f"\n### {today} — {title}\n"
+        if detail:
+            entry += f"*Contesto*: {detail}\n"
+        entry += f"*Fonte*: {source} · *Confermato*: {confirmed}\n"
+
+        try:
+            with open(auto_file, "a", encoding="utf-8") as f:
+                f.write(entry)
+        except Exception as e:
+            result["status"] = "error"
+            result["detail"] = f"scrittura file fallita: {e}"
+            return result
+
+        try:
+            body = json.dumps({"id": item["id"], "applied_to_skill": True}).encode()
+            req = urllib.request.Request(
+                f"{dashboard_url}/api/skill-feedback",
+                data=body,
+                headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                method="PATCH",
+            )
+            with urllib.request.urlopen(req, timeout=10):
+                pass
+            promoted += 1
+        except Exception:
+            pass
+
+    result["status"] = "ok" if promoted > 0 else "skip"
+    result["detail"] = f"{promoted} regole scritte in auto-promoted-lessons.md"
+    return result
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -645,6 +721,7 @@ def main() -> int:
         lambda: run_compaction(project_path),
         lambda: validate_skill_drift(project_path),
         lambda: evaluate_lessons(project_path) if _autopilot_enabled(dashboard_url) else {"name": "evaluate_lessons", "status": "skip", "detail": "autopilot disabilitato"},
+        lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
     ]:
         try:
             r = fn()

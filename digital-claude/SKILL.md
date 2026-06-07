@@ -213,6 +213,7 @@ Reference activation map:
 - coordinator safety → `references/coordinator-safety.md`
 - prompt caching (Anthropic API) → `references/prompt-caching.md`
 - self-improvement → `references/self-improvement.md`, `references/reflexion-loop.md`
+- auto-promoted rules (confirmed via dashboard /feedback) → `references/auto-promoted-lessons.md`
 - drain / auto-curriculum / overnight maintenance → `references/background-drain.md`
 - coordination log / sedimentation → `references/coordination-sedimentation.md`
 - DAG pipeline of subagents → `references/pipeline-dsl.md`
