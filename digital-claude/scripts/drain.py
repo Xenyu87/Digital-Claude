@@ -130,75 +130,118 @@ def complete_tbd_entries(project_path: str) -> dict:
 
 
 def analyze_tool_errors(project_path: str) -> dict:
-    """Raggruppa errori ricorrenti da coordination-log e propone lezioni."""
+    """Raggruppa errori ricorrenti dal DB dashboard e propone lezioni per i pattern ≥3 occorrenze."""
+    import urllib.request
+    import urllib.error
+
     result = {"name": "analyze_tool_errors", "status": "skip", "detail": ""}
 
-    slug = proj_slug(project_path)
-    log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
-    if not log_path.exists():
-        result["detail"] = "coordination-log.jsonl non trovato"
-        return result
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
 
-    # Leggi ultimi 30gg
-    cutoff = datetime.now(timezone.utc).timestamp() - 30 * 86400
-    errors: list[str] = []
+    # Fetch errori raggruppati dal DB
+    clusters: list[dict] = []
     try:
-        for line in log_path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
+        req = urllib.request.Request(f"{dashboard_url}/api/errors?grouped=true&limit=50")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+        clusters = data.get("rows", [])
+    except Exception:
+        # Fallback: leggi coordination-log.jsonl locale
+        slug = proj_slug(project_path)
+        log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
+        if not log_path.exists():
+            result["detail"] = "dashboard non raggiungibile e coordination-log.jsonl non trovato"
+            return result
+        cutoff = datetime.now(timezone.utc).timestamp() - 30 * 86400
+        raw_errors: list[str] = []
+        try:
+            for line in log_path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                ts_str = rec.get("ts", "")
+                try:
+                    from datetime import datetime as dt
+                    ts = dt.fromisoformat(ts_str.replace("Z", "+00:00")).timestamp()
+                except Exception:
+                    continue
+                if ts < cutoff:
+                    continue
+                if rec.get("outcome") in ("failed", "partial"):
+                    lesson = rec.get("lesson") or ""
+                    cat = rec.get("category", "")
+                    raw_errors.append(f"{cat}: {lesson}" if lesson else cat)
+        except Exception as e:
+            result["status"] = "error"
+            result["detail"] = str(e)
+            return result
+        from collections import Counter
+        for pattern, count in Counter(e[:60] for e in raw_errors).most_common(10):
+            if count >= 2:
+                clusters.append({"error_type": "coordination_log", "message_sample": pattern,
+                                  "count": count, "ids": []})
+
+    if not clusters:
+        result["detail"] = "nessun errore aperto nel DB"
+        return result
+
+    # Considera solo cluster con count >= 2
+    recurring = [c for c in clusters if int(c.get("count", 1)) >= 2]
+    if not recurring:
+        result["detail"] = f"{len(clusters)} gruppi totali, nessuno ricorrente (min 2)"
+        return result
+
+    # Per cluster con count >= 3: crea lezione se admin_secret disponibile
+    lessons_created = 0
+    if admin_secret:
+        for c in recurring:
+            if int(c.get("count", 0)) < 3:
                 continue
+            error_type = c.get("error_type", "unknown")
+            msg = c.get("message_sample", "")
             try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            # Controlla data
-            ts_str = rec.get("ts", "")
-            try:
-                from datetime import datetime as dt
-                ts = dt.fromisoformat(ts_str.replace("Z", "+00:00")).timestamp()
+                lesson_body = json.dumps({
+                    "pattern_type": "errore",
+                    "description": f"Errore ricorrente ({c['count']}×): {error_type} — {msg[:120]}",
+                    "rule": f"Quando si incontra '{error_type}': verificare {msg[:160]}",
+                    "source": "drain_analyze_errors",
+                }).encode()
+                lesson_req = urllib.request.Request(
+                    f"{dashboard_url}/api/lessons",
+                    data=lesson_body,
+                    headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                    method="POST",
+                )
+                with urllib.request.urlopen(lesson_req, timeout=10):
+                    pass
+                lessons_created += 1
             except Exception:
-                continue
-            if ts < cutoff:
-                continue
-            if rec.get("outcome") in ("failed", "partial"):
-                lesson = rec.get("lesson") or ""
-                cat = rec.get("category", "")
-                errors.append(f"{cat}: {lesson}" if lesson else cat)
-    except Exception as e:
-        result["status"] = "error"
-        result["detail"] = str(e)
-        return result
+                pass
 
-    if not errors:
-        result["detail"] = "nessun errore negli ultimi 30gg"
-        return result
-
-    # Raggruppa per testo simile (pattern semplice: primi 40 char)
-    from collections import Counter
-    pattern_counts = Counter(e[:40] for e in errors)
-    top_patterns = [p for p, c in pattern_counts.most_common(5) if c >= 2]
-
-    if not top_patterns:
-        result["detail"] = "nessun pattern ricorrente (min 2 occorrenze)"
-        return result
-
-    # Scrivi proposte in improvement-log.md
-    improvement_log = SKILL_DIR / "references" / "improvement-log.md"
-    if improvement_log.exists():
-        today = date.today().isoformat()
-        entries = "\n".join(
-            f"- {today} — auto-proposed — pattern errore ricorrente: {p} — da drain analyze_tool_errors <auto-proposed>"
-            for p in top_patterns
-        )
-        text = improvement_log.read_text(encoding="utf-8")
-        # Inserisce prima di "## Regole"
-        if "## Regole" in text:
-            text = text.replace("## Regole", entries + "\n## Regole", 1)
-        else:
-            text += "\n" + entries + "\n"
-        improvement_log.write_text(text, encoding="utf-8")
+            # Risolvi i singoli record dopo aver creato la lezione
+            ids = [i for i in c.get("ids", []) if i]
+            if ids:
+                try:
+                    resolve_body = json.dumps({"ids": ids, "resolved": True}).encode()
+                    resolve_req = urllib.request.Request(
+                        f"{dashboard_url}/api/errors",
+                        data=resolve_body,
+                        headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                        method="PATCH",
+                    )
+                    with urllib.request.urlopen(resolve_req, timeout=10):
+                        pass
+                except Exception:
+                    pass
 
     result["status"] = "ok"
-    result["detail"] = f"{len(top_patterns)} pattern proposti"
+    result["detail"] = (
+        f"{len(recurring)} pattern ricorrenti, {lessons_created} lezioni create e risolti"
+    )
     return result
 
 
