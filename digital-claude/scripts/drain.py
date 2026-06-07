@@ -713,6 +713,167 @@ def create_lessons_from_failed_tasks(project_path: str) -> dict:
     return result
 
 
+def run_ai_news_intake(project_path: str) -> dict:
+    """Lancia intake-watchdog.mjs se sono passate >48h dall'ultimo run ok.
+
+    Il watchdog gestisce internamente la cadenza e il lock: chiamarlo anche se
+    <48h è sicuro (esce subito con skip). Qui forziamo solo se lo stato dice
+    che è il momento giusto, per non sprecare token.
+    """
+    result = {"name": "run_ai_news_intake", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    import urllib.request
+
+    # Leggi stato intake dal dashboard
+    try:
+        req = urllib.request.Request(f"{dashboard_url}/api/ai-news/check")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            state = json.loads(resp.read())
+    except Exception as e:
+        result["detail"] = f"stato intake non leggibile: {e}"
+        return result
+
+    if state.get("running"):
+        result["detail"] = "intake già in esecuzione, skip"
+        return result
+
+    # Controlla se sono passate >48h dall'ultimo ok
+    last_ok = state.get("last_check_at") if state.get("last_check_status") == "ok" else None
+    needs_run = True
+    if last_ok:
+        from datetime import datetime as dt
+        elapsed_h = (datetime.now(timezone.utc) - dt.fromisoformat(last_ok.replace("Z", "+00:00"))).total_seconds() / 3600
+        needs_run = elapsed_h >= 48
+
+    if not needs_run:
+        result["detail"] = f"ultimo run ok {int(elapsed_h)}h fa, skip (soglia 48h)"
+        return result
+
+    watchdog = Path(project_path) / "ops" / "intake-watchdog.mjs"
+    if not watchdog.exists():
+        result["detail"] = f"intake-watchdog.mjs non trovato in {project_path}/ops"
+        return result
+
+    code, out, err = run(["node", str(watchdog), "--force"], cwd=project_path, capture=True)
+    result["status"] = "ok" if code == 0 else "error"
+    combined = (out + " " + err).strip()[:200]
+    result["detail"] = combined or f"exit {code}"
+    return result
+
+
+def auto_process_ai_news(project_path: str) -> dict:
+    """Auto-processa le AI news: dismiss vecchie low/none, skill_feedback per high+skill.
+
+    - news relevance=none o low più vecchie di 7gg → dismissed (bulk)
+    - news relevance=high + target=skill → crea skill_feedback promotion_candidate
+    """
+    import urllib.request
+
+    result = {"name": "auto_process_ai_news", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret:
+        result["detail"] = "ADMIN_SECRET non impostato, skip"
+        return result
+
+    # Fetch tutte le news proposed non dismissed
+    try:
+        req = urllib.request.Request(f"{dashboard_url}/api/ai-news?limit=200&status=proposed")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except Exception as e:
+        result["detail"] = f"fetch ai_news fallito: {e}"
+        return result
+
+    rows = data.get("rows", [])
+    if not rows:
+        result["detail"] = "nessuna news proposed"
+        return result
+
+    cutoff_7d = datetime.now(timezone.utc).timestamp() - 7 * 86400
+    dismiss_ids: list[int] = []
+    feedback_created = 0
+
+    for r in rows:
+        relevance = r.get("relevance", "none")
+        target = r.get("target", "none")
+        news_id = r.get("id")
+        fetched_at = r.get("fetched_at", "")
+
+        # Auto-dismiss: low/none più vecchie di 7gg
+        if relevance in ("none", "low"):
+            try:
+                ts = datetime.fromisoformat(fetched_at.replace("Z", "+00:00")).timestamp()
+                if ts < cutoff_7d:
+                    dismiss_ids.append(int(news_id))
+            except Exception:
+                pass
+            continue
+
+        # skill_feedback per high+skill (medium+skill solo se very recent non già in feedback)
+        if relevance == "high" and target == "skill":
+            title = r.get("title", "")[:200]
+            proposed_change = r.get("proposed_change") or r.get("rationale") or ""
+            try:
+                fb = json.dumps({
+                    "kind": "routing_insight",
+                    "title": f"[AI News] {title}",
+                    "detail": proposed_change[:500],
+                    "source": "drain_ai_news",
+                    "payload": {
+                        "ai_news_id": news_id,
+                        "effort": r.get("effort"),
+                        "risk": r.get("risk"),
+                        "affects": r.get("affects", []),
+                    },
+                }).encode()
+                fb_req = urllib.request.Request(
+                    f"{dashboard_url}/api/skill-feedback",
+                    data=fb,
+                    headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                    method="POST",
+                )
+                with urllib.request.urlopen(fb_req, timeout=10):
+                    pass
+                # Aggiorna status news → in_plan
+                status_req = urllib.request.Request(
+                    f"{dashboard_url}/api/ai-news?id={news_id}",
+                    data=json.dumps({"status": "in_plan"}).encode(),
+                    headers={"Content-Type": "application/json"},
+                    method="PATCH",
+                )
+                with urllib.request.urlopen(status_req, timeout=10):
+                    pass
+                feedback_created += 1
+            except Exception:
+                pass
+
+    # Bulk dismiss
+    dismissed = 0
+    if dismiss_ids:
+        try:
+            body = json.dumps({"ids": dismiss_ids, "dismissed": True}).encode()
+            req = urllib.request.Request(
+                f"{dashboard_url}/api/ai-news?id=0",
+                data=body,
+                headers={"Content-Type": "application/json"},
+                method="PATCH",
+            )
+            with urllib.request.urlopen(req, timeout=10):
+                pass
+            dismissed = len(dismiss_ids)
+        except Exception:
+            pass
+
+    result["status"] = "ok"
+    result["detail"] = (
+        f"{feedback_created} high+skill → skill_feedback, {dismissed} low/none dismissed"
+    )
+    return result
+
+
 def promote_acknowledged_feedback(project_path: str) -> dict:
     """Scrive in references/auto-promoted-lessons.md le regole confermate dall'utente.
 
@@ -836,6 +997,8 @@ def main() -> int:
         lambda: validate_skill_drift(project_path),
         lambda: evaluate_lessons(project_path) if _autopilot_enabled(dashboard_url) else {"name": "evaluate_lessons", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: create_lessons_from_failed_tasks(project_path) if _autopilot_enabled(dashboard_url) else {"name": "create_lessons_from_failed_tasks", "status": "skip", "detail": "autopilot disabilitato"},
+        lambda: run_ai_news_intake(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ai_news_intake", "status": "skip", "detail": "autopilot disabilitato"},
+        lambda: auto_process_ai_news(project_path) if _autopilot_enabled(dashboard_url) else {"name": "auto_process_ai_news", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
     ]:
         try:
