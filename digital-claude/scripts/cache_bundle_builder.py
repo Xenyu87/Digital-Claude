@@ -23,8 +23,8 @@ from typing import Counter
 
 
 def find_skill_root() -> Path:
-    """Locate cost-aware-app-coordinator root (SKILL.md location)."""
-    for candidate in [Path.cwd(), Path.cwd().parent, Path("/root/.claude/skills/cost-aware-app-coordinator")]:
+    """Locate digital-claude root (SKILL.md location)."""
+    for candidate in [Path.cwd(), Path.cwd().parent, Path("/root/.claude/skills/digital-claude")]:
         if (candidate / "SKILL.md").exists():
             return candidate
     raise FileNotFoundError("Could not locate SKILL.md. Run from skill root or parent.")
@@ -137,7 +137,7 @@ def main() -> None:
         print(f"  client = Anthropic()")
         print(f"  bundle = open('{args.output}').read()")
         print(f"  response = client.messages.create(")
-        print(f'      model="claude-opus-4-7",')
+        print(f'      model="claude-opus-4-8",')
         print(f'      system=[')
         print(f'          {{"type": "text", "text": bundle, "cache_control": {{"type": "ephemeral"}}}}')
         print(f'      ],')

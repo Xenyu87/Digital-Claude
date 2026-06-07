@@ -272,6 +272,74 @@ def summarize_changes(project_path: str, sub_results: list[dict]) -> str:
     return "\n".join(lines)
 
 
+# ── Skill Exchange check ──────────────────────────────────────────────────────
+
+SKILL_EXCHANGE_PATH = Path("/root/Progetti/SKILL_EXCHANGE.md")
+SKILL_EXCHANGE_MARKER = "[ ] digital-claude"
+
+
+def check_skill_exchange(project_path: str) -> dict:
+    """Legge SKILL_EXCHANGE.md e segnala in improvement-log.md le feature di codex non ancora adottate da claude."""
+    result = {"name": "check_skill_exchange", "status": "skip", "detail": ""}
+
+    if not SKILL_EXCHANGE_PATH.exists():
+        result["detail"] = "SKILL_EXCHANGE.md non trovato"
+        return result
+
+    text = SKILL_EXCHANGE_PATH.read_text(encoding="utf-8")
+
+    # Raccogli i titoli delle feature non ancora adottate da claude (salta code block)
+    unadopted: list[str] = []
+    current_title = ""
+    in_code_block = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+        if line.startswith("### "):
+            current_title = line.lstrip("#").strip()
+        if SKILL_EXCHANGE_MARKER in line and current_title:
+            unadopted.append(current_title)
+
+    if not unadopted:
+        result["detail"] = "nessuna feature codex da valutare"
+        return result
+
+    improvement_log = SKILL_DIR / "references" / "improvement-log.md"
+    if not improvement_log.exists():
+        result["detail"] = f"{len(unadopted)} feature trovate ma improvement-log.md assente"
+        return result
+
+    today = date.today().isoformat()
+    existing = improvement_log.read_text(encoding="utf-8")
+
+    # Filtra solo quelle non già presenti nel log (evita duplicati per le stesse feature)
+    new_entries = []
+    for feat in unadopted:
+        tag = f"<skill-exchange> {feat[:60]}"
+        if tag not in existing:
+            new_entries.append(
+                f"- {today} — skill-exchange — feature codex non adottata: {feat} — valutare adozione in digital-claude {tag}"
+            )
+
+    if not new_entries:
+        result["detail"] = f"{len(unadopted)} feature già segnalate in precedenza"
+        return result
+
+    entries_text = "\n".join(new_entries)
+    if "## Regole" in existing:
+        updated = existing.replace("## Regole", entries_text + "\n## Regole", 1)
+    else:
+        updated = existing + "\n" + entries_text + "\n"
+    improvement_log.write_text(updated, encoding="utf-8")
+
+    result["status"] = "ok"
+    result["detail"] = f"{len(new_entries)} nuove feature codex segnalate in improvement-log.md"
+    return result
+
+
 # ── Auto-curriculum settimanale ───────────────────────────────────────────────
 
 def run_curriculum_weekly(project_path: str) -> dict:
@@ -369,6 +437,168 @@ def run_curriculum_weekly(project_path: str) -> dict:
     return result
 
 
+# ── Helpers dashboard settings ───────────────────────────────────────────────
+
+def _autopilot_enabled(dashboard_url: str) -> bool:
+    """Legge il flag autopilot dalla dashboard. Default False se non raggiungibile."""
+    import urllib.request
+    try:
+        req = urllib.request.Request(f"{dashboard_url}/api/settings?key=autopilot")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+        return str(data.get("value", "false")).lower() == "true"
+    except Exception:
+        return False
+
+
+# ── Lesson evaluator ─────────────────────────────────────────────────────────
+
+def evaluate_lessons(project_path: str) -> dict:
+    """Valuta lezioni pending con Claude Haiku e aggiorna status sulla dashboard.
+
+    Criteri apply: concreta, azionabile, non duplicata di SKILL.md, occorrenze >= 1.
+    Criteri ineffective: vaga, duplicata, rumore da caso isolato.
+    Lezioni 'apply' con occorrenze >= 3 vengono promosse a skill_feedback per inject_lessons.py.
+    """
+    import urllib.request
+    import urllib.error
+
+    result = {"name": "evaluate_lessons", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret:
+        result["detail"] = "ADMIN_SECRET non impostato, skip"
+        return result
+
+    # 1. Fetch pending lessons
+    try:
+        req = urllib.request.Request(f"{dashboard_url}/api/lessons?limit=100")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except Exception as e:
+        result["detail"] = f"fetch lessons fallito: {e}"
+        return result
+
+    rows = data.get("rows", [])
+    pending = [r for r in rows if r.get("status") == "pending"]
+    if not pending:
+        result["detail"] = "nessuna lezione pending"
+        return result
+
+    # Max 20 per run (costo contenuto, Haiku)
+    pending = pending[:20]
+
+    # 2. Contesto SKILL.md (prime 80 righe — regole e gate)
+    skill_md = SKILL_DIR / "SKILL.md"
+    skill_context = ""
+    if skill_md.exists():
+        skill_context = "\n".join(skill_md.read_text(encoding="utf-8").splitlines()[:80])
+
+    # 3. Prompt di valutazione batch
+    lessons_json = json.dumps(
+        [{"id": r["id"], "description": r["description"], "rule": r["rule"],
+          "occurrences": r.get("occurrences", 1), "type": r.get("pattern_type", "")}
+         for r in pending],
+        ensure_ascii=False,
+    )
+
+    prompt = (
+        "Sei un valutatore di lezioni per una skill AI coordinator. "
+        "Valuta ogni lezione e decidi 'apply' o 'ineffective'.\n\n"
+        "APPLY se: regola concreta e azionabile, non già coperta da SKILL.md, "
+        "seguibile in sessioni future, occorrenze >= 2 o critica anche se singola.\n"
+        "INEFFECTIVE se: troppo generica ('fare attenzione'), duplicata di SKILL.md, "
+        "o caso isolato non critico (occorrenze = 1 e regola ovvia).\n\n"
+        f"Contesto SKILL.md (prime 80 righe):\n{skill_context[:1500]}\n\n"
+        f"Lezioni:\n{lessons_json}\n\n"
+        "Rispondi SOLO con JSON valido, nessun testo aggiuntivo:\n"
+        '[{"id":"...","verdict":"apply|ineffective","reason":"una riga"}]'
+    )
+
+    code, out, err = run(
+        ["claude", "--permission-mode", "default", "--model", "haiku", "--print", prompt],
+        cwd=str(SKILL_DIR),
+    )
+    if code != 0:
+        result["status"] = "error"
+        result["detail"] = f"claude CLI errore: {err[:200]}"
+        return result
+
+    # 4. Parse verdetti
+    try:
+        json_match = re.search(r"\[.*\]", out, re.DOTALL)
+        if not json_match:
+            result["status"] = "error"
+            result["detail"] = "output non parsabile come JSON array"
+            return result
+        verdicts = json.loads(json_match.group(0))
+    except json.JSONDecodeError as e:
+        result["status"] = "error"
+        result["detail"] = f"JSON parse error: {e}"
+        return result
+
+    # 5. Applica verdetti
+    applied = ineffective = feedback_created = 0
+    lesson_map = {r["id"]: r for r in pending}
+
+    for v in verdicts:
+        lid = v.get("id")
+        verdict = v.get("verdict")
+        if not lid or verdict not in ("apply", "ineffective"):
+            continue
+
+        new_status = "applied" if verdict == "apply" else "ineffective"
+
+        # PATCH /api/lessons
+        try:
+            body = json.dumps({"id": lid, "status": new_status}).encode()
+            req = urllib.request.Request(
+                f"{dashboard_url}/api/lessons",
+                data=body,
+                headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                method="PATCH",
+            )
+            with urllib.request.urlopen(req, timeout=10):
+                pass
+            if new_status == "applied":
+                applied += 1
+            else:
+                ineffective += 1
+        except Exception:
+            continue
+
+        # Promuovi a skill_feedback se apply + occorrenze >= 3
+        lesson = lesson_map.get(lid)
+        if lesson and new_status == "applied" and lesson.get("occurrences", 0) >= 3:
+            try:
+                fb = json.dumps({
+                    "kind": "promotion_candidate",
+                    "title": lesson.get("rule", "")[:200],
+                    "detail": lesson.get("description", "")[:500],
+                    "source": "drain_evaluate_lessons",
+                    "payload": {"occurrences": lesson["occurrences"], "reason": v.get("reason", "")},
+                }).encode()
+                fb_req = urllib.request.Request(
+                    f"{dashboard_url}/api/skill-feedback",
+                    data=fb,
+                    headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                    method="POST",
+                )
+                with urllib.request.urlopen(fb_req, timeout=10):
+                    pass
+                feedback_created += 1
+            except Exception:
+                pass
+
+    result["status"] = "ok"
+    result["detail"] = (
+        f"{applied} applicate, {ineffective} inefficaci, "
+        f"{feedback_created} promosse a skill_feedback"
+    )
+    return result
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -376,6 +606,8 @@ def main() -> int:
     ap.add_argument("--project", default=os.getcwd())
     ap.add_argument("--curriculum-weekly", action="store_true",
                     help="Esegui auto-curriculum (solo se domenica)")
+    ap.add_argument("--skill-exchange", action="store_true",
+                    help="Controlla SKILL_EXCHANGE.md per feature codex non adottate")
 
     try:
         args = ap.parse_args()
@@ -391,19 +623,28 @@ def main() -> int:
         print(f"drain: working tree modificato, skip.", file=sys.stderr)
         return 0
 
-    # Crea/vai su branch drain
+    # Crea/vai su branch drain (usa suffisso incrementale se esiste già)
     today_str = date.today().isoformat()
     branch_name = f"{DRAIN_BRANCH_PREFIX}/{today_str}"
-    run(["git", "checkout", "-b", branch_name], cwd=project_path)
+    code_br, _, _ = run(["git", "checkout", "-b", branch_name], cwd=project_path)
+    if code_br != 0:
+        # Branch già esistente: aggiungi suffisso orario
+        branch_name = f"{DRAIN_BRANCH_PREFIX}/{today_str}-{datetime.now().strftime('%H%M')}"
+        code_br2, _, err_br = run(["git", "checkout", "-b", branch_name], cwd=project_path)
+        if code_br2 != 0:
+            print(f"drain: impossibile creare branch ({err_br}), abort.", file=sys.stderr)
+            return 0
 
     sub_results: list[dict] = []
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
 
-    # Sub-attivita' 1-4
+    # Sub-attivita' 1-5
     for fn in [
         lambda: complete_tbd_entries(project_path),
         lambda: analyze_tool_errors(project_path),
         lambda: run_compaction(project_path),
         lambda: validate_skill_drift(project_path),
+        lambda: evaluate_lessons(project_path) if _autopilot_enabled(dashboard_url) else {"name": "evaluate_lessons", "status": "skip", "detail": "autopilot disabilitato"},
     ]:
         try:
             r = fn()
@@ -411,6 +652,15 @@ def main() -> int:
             r = {"name": "unknown", "status": "error", "detail": str(e)}
         sub_results.append(r)
         print(f"drain [{r['name']}]: {r['status']} — {r.get('detail', '')}", file=sys.stderr)
+
+    # Skill Exchange check (domenica o flag esplicito)
+    if args.skill_exchange or (args.curriculum_weekly and datetime.now().weekday() == 6):
+        try:
+            r = check_skill_exchange(project_path)
+        except Exception as e:
+            r = {"name": "check_skill_exchange", "status": "error", "detail": str(e)}
+        sub_results.append(r)
+        print(f"drain [skill_exchange]: {r['status']} — {r.get('detail', '')}", file=sys.stderr)
 
     # Auto-curriculum (solo domenica o se flag esplicito)
     if args.curriculum_weekly:

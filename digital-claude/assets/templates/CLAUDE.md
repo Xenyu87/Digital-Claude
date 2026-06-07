@@ -4,7 +4,7 @@ Regole specifiche per Claude Code in questo progetto. Estende `AGENTS.md`.
 
 ## Skill di coordinamento
 
-Usa `cost-aware-app-coordinator` per: nuova app, modifica, audit, bug rescue, miglioramento skill. Default budget: Economico.
+Usa `digital-claude` per: nuova app, modifica, audit, bug rescue, miglioramento skill. Default budget: Economico.
 
 ## Tool da preferire
 

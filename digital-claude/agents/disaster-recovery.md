@@ -54,18 +54,18 @@ pct start <CTID>
 - **Ripristino**:
   ```bash
   mkdir -p /root/.claude/agents
-  cd /root/.claude/skills/cost-aware-app-coordinator
+  cd /root/.claude/skills/digital-claude
   git pull
   cp agents/*.md /root/.claude/agents/
   ```
 
-### Skill cost-aware-app-coordinator
+### Skill digital-claude
 - **Backup**: `Xenyu87/codex-app-coordinator-skill` (repo GitHub)
 - **Ripristino**:
   ```bash
   mkdir -p /root/.claude/skills
   git clone git@github.com:Xenyu87/codex-app-coordinator-skill.git \
-    /root/.claude/skills/cost-aware-app-coordinator
+    /root/.claude/skills/digital-claude
   ```
 
 ### Configurazione Claude Code (`~/.claude/settings.json`)
@@ -77,7 +77,7 @@ Non versionato → ricreare manualmente. Config minima:
       "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "python /root/.claude/skills/cost-aware-app-coordinator/scripts/hooks/coordination_log.py"
+        "command": "python /root/.claude/skills/digital-claude/scripts/hooks/coordination_log.py"
       }]
     }]
   }

@@ -9,7 +9,7 @@ Coordinates software project work while reducing token waste and excessive outpu
 
 ## Language
 
-Default: English. Change only if the user writes in another language.
+Default: **Italiano**. Cambia solo se l'utente scrive in altra lingua. Termini tecnici inglesi vanno bene (commit, branch, endpoint).
 
 ## When NOT to use this skill
 
@@ -72,7 +72,11 @@ Default Economical, automatic escalation on risk gates. User can force. Category
 
 Smallest model capable of closing the task (`haiku` < `sonnet` < `opus` by cost).
 
-**Baseline 2026-05**: Haiku 4.5 · Sonnet 4.6 · Opus 4.7. Escalation rules refer to family, not minor version.
+**Baseline 2026-06**: Haiku 4.5 · Sonnet 4.6 · Opus 4.8. Escalation rules refer to family, not minor version.
+
+**Opus 4.8 API notes**: effort defaults to `high` (no need to set); fast mode via `speed: "fast"`; adaptive thinking via `thinking: {type: "adaptive"}` only (no `budget_tokens`); prompt cache min now **1,024 tokens** (down from 2,048 on 4.7); mid-conversation system messages supported (inject updated instructions mid-loop without restating full prompt).
+
+**Tool-routing & Reasoning Trap** (arxiv 2510.22977): per decisioni di *selezione/uso tool* non attivare `thinking: adaptive` né reasoning esteso — amplifica le tool hallucination. Usare i gate deterministici della delega (tabella sub-task, Gate 1-5) e le regole di routing. Il reasoning esteso resta appropriato per design/debug, mai per "quale tool chiamo adesso".
 
 **Main agent**: chosen by user, not changeable by skill. If risk rises (auth, migrations), suggest changing model with `/model` (press `d` in picker to make it default in session), don't assume.
 
@@ -108,6 +112,9 @@ When in doubt choose the smallest. Single escalation per turn: if Haiku fails, e
 | `ops-runner` | haiku | systemctl/journalctl/cron/ss/df: quick commands, no decisions |
 | `homelab-admin` | sonnet | sysadmin decisions: configure services, LXC, network, Proxmox, port allocation, deploy workflow |
 | `security-hardener` | sonnet | server/LXC security audit: SSH, firewall, ports, permissions — read-only and recommendations |
+| `pentest-agent` | haiku | legge report pentest homelab + può triggerare scan on-demand; usa nmap/nikto/nuclei/shodan su LXC dev+stable+IP pubblico |
+| `code-security-scanner` | sonnet | OWASP-aware app code scan: injection, XSS, auth, secrets, misconfig — HIGH confidence only, pre-deploy |
+| `secrets-scanner` | haiku | hardcoded API keys, tokens, passwords, .env not in .gitignore — fast, pre-commit/pre-deploy |
 | `bypass-guardian` | sonnet | pre-execution review when bypass-permissions is ON and risky/irreversible actions present |
 | `dependency-checker` | haiku | npm/pip audit: obsolete versions, known CVEs, unmaintained packages — read-only |
 | `db-migrator` | sonnet | safe DB migrations with rollback: ALTER/DROP/ADD, SQLite↔Postgres conversions, initial schema |
@@ -116,12 +123,12 @@ When in doubt choose the smallest. Single escalation per turn: if Haiku fails, e
 | `qa-tester` | sonnet | test writing/run, regression testing on bugs |
 | `code-debugger` | sonnet | bug rescue: reproduce → isolate → fix → verify |
 | `doc-writer` | sonnet | AI_*.md / README / handoff after non-trivial modifications |
-| `code-reviewer` | opus | pre-commit review of non-trivial diff (independent judgment) |
+| `code-reviewer` | sonnet | pre-commit review of non-trivial diff (independent judgment); opus solo se risk gate attivo |
 | `mar-reviewer` | opus | cross-module audit + pre-commit review of non-trivial diff (3 reviewers + aggregator) |
 | `architect` | opus | new feature, stack choice, data model design |
 | `scope-verifier` | sonnet | continuous monitor if work aligns with brief (v1.1.0) |
 
-**Flags for dispatched subagent**: subagents accept `--model`, `--permission-mode` for one-off override. Fast mode uses Opus 4.7 by default. Practical examples in `references/specialist-agents.md`.
+**Flags for dispatched subagent**: subagents accept `--model`, `--permission-mode` for one-off override. Fast mode uses Opus 4.8 by default (2.5x faster output, 3x cheaper than previous fast mode). Practical examples in `references/specialist-agents.md`.
 
 **Model pre-selection (v1.1.0)**: before applying the table, extract difficulty from brief with `scripts/difficulty_estimator.py`. Baseline score 0.5, adjust for keywords (hard +0.3, easy -0.15, vague +0.2). See `references/difficulty-routing.md`.
 
@@ -199,6 +206,8 @@ Reference activation map:
 - app deploy → `references/deploy-paths.md` + scripts in `assets/scripts/deploy-*.sh`
 - UI visual testing → `references/visual-first-testing.md`
 - **ops** tasks (systemd, journalctl, ssh, lxc, proxmox, syncthing, cron, firewall, deploy, ports) → `references/homelab-ops.md`
+- **Proxmox hardening / server security checklist** → `references/proxmox-security-checklist.md`
+- **pentest esterno / scan homelab / nuclei / nikto / shodan** → `references/pentest-playbook.md`
 - MCP integrations (GitHub/Linear/Slack/Notion/...) → `references/mcp-integrations.md`
 - maintenance → `references/maintenance-compaction.md`, `references/compression-pass.md`, `references/skill-sync.md`, `references/improvement-log.md`, `references/release-notes.md`
 - coordinator safety → `references/coordinator-safety.md`
@@ -287,6 +296,13 @@ Details: `references/agent-handoff.md`, `references/cross-agent-handoff-template
 ## 11. Definition of Done
 
 Task closed when: behavior handled, files touched limited to task, relevant checks executed (or skip reason declared), final output short. For UI/functional at medium/high risk: user confirms in plain language + evaluates Playwright screenshot.
+
+**Pre-close checklist (run mentally before every "done"):**
+- Side effects applied? (build, restart, reload, migration, config push)
+- Verified working? (curl, systemctl status, browser check — not just "should work")
+- User can actually see/use the change right now without extra steps?
+
+If any answer is no → do it, don't delegate it.
 
 ## 12. Creating a new app
 

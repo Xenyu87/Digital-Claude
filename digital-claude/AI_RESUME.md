@@ -1,7 +1,7 @@
 # AI Resume
 
 Last updated: 2026-05-23T07:05:00
-Project: /root/.codex/skills/cost-aware-app-coordinator
+Project: /root/.codex/skills/digital-claude
 
 ## Current State
 

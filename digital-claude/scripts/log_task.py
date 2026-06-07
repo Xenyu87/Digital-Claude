@@ -59,7 +59,7 @@ def detect_skill_version() -> str:
         return env
     # cerca SKILL.md nella skill installata o nel CWD
     candidates = [
-        Path.home() / ".claude/skills/cost-aware-app-coordinator/SKILL.md",
+        Path.home() / ".claude/skills/digital-claude/SKILL.md",
         Path.cwd() / "SKILL.md",
     ]
     for p in candidates:

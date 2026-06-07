@@ -37,6 +37,14 @@ Ad ogni minor della CLI Claude Code (es. v2.1.x → v2.2.x), rivisita la nota "B
 - `grep -rn "Opus 4\.\|Sonnet 4\.\|Haiku 4\." SKILL.md references/` → nessun modello hardcoded obsoleto
 - prezzi in §18 ancora allineati con la pricing page Anthropic
 
+## Context Editing (API beta — alternativa alla compaction manuale)
+
+Per sessioni agentic lunghe con molte tool call (file read, search, screenshot): invece di compattare manualmente i file AI_*.md, si può abilitare **context editing** a livello API. Rimuove automaticamente tool call e risultati obsoleti dal context window prima di raggiungere il limite.
+
+- **Risparmio**: 84% token su sessioni 100+ turni con tool use; +29% performance agenti
+- **Come attivare**: parametro nella chiamata SDK (vedi docs Anthropic `context-editing`)
+- **Quando preferirla alla compaction manuale**: sessioni pure-API o script automatizzati (drain, schedule); per sessioni Claude Code interattive, la compaction automatica del runtime già gestisce questo
+
 ## Anti-pattern
 
 - compaction durante una feature attiva (rischia di perdere stato)

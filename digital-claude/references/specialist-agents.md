@@ -80,7 +80,7 @@ claude agents run ops-runner --model haiku --permission-mode read-only "tail -50
 claude agents run architect --model opus "disegna lo schema dati per feature X"
 ```
 
-Fast mode (flag `/fast` in sessione) usa Opus 4.7 by default — utile per task brevi dove vuoi output veloce senza rinunciare alla qualità Opus.
+Fast mode (flag `/fast` in sessione) usa Opus 4.8 by default — output 2.5x più veloce e 3x più economico rispetto al fast mode di Opus 4.7. Utile per task brevi dove vuoi velocità senza rinunciare alla qualità Opus.
 
 ## Ecosistemi di agent esterni (plugin marketplace)
 
@@ -93,6 +93,23 @@ Preferisci `mar-reviewer` a `code-reviewer` quando:
 - categoria=modifica AND >5 file AND budget diverso da Economico
 
 `mar-reviewer` spawna 3 sub-review Sonnet (sicurezza/performance/leggibilità) + aggregatore Haiku. Ricetta: `recipes/mar-audit.md`.
+
+## Dynamic Workflows (Opus 4.8 — research preview)
+
+Tier sopra il parallel swarm per task fuori scala normale:
+
+| Condizione | Parallel swarm | Dynamic Workflows |
+|---|---|---|
+| Agenti paralleli | 2–3 | fino a 1.000 (16 concurrent) |
+| Durata | <1 sessione | multi-giorno |
+| File scope | <5 | codebase-wide (1k+) |
+| Context pollution | sì | no (script fuori context window) |
+
+**Come attivare**: suggerisci all'utente di abilitare **auto mode** in Claude Code o impostare effort `xhigh` (ultracode). Non è un parametro API — Claude scrive autonomamente lo script di orchestrazione. Richiede Claude Code v2.1.154+, piano Max/Team/Enterprise.
+
+**Costo**: token significativamente più alti. Conferma sempre con utente. Quirk noti: early stopping, file deletion aggressiva su ops distruttive.
+
+**Non usare per**: task <20 file, task sequenziali, latency-sensitive, quando parallel swarm (2-3 agenti) è sufficiente.
 
 ## Anti-pattern
 

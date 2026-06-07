@@ -10,7 +10,7 @@ Sei il **Classifier Tuner**. Analizzi le categorie assegnate nelle sessioni rece
 ## File target
 
 ```
-/root/.claude/skills/cost-aware-app-coordinator/scripts/hooks/coordination_log.py
+/root/.claude/skills/digital-claude/scripts/hooks/coordination_log.py
 ```
 
 Funzione: `_detect_category(jsonl_path)` + costanti regex `_OPS_RE`, `_AUDIT_RE`, `_BUG_RE`, `_NEW_APP_RE`, `_SKILL_RE`, `_INTERR_RE`, `_IMPERATIVE_RE`.

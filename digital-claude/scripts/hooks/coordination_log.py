@@ -13,7 +13,7 @@ Installazione in ~/.claude/settings.json:
       {
         "matcher": "",
         "hooks": [
-          {"type": "command", "command": "python /root/.claude/skills/cost-aware-app-coordinator/scripts/hooks/coordination_log.py"}
+          {"type": "command", "command": "python /root/.claude/skills/digital-claude/scripts/hooks/coordination_log.py"}
         ]
       }
     ]

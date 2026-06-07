@@ -9,7 +9,7 @@ Best-effort: se la dashboard e' giu', stampa avviso ed esce 0. Mai blocca.
 
 Variabili ambiente:
     SKILL_SOURCE_PATH       default: path installato (LXC dev) o c:/Progetti/Claude-Skill-Coordinator (Windows)
-    SKILL_INSTALLED_PATH    default: ~/.claude/skills/cost-aware-app-coordinator
+    SKILL_INSTALLED_PATH    default: ~/.claude/skills/digital-claude
     SKILL_DASHBOARD_URL     default: http://localhost:3001
 """
 from __future__ import annotations
@@ -34,10 +34,10 @@ def detect_source_path() -> Path:
     # Linux LXC: la copia installata e' anche la canonica.
     # Windows: clone separato in c:/Progetti/Claude-Skill-Coordinator.
     candidates = [
-        Path.home() / ".claude/skills/cost-aware-app-coordinator",
+        Path.home() / ".claude/skills/digital-claude",
         Path("c:/Progetti/Claude-Skill-Coordinator"),
         Path.home() / "Progetti/Claude-Skill-Coordinator",
-        Path.home() / "src/cost-aware-app-coordinator",
+        Path.home() / "src/digital-claude",
     ]
     for p in candidates:
         if (p / "SKILL.md").exists():
@@ -49,7 +49,7 @@ def detect_installed_path() -> Path:
     env = os.environ.get("SKILL_INSTALLED_PATH")
     if env:
         return Path(env).expanduser()
-    return Path.home() / ".claude" / "skills" / "cost-aware-app-coordinator"
+    return Path.home() / ".claude" / "skills" / "digital-claude"
 
 
 VERSION_RE = re.compile(r"^##\s+v(\d+)\.(\d+)\.(\d+)\b", re.MULTILINE)

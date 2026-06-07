@@ -10,13 +10,16 @@ Diario sintetico delle modifiche alla skill. Una riga per modifica.
 
 ## Voci
 
+- 2026-06-06 — loop self-management + Reasoning Trap — SKILL.md §3: regola `thinking: adaptive` vietata su tool-routing (arxiv 2510.22977 Reasoning Trap); tabella DB `skill_feedback` + endpoint REST + inject_lessons.py consuma feedback dalla dashboard; `lessons.status` (pending/applied/ineffective) + PATCH API; azione `sync-skill` in allowlist QuickActions — chiude il loop bidirezionale skill↔dashboard
 - 2026-05-24 — scope-drift-detector (improvement 1) — predictive_scope_creep: estrapola trend file al completamento, accelera avviso se a X% del task hai Y% dei file — previene scope creep silenzioso
 - 2026-05-24 — SKILL.md §1.5 (improvement 2) — auto-scope-checkpoint: debate automatico se brief ha 2+ verbi separati o parole vaghe — costo $0.01 vs rischio $5, pattern emerso da 100+ sessioni
+- 2026-06-05 — audit 3 agenti paralleli (16 gap): fix lingua SKILL→Italiano (era English vs Italiano contraddittorio), code-reviewer sonnet (era opus vs sonnet contraddittorio), task-routing.md modifica+bug rescue aggiunto post-modifica/post-fix obbligatorio, homelab-ops.md protocollo LXC non raggiungibile + rollback deploy
+- 2026-06-04 — SKILL.md §11 + app-creation-blueprint.md — pre-close checklist + regola post-modifica
+- 2026-06-01 — layer sicurezza completo (6 file + 2 agenti): code-security-scanner, secrets-scanner, gate pre-deploy, Opus 4.8
 - 2026-05-24 — scope-drift-detector (improvement 3) — detect_opportunistic_refactor: pattern matching su "cleanup", "refactor", "DRY", "while we're at it" nel log — identifica refactor non richiesto
 - 2026-05-22 — roadmap 7 step — implementata (vedi AI_DECISIONS del progetto digital-claude-dashboard): coordination-sedimentation, MAR-reviewer, debate scope, background-drain, auto-curriculum, pipeline-dsl, external-routing — espansione coordinata skill + dashboard
 - 2026-05-22 — SKILL.md §3 + references/auto-delegation-gate.md + §5 mappa — Auto-delegation gate: introdotto enforcement a 4 gate (routing-hint, tetto Opus >3 file, Explore per grep >2 file, ops-runner per ops+Economico) — dati reali 14gg: drift suggested→used ~50% (45 task sonnet→opus, 19 haiku→opus su 165 task con hint); costo Opus inflazionato senza beneficio qualitativo
-- 2026-05-21 — SKILL.md §3 — aggiunta nota baseline modelli 2026-05 (Haiku 4.5/Sonnet 4.6/Opus 4.7) + /model per switch sessione — allineamento a CLI v2.1.142-145
-- 2026-05-21 — SKILL.md §3 — nota flag subagent dispatched (--model, --permission-mode) + Fast mode Opus 4.7 — da release notes CLI
+- 2026-05-21 — SKILL.md §3 + references/specialist-agents.md — baseline modelli 2026-05 (Haiku 4.5/Sonnet 4.6/Opus 4.7) + /model per switch sessione + flag subagent dispatched (--model, --permission-mode) + Fast mode — da CLI v2.1.142-145
 - 2026-05-21 — references/mcp-integrations.md — MCP Registry come fonte canonica, deprecazione Third-Party list, MCP_TOOL_TIMEOUT >60s fix — da commit modelcontextprotocol/servers
 - 2026-05-24 — Pillar 1: Decision Snapshot (SessionStart priming) — scripts/decision_snapshot_builder.py + inject_lessons.py esteso — SessionStart carica decisioni critiche dal MEMORY.md e le inietta in contesto, eliminando riscoperta di regole gia' decise (~10-20k token/sessione risparmiati)
 - 2026-05-24 — Pillar 2: Bilingual SKILL (Canonical English + Italian fallback) — SKILL.md tradotto in English (~367 righe), SKILL_IT.md backup italiano, self-improvement.md aggiornato — Model training ottimizzato per English, ~2-4% token savings on reference reads; references rimangono italiano (on-demand, non critico)
@@ -85,16 +88,9 @@ Diario sintetico delle modifiche alla skill. Una riga per modifica.
 - 2026-05-02 — references/agent-handoff.md, SKILL.md §10, evaluations/scenarios.md — pattern di comunicazione tra sub-agent dello stesso coordinator (router via coordinator, file `AI_HANDOFF.md`, `SendMessage` per riprendere) — l'utente vuole sub-agent che si scambino info; non è possibile direttamente, lo gestisce il coordinator
 - 2026-05-02 — recipes/ — cartella nuova con README + 5 ricette (landing-page, crud-with-auth, data-dashboard, content-site, bot) — riempie il gap "cookbook per non programmer", ogni ricetta è scheletro modulare non boilerplate fisso
 - 2026-05-02 — references/default-stacks.md — 3 stack di default (web full-stack, sito contenuti, backend long-running) — evita di chiedere "quale framework" ad ogni nuova app
-- 2026-05-02 — references/deploy-paths.md + assets/scripts/deploy-{vercel,netlify,railway}.sh — percorsi e script di deploy concreti — coloma il gap "come metto l'app online"
-- 2026-05-02 — references/visual-first-testing.md — protocollo URL/azione/atteso/segnalazioni codificato — utente non programmer non legge stack trace
-- 2026-05-02 — SKILL.md §12 — aggiunti Step 0 (riconosci ricetta) / Step 2 (deploy presto) / Step 3 (test visivo) — workflow nuova app ora copre l'intero ciclo "idea → online"
-- 2026-05-03 — SKILL.md frontmatter description — esplicito "NON attivare per fix di una stringa, rename locale, modifica isolata di 1 file noto" — utente segnala 40% del budget token per modifica semplice; description troppo "pushy" causava over-trigger
-- 2026-05-03 — SKILL.md §0 — nuova sezione "Fast path" come prima sezione operativa: per modifiche locali (1-3 file noti, scope chiaro, no auth/dati/deploy) → no reference, no Agent, output 2 righe — taglia il costo fisso per task semplici
-- 2026-05-03 — SKILL.md — compattato da 307 a ~190 righe (Working loop denso, Selezione modello tabella spostata in specialist-agents.md, Handoff lista file compattata, Definition of Done 6→3 bullet) — riduce il costo di caricamento ad ogni attivazione
-- 2026-05-03 — references/specialist-agents.md — accolta tabella decisionale model haiku/sonnet/opus precedentemente in SKILL.md — single source of truth
-- 2026-05-03 — evaluations/scenarios.md — scenario 9 per coprire la fast path — è il più importante per il consumo token
-- 2026-05-17 — SKILL.md + homelab-ops.md — ops category + reference — 50% interazioni reali erano ops
-
+- 2026-05-02/03 — SKILL.md §0/§12 + references (deploy, visual-test, specialist-agents, scenarios) — fast path, compattazione, tabella modelli, workflow nuova app completo
+- 2026-05-17 — SKILL.md + homelab-ops.md — ops category + reference
+- 2026-05-31 — skill-exchange — 17 feature Codex valutate, nessuna adottata (preflight-validator, cost-governor, release-manager, intent-checker, sistemista, blueprint_board, cache_bundle_builder, external_skill_intake, telegram_notify, AI_RESUME, validate_agent_catalog, check_handoff_drift, inject_lessons, memory_consolidation, pr_readiness_check, project_copilot, background_sentinel) — in attesa di valutazione futura, nessun conflitto con SKILL.md
 ## Regole
 
 - una riga per cambio

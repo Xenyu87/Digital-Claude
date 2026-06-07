@@ -1,5 +1,5 @@
 [Unit]
-Description=Background drain: manutenzione automatica skill cost-aware-app-coordinator
+Description=Background drain: manutenzione automatica skill digital-claude
 After=network-online.target
 Wants=network-online.target
 
@@ -11,8 +11,8 @@ Environment=PROJECT_PATH=<PROJECT_PATH>
 Environment=SKILL_DASHBOARD_URL=http://localhost:3001
 
 ExecStart=/usr/bin/python3 \
-  /root/.claude/skills/cost-aware-app-coordinator/scripts/drain.py \
-  --project %E{PROJECT_PATH} \
+  /root/.claude/skills/digital-claude/scripts/drain.py \
+  --project ${PROJECT_PATH} \
   --curriculum-weekly
 
 # Log su journal (visibile con: journalctl --user -u drain.service)

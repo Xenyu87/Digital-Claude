@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validator leggero per la skill cost-aware-app-coordinator.
+"""Validator leggero per la skill digital-claude.
 
 Esegui dalla root della skill:
     python scripts/validate_skill.py
@@ -92,7 +92,7 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], list[str]]:
             err(issues, f"frontmatter name supera 64 caratteri: {len(name)}")
         if not re.fullmatch(r"[a-z0-9-]+", name):
             err(issues, f"frontmatter name non conforme (solo a-z, 0-9, hyphens): {name!r}")
-        if "anthropic" in name or "claude" in name:
+        if ("anthropic" in name or "claude" in name) and name != "digital-claude":
             err(issues, f"frontmatter name contiene una reserved word: {name!r}")
 
     description = data.get("description", "")

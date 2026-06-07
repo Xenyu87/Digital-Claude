@@ -30,6 +30,45 @@ def fetch(path: str) -> list[dict]:
         return []
 
 
+def fetch_setting(key: str) -> str | None:
+    try:
+        req = urllib.request.Request(f"{BASE.rstrip('/')}/api/settings?key={key}")
+        with urllib.request.urlopen(req, timeout=2) as r:
+            return json.loads(r.read().decode()).get("value")
+    except Exception:
+        return None
+
+
+def _drain_summary_if_recent() -> str | None:
+    """Legge drain-log.jsonl e ritorna riassunto se c'è stato un run nelle ultime 12h."""
+    try:
+        import re as _re
+        cwd = Path.cwd()
+        slug = _re.sub(r"[^a-zA-Z0-9]", "-", str(cwd)).rstrip("-")
+        log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "drain-log.jsonl"
+        if not log_path.exists():
+            return None
+        lines = log_path.read_text(encoding="utf-8").splitlines()
+        if not lines:
+            return None
+        last = json.loads(lines[-1])
+        ts_str = last.get("ts", "")
+        ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+        age_h = (datetime.now(timezone.utc) - ts).total_seconds() / 3600
+        if age_h > 12:
+            return None
+        sub = last.get("sub_activities", [])
+        parts = []
+        for a in sub:
+            if a.get("status") == "ok" and a.get("detail"):
+                parts.append(f"{a['name']}: {a['detail']}")
+        outcome = last.get("outcome", "?")
+        summary = "; ".join(parts) if parts else "nessuna attività rilevante"
+        return f"🌙 Drain stanotte ({outcome}): {summary}"
+    except Exception:
+        return None
+
+
 def rel(iso: str) -> str:
     try:
         t = datetime.fromisoformat(iso.replace("Z", "+00:00"))
@@ -39,12 +78,42 @@ def rel(iso: str) -> str:
         return ""
 
 
+def _pending_session_block() -> str | None:
+    """Legge AI_HANDOFF.md e ritorna il blocco PROSSIMA SESSIONE se presente."""
+    handoff = Path.cwd() / "AI_HANDOFF.md"
+    if not handoff.exists():
+        return None
+    try:
+        text = handoff.read_text(encoding="utf-8")
+        marker = "## ⏸ PROSSIMA SESSIONE"
+        if marker not in text:
+            return None
+        # Estrai tutto fino al prossimo ## heading
+        start = text.index(marker)
+        rest = text[start:]
+        end = rest.find("\n## ", len(marker))
+        block = rest[:end].strip() if end != -1 else rest.strip()
+        # Prendi solo le righe con i task (###, -, **) — max 20 righe
+        relevant = [l for l in block.splitlines()
+                    if l.startswith(("###", "- ", "**", "⏸"))][:20]
+        if not relevant:
+            return None
+        return "⏸ Sessione sospesa — lavoro in attesa:\n" + "\n".join(relevant)
+    except Exception:
+        return None
+
+
 def main() -> None:
     # Solo in repo git con AI_HANDOFF.md (progetti attivi con la skill)
     if not (Path.cwd() / "AI_HANDOFF.md").exists():
         return
 
     lines: list[str] = []
+
+    # Sessione sospesa: mostra subito il lavoro pendente
+    pending = _pending_session_block()
+    if pending:
+        lines.append(pending)
 
     # Pillar 1: Decision Snapshot (SessionStart priming)
     try:
@@ -82,6 +151,20 @@ def main() -> None:
         for e in errors:
             when = rel(e.get("created_at", ""))
             lines.append(f"  • {e.get('error_type','?')}: {e.get('message','')[:100]} ({when})")
+
+    feedback = fetch("/api/skill-feedback?status=pending&limit=5")
+    if feedback:
+        lines.append("🔁 Feedback dashboard (candidati promozione / routing insight):")
+        kind_labels = {"promotion_candidate": "promozione", "routing_insight": "routing", "efficacy_alert": "efficacia"}
+        for f in feedback:
+            kind_label = kind_labels.get(f.get("kind", ""), f.get("kind", ""))
+            lines.append(f"  • [{kind_label}] {f.get('title', '').strip()}")
+
+    # Drain summary (solo se autopilot abilitato)
+    if str(fetch_setting("autopilot") or "").lower() == "true":
+        drain_summary = _drain_summary_if_recent()
+        if drain_summary:
+            lines.append(drain_summary)
 
     if lines:
         print("\n".join(lines))

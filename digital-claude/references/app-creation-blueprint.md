@@ -40,6 +40,28 @@ Crea solo se hanno contenuto utile da subito; altrimenti rimanda al primo passo 
 - pagine demo, esempi finti
 - file `LICENSE` se l'utente non ha dichiarato licenza
 
+## Regola post-modifica (obbligatoria su app attive)
+
+Dopo OGNI modifica al codice di un'app già in esecuzione:
+
+1. **Build** → `npm run build` (Next.js) o equivalente
+2. **Restart** → `systemctl restart <service>` o `pm2 restart`
+3. **Verifica** → controlla che la pagina/endpoint risponda prima di dire "done"
+
+Non delegare questi step all'utente. Non dichiarare il task completato prima di averli eseguiti.
+
+## Security gate (obbligatorio prima del deploy)
+
+Prima di ogni deploy su stable o su internet, esegui in sequenza:
+
+1. **Secrets scan** → `Agent(subagent_type="secrets-scanner")` — blocca se trova SECRET con livello CRITICO
+2. **Code security scan** → `Agent(subagent_type="code-security-scanner")` — blocca se trova VULN HIGH
+3. **Dependency audit** → `Agent(subagent_type="dependency-checker")` — segnala ma non blocca (a meno di CVE critical)
+
+Se un agente trova blocchi: non procedere col deploy, mostrare i finding all'utente e aspettare fix confermati.
+
+Questi check **non si saltano** anche se l'utente dice "deploy veloce" — al massimo si può rimandare il dependency audit.
+
 ## Conferma a metà
 
 Dopo lo scaffolding, ferma e mostra struttura:

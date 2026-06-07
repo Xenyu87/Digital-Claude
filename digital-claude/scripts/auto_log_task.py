@@ -41,6 +41,7 @@ from pathlib import Path
 # Aggiungi scripts/ al path per importare helper
 sys.path.insert(0, str(Path(__file__).parent))
 from buffering_client import post_with_fallback, flush_queue
+from dashboard_client import discover_dashboard_url
 
 
 CLAUDE_HOME = Path.home() / ".claude"
@@ -352,7 +353,7 @@ def detect_skill_version() -> str:
     if env:
         return env
     candidates = [
-        CLAUDE_HOME / "skills" / "cost-aware-app-coordinator" / "references" / "release-notes.md",
+        CLAUDE_HOME / "skills" / "digital-claude" / "references" / "release-notes.md",
         Path("c:/Progetti/Claude-Skill-Coordinator/references/release-notes.md"),  # legacy clone Windows
     ]
     for p in candidates:
@@ -469,6 +470,7 @@ def main() -> int:
         post_lessons(lessons, task_id, dry_run=False)
 
     # Invia errore se sessione parziale (non bloccante)
+    base = discover_dashboard_url() or "http://localhost:3001"
     post_errors(meta, task_id, base, dry_run=False)
 
     return 0

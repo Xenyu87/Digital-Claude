@@ -48,10 +48,10 @@ def discover_dashboard_url() -> Optional[str]:
 def _test_endpoint(url: str, timeout: int = 2) -> bool:
     """Testa se un endpoint della dashboard è raggiungibile."""
     try:
-        test_url = url.rstrip("/") + "/api/health"
-        req = urllib.request.Request(test_url, method="HEAD")
+        test_url = url.rstrip("/") + "/"  # Testa la home page
+        req = urllib.request.Request(test_url, method="GET")
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.status in (200, 404)  # 404 OK se l'endpoint non esiste, almeno il server risposte
+            return resp.status == 200
     except Exception:
         return False
 

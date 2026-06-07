@@ -109,7 +109,7 @@ class ExternalRouter:
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.api_key}",
-                "HTTP-Referer": "https://github.com/cost-aware-app-coordinator",
+                "HTTP-Referer": "https://github.com/digital-claude",
             },
             method="POST",
         )

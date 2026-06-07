@@ -13,6 +13,7 @@ Budget default: Bilanciato.
 Trigger: "aggiungi", "cambia", "refactor", "sposta", su repo esistente.
 Routing: leggi `AI_HANDOFF.md` o `AI_CONTEXT.md`, identifica file impattati.
 Budget default: Economico.
+**Post-modifica obbligatorio** (vedi `app-creation-blueprint.md` §Regola post-modifica): build + restart + verifica che l'utente possa usare il risultato adesso. Non dichiarare done prima.
 
 ### audit
 Trigger: "rivedi", "fai una review", "controlla sicurezza", "audit".
@@ -23,6 +24,7 @@ Budget default: Bilanciato. Se è auth/dati/segreti → Massima sicurezza.
 Trigger: "non funziona", "errore", "crash", "test fallisce".
 Routing: riproduci con minime letture, isola, proponi fix prima di applicarlo se la causa non è ovvia.
 Budget default: Economico, con escalation se la superficie è ampia.
+**Verifica post-fix obbligatoria**: ri-esegui il comando/test che mostrava l'errore e includi l'output nel Done. Non dichiarare risolto senza output di conferma.
 
 ### miglioramento skill
 Trigger: "modifica la skill", "aggiungi al SKILL.md", "aggiorna le regole".

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sync della skill dalla sorgente alla copia installata in `~/.claude/skills/cost-aware-app-coordinator`.
+"""Sync della skill dalla sorgente alla copia installata in `~/.claude/skills/digital-claude`.
 
 Esegui dalla root della skill sorgente:
     python scripts/sync_skill.py            # sync verso il default
@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DEST = Path.home() / ".claude" / "skills" / "cost-aware-app-coordinator"
+DEFAULT_DEST = Path.home() / ".claude" / "skills" / "digital-claude"
 
 ITEMS = [
     "SKILL.md",

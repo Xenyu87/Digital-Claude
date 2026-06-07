@@ -51,7 +51,7 @@ def is_skill_workspace(path: Path) -> bool:
         resolved == ROOT.resolve()
         or resolved == REPO.resolve()
         or resolved.name == "Codex-app-coordinator-skill"
-        or (resolved / "cost-aware-app-coordinator" / "SKILL.md").exists()
+        or (resolved / "digital-claude" / "SKILL.md").exists()
     )
 
 

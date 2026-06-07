@@ -72,7 +72,7 @@ Default Economico, escalation automatica per gate di rischio. L'utente può forz
 
 Modello più piccolo capace di chiudere il task (`haiku` < `sonnet` < `opus` per costo).
 
-**Baseline 2026-05**: Haiku 4.5 · Sonnet 4.6 · Opus 4.7. Le regole di escalation si riferiscono alla famiglia, non alla minor version.
+**Baseline 2026-06**: Haiku 4.5 · Sonnet 4.6 · Opus 4.8. Le regole di escalation si riferiscono alla famiglia, non alla minor version.
 
 **Main agent**: scelto dall'utente, non cambiabile dalla skill. Se il rischio sale (auth, migrazioni), suggerisci di cambiare modello con `/model` (tasto `d` nel picker per renderlo default nella sessione), non assumere.
 
@@ -121,7 +121,7 @@ In dubbio scegli il più piccolo. Una sola escalation per turno: se Haiku fallis
 | `architect` | opus | nuova feature, scelta stack, design data model |
 | `scope-verifier` | sonnet | monitor continuo se lavoro è allineato al brief (v1.1.0) |
 
-**Flag per subagent dispatched**: i subagent accettano `--model`, `--permission-mode` per override puntuale. Fast mode usa Opus 4.7 by default. Esempi pratici in `references/specialist-agents.md`.
+**Flag per subagent dispatched**: i subagent accettano `--model`, `--permission-mode` per override puntuale. Fast mode usa Opus 4.8 by default (output 2.5x più veloce, 3x più economico del fast mode precedente). Esempi pratici in `references/specialist-agents.md`.
 
 **Pre-selezione modello (v1.1.0)**: prima di applicare la tabella, estrai difficoltà dal brief con `scripts/difficulty_estimator.py`. Baseline score 0.5, aggiusta per keyword (hard +0.3, easy -0.15, vague +0.2). Vedi `references/difficulty-routing.md`.
 

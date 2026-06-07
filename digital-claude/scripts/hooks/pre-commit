@@ -1,5 +1,5 @@
 #!/bin/sh
-# Pre-commit hook per il repo cost-aware-app-coordinator.
+# Pre-commit hook per il repo digital-claude.
 # Lancia validate_skill + pytest. Blocca il commit se uno fallisce.
 #
 # Installato con: python scripts/install_hooks.py

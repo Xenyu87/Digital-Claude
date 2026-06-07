@@ -4,12 +4,12 @@ Procedura per modificare questa skill o sincronizzarla tra installazione globale
 
 ## Posizioni
 
-- Globale (utente): `~/.claude/skills/cost-aware-app-coordinator/`
-- Progetto: `.claude/skills/cost-aware-app-coordinator/`
+- Globale (utente): `~/.claude/skills/digital-claude/`
+- Progetto: `.claude/skills/digital-claude/`
 
-Su Windows l'equivalente di `~` è `%USERPROFILE%`. Il path tipico è `C:\Users\<utente>\.claude\skills\cost-aware-app-coordinator\`.
+Su Windows l'equivalente di `~` è `%USERPROFILE%`. Il path tipico è `C:\Users\<utente>\.claude\skills\digital-claude\`.
 
-Su Linux/LXC `dev` (Debian) il path reale è `/root/.claude/skills/cost-aware-app-coordinator/`, accessibile anche via symlink `/root/Progetti/_claude-skills/cost-aware-app-coordinator/`.
+Su Linux/LXC `dev` (Debian) il path reale è `/root/.claude/skills/digital-claude/`, accessibile anche via symlink `/root/Progetti/_claude-skills/digital-claude/`.
 
 ## Quando aggiornare globale vs progetto
 
@@ -38,7 +38,7 @@ Su Linux/LXC `dev` (Debian) il path reale è `/root/.claude/skills/cost-aware-ap
 Quando una modifica fatta in versione globale deve arrivare al progetto (o viceversa):
 
 1. Identifica la versione canonica (di solito la globale).
-2. Sync automatico: `python scripts/sync_skill.py` copia `SKILL.md`, `references/`, `assets/`, `scripts/` verso `~/.claude/skills/cost-aware-app-coordinator/`. Usa `--dry-run` per anteprima e `--dest <path>` per destinazioni custom.
+2. Sync automatico: `python scripts/sync_skill.py` copia `SKILL.md`, `references/`, `assets/`, `scripts/` verso `~/.claude/skills/digital-claude/`. Usa `--dry-run` per anteprima e `--dest <path>` per destinazioni custom.
 3. Esegui validator in destinazione.
 4. Aggiorna `improvement-log.md` solo nella canonica.
 

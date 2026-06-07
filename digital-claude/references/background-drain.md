@@ -12,6 +12,8 @@ Gira ogni notte alle 03:00 locali (systemd timer). Su ogni run:
 4. **validate_skill_drift** — esegue `validate_skill.py` e `check_handoff_drift.py`, allega output al PR.
 5. **summarize_changes** — genera body PR markdown con riepilogo delle modifiche.
 
+6. **security_audit** *(solo domenica)* — lancia `security-hardener` sul server: porte aperte, aggiornamenti sicurezza pendenti, fail2ban status, certificati in scadenza (<30 giorni), LXC unprivileged check. Output append in `HOMELAB_PENDING.md` se trova anomalie. Non blocca il drain se fallisce.
+
 Alla fine: commit + push su branch `drain/YYYY-MM-DD` + apertura PR con label `drain`.
 
 ## Garanzie di safety

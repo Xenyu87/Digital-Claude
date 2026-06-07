@@ -25,7 +25,7 @@ def session_confidence(raw_text: str, commands: collections.Counter[str], cwd: s
         return "alta", "skill body o regole specifiche viste nella sessione"
     if any(name in commands for name in ["AI_CONTEXT.md", "AI_HANDOFF.md", "AI_STRUCTURE.md"]):
         return "media", "file contesto progetto usati"
-    if "cost-aware-app-coordinator" in raw_text:
+    if "digital-claude" in raw_text:
         return "bassa", "solo nome/metadata skill rilevati"
     if cwd:
         return "non rilevata", "nessun marker skill"

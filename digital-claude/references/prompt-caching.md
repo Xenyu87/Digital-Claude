@@ -2,6 +2,8 @@
 
 Reduces cost of repeated references by **75% first read, 90% subsequent reads**. For 3+ sessions/week with Caching = **-27% total cost**.
 
+**Opus 4.8**: cache min sceso a **1,024 tokens** (era 2,048 su 4.7). I bundle più corti ora creano cache hit senza modifiche al codice. Supporta anche **mid-conversation system messages** (`role: "system"` dopo un turno utente) per iniettare istruzioni aggiornate a metà loop senza riscrivere il system prompt intero — preserva i cache hit sui turni precedenti.
+
 ## How it works
 
 Anthropic API's Prompt Caching caches large text blocks (5-min TTL). First read pays 100% tokens. Subsequent reads pay 10% (90% discount).
@@ -20,7 +22,7 @@ client = Anthropic()
 skill = open("SKILL.md").read()
 
 response = client.messages.create(
-    model="claude-opus-4-7",
+    model="claude-opus-4-8",
     system=[{"type": "text", "text": skill, 
              "cache_control": {"type": "ephemeral"}}],
     messages=[{"role": "user", "content": user_prompt}]
@@ -79,3 +81,16 @@ if response.usage.cache_read_input_tokens > 100000:
 ```
 
 See also: `references/external-routing.md` (OpenRouter integration if no API key yet).
+
+## Instant Compaction (background threading)
+
+Pattern da Anthropic Cookbook per sessioni lunghe: invece di aspettare che il context sia pieno (→ 40s di attesa), un background thread costruisce il summary in anticipo → compaction **zero-wait**.
+
+Combinato con prompt caching: **80% di risparmio sul costo delle chiamate di compaction** (il prefisso della conversazione viene cachato, solo i nuovi turni pagano full price).
+
+Threshold consigliati:
+- Avvia background summary a **70-80%** del context limit
+- Aggiorna ogni **2.000-5.000 token** nuovi
+- Preserva sempre: path esatti, messaggi di errore verbatim, correzioni utente
+
+Rilevante per il drain notturno (`references/background-drain.md`) e sessioni API lunghe. Per Claude Code interattivo, il runtime gestisce automaticamente.

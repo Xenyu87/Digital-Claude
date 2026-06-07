@@ -1,6 +1,6 @@
 [Unit]
-Description=Background drain: manutenzione automatica notturna skill cost-aware-app-coordinator
-Documentation=https://github.com/xenyu87/cost-aware-app-coordinator
+Description=Background drain: manutenzione automatica notturna skill digital-claude
+Documentation=https://github.com/xenyu87/digital-claude
 
 [Timer]
 # Gira ogni notte alle 03:00 ora locale

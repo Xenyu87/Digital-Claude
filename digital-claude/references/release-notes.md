@@ -16,6 +16,15 @@ Note di rilascio sul comportamento osservabile della skill. Pensate per chi la u
 - ...
 ```
 
+## v1.2.0 — 2026-06-06
+### Aggiunto
+- **Reasoning Trap (§3)**: vietato `thinking: adaptive` e reasoning esteso per decisioni tool-routing. Fonte: arxiv 2510.22977. Riduce tool hallucination in task agentici.
+- **Feedback dashboard→skill**: `inject_lessons.py` legge `GET /api/skill-feedback?status=pending` e inietta candidati di promozione e routing insight come `<system-reminder>` a SessionStart.
+- **Efficacy tracking lezioni**: colonna `lessons.status` (pending/applied/ineffective), endpoint `PATCH /api/lessons`, controlli UI per-lezione.
+- **Azione sync-skill**: aggiunta all'allowlist QuickActions, eseguita via `/api/actions/run` (no shell injection). Bottone visibile in `/skill-version` quando c'è drift.
+### Note di migrazione
+- Applicare lo snippet SQL in `supabase/schema.sql` (sezione "Migration: lesson efficacy + skill_feedback") sul DB Neon prima di usare le nuove feature.
+
 ## v1.1.0 — 2026-05-22
 ### Aggiunto
 - **Coordination sedimentation**: log JSONL strutturato per ogni task chiuso (`scripts/log_coordination.py`, hook `scripts/hooks/coordination_log.py`). Schema: ts, task_id, project, category, tokens, cost_usd, outcome, lesson.
@@ -184,16 +193,6 @@ Note di rilascio sul comportamento osservabile della skill. Pensate per chi la u
 - "Specialisti" con criteri "quando NON attivare". `maintenance-compaction.md` non duplica più soglie di `compression-pass.md`.
 - validator richiede "Working loop" e "Definition of Done".
 
-## Quando incrementare la versione
 
-- patch (x.y.Z): correzioni che non cambiano il comportamento atteso
-- minor (x.Y.z): aggiunta sezione, reference o ruolo
-- major (X.y.z): cambio default (es. budget mode), rimozione di sezioni, rinomina file
-
-## Regole
-
-- una voce per release, non una per modifica
-- registra solo ciò che un utente nota usando la skill
-- niente note interne (refactoring puro), che restano in `improvement-log.md`
-t e s t  
- 
+---
+**Versionamento**: patch = fix no-behavior-change · minor = sezione/reference/ruolo · major = cambio default/rimozione. Una voce per release; solo ciò che un utente nota; refactoring in `improvement-log.md`.

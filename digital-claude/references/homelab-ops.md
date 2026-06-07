@@ -10,12 +10,10 @@ Trigger speculari nella heuristic `detect_category` (vedi `scripts/auto_log_task
 
 ## Mappa rapida del homelab
 
-- **Host Proxmox**: hypervisor
-- **LXC `dev`** `192.168.1.148` — workstation remota, dove gira Claude Code/Codex, dashboard `dev`, Syncthing GUI su porta **3003** (non 8384), porta sync TCP **22000**
-- **LXC `stable`** `192.168.1.147` — produzione (dashboard pubblica)
-- **LXC `digital-claude-dashboard`** — dashboard di produzione Claude
-
-Per dettagli completi → `/root/Progetti/homelab/HOMELAB.md` (indice topico in cima; **non leggerlo per intero**, usa `grep -n '^## '` + `Read offset/limit`).
+- **Proxmox host** `.136` (VMID: dev=113, stable=108, security=114) — fallback via `pct exec <VMID>`
+- **LXC `dev`** `.148` — Claude Code/Codex, Syncthing GUI **3003**, sync TCP **22000**
+- **LXC `stable`** `.147` — produzione app
+- Per topologia completa → `HOMELAB.md` (usa `grep -n '^## '` + `Read offset/limit`)
 
 ## Servizi systemd noti
 
@@ -88,21 +86,7 @@ Dimenticare `daemon-reload` è errore comune → il servizio riparte con la vecc
 
 ### "Non si apre 8384 dopo cambio porta Syncthing"
 
-Cambio porta GUI Syncthing si fa nel file `~/.config/syncthing/config.xml`, tag `<gui><address>`. Dopo `systemctl restart syncthing`. Porta sync TCP 22000 resta invariata.
-
-### "Process non parte ma porta è in LISTENING"
-
-`netstat`/`ss` mostra il **PID che ha aperto la porta**, non sempre il processo che ti aspetti. Su Windows spesso `Code` (VS Code) forwarda porte e appare come listener.
-```bash
-ss -tlnp | grep :<porta>             # Linux
-# PowerShell:
-netstat -ano | findstr :<porta>
-Get-Process -Id <pid>
-```
-
-### "Hook Stop di Claude Code"
-
-Hook in `/root/.claude/settings.json` → array `hooks.Stop`. Comandi shell eseguiti su Stop. Tre script attivi: `propose_lesson.py`, `check_version.py`, `auto_log_task.py`. Errori negli hook non bloccano Claude Code ma logghano su stderr.
+Cambio porta GUI: `~/.config/syncthing/config.xml`, tag `<gui><address>`. Poi `systemctl restart syncthing`. Porta sync TCP 22000 invariata.
 
 ## Anti-pattern noti
 
@@ -110,6 +94,23 @@ Hook in `/root/.claude/settings.json` → array `hooks.Stop`. Comandi shell eseg
 - **Non killare `tokio-runtime-w`** manualmente: è il worker Next.js, ucciso da systemd su restart.
 - **Non rinominare LXC dev senza aggiornare** `~/.ssh/config` (alias `dev`).
 - **Non puntare a porta 8384** per accedere a Syncthing del LXC: oggi è **3003** (vedi `HOMELAB.md` § Syncthing).
+
+## LXC non raggiungibile — protocollo
+
+Se SSH su un LXC non risponde (timeout, connection refused):
+1. **Non ritentare SSH in loop** — fermarsi dopo 2 tentativi
+2. **Fallback via Proxmox host**: `ssh root@192.168.1.136 "pct exec <VMID> -- <comando>"` oppure `qm guest exec <VMID> -- bash -c '<comando>'` per VM
+3. **VMID noti**: dev=113, stable=108, security=114, adguard=101, uptimekuma=102
+4. Se anche il Proxmox host non è raggiungibile → segnala all'utente e suggerisci console grafica Proxmox
+
+## Deploy homelab dev→stable — rollback
+
+Se il deploy su stable fallisce dopo che i file sono già stati copiati:
+1. Ferma il servizio: `systemctl stop <service>`
+2. Ripristina dal backup pre-deploy (se esistente in `/opt/<app>/backup/`)
+3. Se non c'è backup: `git checkout HEAD` nella directory dell'app su stable
+4. Riavvia: `systemctl start <service>` e verifica con `curl -s http://localhost:<porta>`
+5. Segnala all'utente con stato preciso
 
 ## Riferimenti
 

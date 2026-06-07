@@ -2,6 +2,16 @@
 
 Azioni che richiedono conferma esplicita prima di procedere.
 
+## Gate sicurezza pre-deploy (sempre)
+
+Prima di qualsiasi deploy su stable, server pubblico o internet:
+
+- **secrets-scanner** deve aver girato e restituito ✅ (nessun segreto CRITICO)
+- **code-security-scanner** deve aver girato e restituito ✅ o solo finding MEDIUM/LOW
+
+Se questi check non sono stati eseguiti nella sessione corrente → eseguili adesso, non dopo.
+Non delegare la responsabilità all'utente ("poi lo fai tu") — il check è parte del task.
+
 ## Gate hard (sempre fermarsi)
 
 Non procedere senza conferma in chat:
