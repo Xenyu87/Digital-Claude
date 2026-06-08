@@ -176,10 +176,11 @@ Four gates that main agent must respect before executing inline. Bypassable only
 
 Only these files if they exist, in order:
 
-1. `AI_RESUME.md` — cross-project session memory entry point: what was in progress, last file touched, next step. Read first, even on seemingly small tasks. See `references/session-memory.md`.
-2. `AI_HANDOFF.md` (if taking over from another agent)
-3. `AI_MISTAKE_REGISTER.md` — per-project mistake registry: pattern ricorrenti specifici del codebase, con peso e decadimento. Leggere se il task tocca le aree elencate (pricing, SQL, tipi TypeScript, ecc.).
-4. `AI_CONTEXT.md`
+1. `AI_ANCHORS.md` — fatti immutabili del progetto (stack, porte, auth, prezzi, deploy). Caricato **sempre per primo**: zero esplorazione necessaria per questi fatti.
+2. `AI_RESUME.md` — cross-project session memory entry point: what was in progress, last file touched, next step. See `references/session-memory.md`.
+3. `AI_HANDOFF.md` (if taking over from another agent)
+4. `AI_MISTAKE_REGISTER.md` — per-project mistake registry: pattern ricorrenti specifici del codebase, con peso e decadimento. Leggere se il task tocca le aree elencate.
+5. `AI_CONTEXT.md`
 4. `AGENTS.md`
 5. `CLAUDE.md`
 6. `AI_STRUCTURE.md` (only if task touches modules or contracts)
@@ -298,6 +299,8 @@ When briefing `code-implementer` or `code-debugger` for functions >20 lines, SQL
 - Tipi: confronti cross-layer usano stesso tipo (cast esplicito se necessario)?
 - SQL: ogni subquery correlata su tutti i campi di raggruppamento, mai interpolazione diretta di input utente
 - Leggere `AI_MISTAKE_REGISTER.md` se il task tocca aree a rischio noto nel progetto
+
+**Briefing compatto per subagenti**: usare `AI_SCORE.md` (skill dir) come contesto comportamentale invece di incollare SKILL.md intero. Risparmio ~2500 token per delega.
 
 ## 10. Handoff between agents
 

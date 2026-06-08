@@ -354,6 +354,125 @@ def run_compaction(project_path: str) -> dict:
     return result
 
 
+def sediment_handoff(project_path: str) -> dict:
+    """Compatta AI_HANDOFF.md in 3 strati temporali per impedirne la crescita illimitata.
+
+    Stratum_0 (ultimi 2gg): full · Stratum_1 (3-30gg): header + prime 3 righe
+    Stratum_2 (>30gg): solo header. Vecchie sezioni restano nel git history.
+    """
+    result = {"name": "sediment_handoff", "status": "skip", "detail": ""}
+    handoff = Path(project_path) / "AI_HANDOFF.md"
+    if not handoff.exists():
+        result["detail"] = "AI_HANDOFF.md non trovato"
+        return result
+
+    text = handoff.read_text(encoding="utf-8")
+    total_lines = len(text.splitlines())
+    if total_lines < 80:
+        result["detail"] = f"{total_lines} righe — sotto soglia (80), skip"
+        return result
+
+    # Splitta per sezioni con header ## DATE
+    section_re = re.compile(r"^(##\s+\d{4}-\d{2}-\d{2}.*)", re.MULTILINE)
+    parts = section_re.split(text)
+    # parts = [preamble, header1, body1, header2, body2, ...]
+    preamble = parts[0] if parts else ""
+    sections: list[tuple[str, str]] = []  # (header, body)
+    for i in range(1, len(parts) - 1, 2):
+        sections.append((parts[i], parts[i + 1] if i + 1 < len(parts) else ""))
+
+    if len(sections) <= 2:
+        result["detail"] = f"{len(sections)} sezioni — non abbastanza per sedimentare"
+        return result
+
+    today = date.today()
+    new_parts: list[str] = [preamble]
+    compressed = 0
+
+    for header, body in sections:
+        # Estrai data dall'header (formato: ## 2026-06-08 ...)
+        m = re.search(r"(\d{4}-\d{2}-\d{2})", header)
+        if not m:
+            new_parts.extend([header, body])
+            continue
+        try:
+            section_date = date.fromisoformat(m.group(1))
+        except ValueError:
+            new_parts.extend([header, body])
+            continue
+        age_days = (today - section_date).days
+
+        if age_days <= 2:
+            # Stratum 0: full retention
+            new_parts.extend([header, body])
+        elif age_days <= 30:
+            # Stratum 1: header + prime 3 righe non vuote del body
+            body_lines = [l for l in body.splitlines() if l.strip()][:3]
+            truncated_body = "\n" + "\n".join(body_lines) + "\n[...sedimentato — dettaglio in git history]\n\n"
+            new_parts.extend([header, truncated_body])
+            compressed += 1
+        else:
+            # Stratum 2: solo header
+            new_parts.extend([header, "\n[sedimentato]\n\n"])
+            compressed += 1
+
+    if compressed == 0:
+        result["detail"] = "nessuna sezione da sedimentare"
+        return result
+
+    handoff.write_text("".join(new_parts), encoding="utf-8")
+    new_lines = len(handoff.read_text(encoding="utf-8").splitlines())
+    result["status"] = "ok"
+    result["detail"] = (
+        f"{compressed} sezioni sedimentate · {total_lines}→{new_lines} righe"
+    )
+    return result
+
+
+def regenerate_score(project_path: str) -> dict:
+    """Controlla se SKILL.md è cambiato dall'ultima generazione di AI_SCORE.md.
+
+    Se il checksum è cambiato, aggiunge un avviso in AI_SCORE.md e aggiorna
+    il checksum salvato. La rigenerazione manuale resta a carico dell'utente
+    (troppo soggettiva per affidarla a Haiku senza revisione).
+    """
+    import hashlib
+    result = {"name": "regenerate_score", "status": "skip", "detail": ""}
+
+    skill_md = SKILL_DIR / "SKILL.md"
+    score_md = SKILL_DIR / "AI_SCORE.md"
+    checksum_file = SKILL_DIR / "scripts" / ".score_checksum"
+
+    if not skill_md.exists():
+        result["detail"] = "SKILL.md non trovato"
+        return result
+
+    current_hash = hashlib.sha256(skill_md.read_bytes()).hexdigest()[:16]
+    stored_hash = checksum_file.read_text().strip() if checksum_file.exists() else ""
+
+    if current_hash == stored_hash:
+        result["detail"] = f"checksum invariato ({current_hash[:8]}) — score in sync"
+        return result
+
+    # Checksum cambiato: aggiorna file e aggiungi avviso se score esiste
+    checksum_file.write_text(current_hash)
+    if score_md.exists():
+        score_text = score_md.read_text(encoding="utf-8")
+        warning = f"<!-- SKILL.md aggiornato ({current_hash[:8]}) — rivedere score in prossima sessione -->\n"
+        # Sostituisci avviso precedente se presente, altrimenti aggiungi in cima
+        if "<!-- SKILL.md aggiornato" in score_text:
+            score_text = re.sub(r"<!-- SKILL\.md aggiornato.*?-->\n", warning, score_text)
+        else:
+            score_text = warning + score_text
+        score_md.write_text(score_text, encoding="utf-8")
+
+    result["status"] = "ok"
+    result["detail"] = f"checksum aggiornato {stored_hash[:8] or 'n/a'}→{current_hash[:8]}" + (
+        " · avviso aggiunto in AI_SCORE.md" if score_md.exists() else " · AI_SCORE.md non trovato"
+    )
+    return result
+
+
 def validate_skill_drift(project_path: str) -> dict:
     """Esegue validate_skill.py (sulla skill) e check_handoff_drift.py (sul progetto)."""
     result = {"name": "validate_skill_drift", "status": "skip", "detail": ""}
@@ -1228,6 +1347,8 @@ def main() -> int:
         lambda: complete_tbd_entries(project_path),
         lambda: analyze_tool_errors(project_path),
         lambda: decay_mistake_register(project_path),
+        lambda: sediment_handoff(project_path),
+        lambda: regenerate_score(project_path),
         lambda: run_compaction(project_path),
         lambda: validate_skill_drift(project_path),
         lambda: evaluate_lessons(project_path) if _autopilot_enabled(dashboard_url) else {"name": "evaluate_lessons", "status": "skip", "detail": "autopilot disabilitato"},
