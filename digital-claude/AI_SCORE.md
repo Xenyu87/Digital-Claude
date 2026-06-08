@@ -28,6 +28,7 @@ G2: edit >3file → code-implementer OBBLIGATORIO · main non tocca file prod
 G3: grep/find >2file → Explore OBBLIGATORIO · no bash grep inline
 G4: ops+eco → ops-runner OBBLIGATORIO · no bash inline se output richiede parsing
 G5: bypass-mode + azione rischiosa(rm/force-push/DROP/deploy) → bypass-guardian PRIMA
+G6: prima di git push → leggi .git_remotes.json · mostra PUSH→<url> · aspetta conferma · NON bypassabile
 
 ## MODEL
 haiku: explore · ops · log · qa deterministici

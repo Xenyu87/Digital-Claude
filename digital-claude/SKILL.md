@@ -187,11 +187,11 @@ Only these files if they exist, in order:
 3. `AI_HANDOFF.md` (if taking over from another agent)
 4. `AI_MISTAKE_REGISTER.md` — per-project mistake registry: pattern ricorrenti specifici del codebase, con peso e decadimento. Leggere se il task tocca le aree elencate.
 5. `AI_CONTEXT.md`
-4. `AGENTS.md`
-5. `CLAUDE.md`
-6. `AI_STRUCTURE.md` (only if task touches modules or contracts)
-7. `AI_DECISIONS.md` (only if current decision crosses past one)
-8. `README.md` (only if previous ones insufficient)
+6. `AGENTS.md`
+7. `CLAUDE.md`
+8. `AI_STRUCTURE.md` (only if task touches modules or contracts)
+9. `AI_DECISIONS.md` (only if current decision crosses past one)
+10. `README.md` (only if previous ones insufficient)
 
 Don't read entire repo: preventive reading burns context on unused files.
 

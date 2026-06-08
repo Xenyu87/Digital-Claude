@@ -983,7 +983,8 @@ def run_ideation(project_path: str) -> dict:
         pass
     dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
     env = {**os.environ, "DASHBOARD_API": dashboard_url}
-    code, out, err = run(["node", str(script)], cwd=project_path, capture=True, env=env)
+    r = subprocess.run(["node", str(script)], cwd=project_path, capture_output=True, text=True, timeout=120, env=env)
+    code, out, err = r.returncode, r.stdout.strip(), r.stderr.strip()
     result["status"] = "ok" if code == 0 else "error"
     result["detail"] = (out + " " + err).strip()[:200] or f"exit {code}"
     return result
@@ -1244,7 +1245,7 @@ def court_review_lesson_promotion(project_path: str) -> dict:
             verdict = "approve" if proc.returncode == 0 else "reject"
         except Exception as e:
             verdict = "reject"
-            log(f"court error per lezione {lesson.get('id')}: {e}")
+            print(f"drain [court] error lezione {lesson.get('id')}: {e}", file=sys.stderr)
 
         if verdict == "approve":
             approved.append(lesson)
@@ -1268,7 +1269,7 @@ def court_review_lesson_promotion(project_path: str) -> dict:
                     with open(skill_md, "a", encoding="utf-8") as f:
                         f.write(f"\n\n## 14. Auto-curriculum (promozioni automatiche)\n{entry}\n")
             except Exception as e:
-                log(f"scrittura SKILL.md fallita: {e}")
+                print(f"drain [court] scrittura SKILL.md fallita: {e}", file=sys.stderr)
                 continue
 
             # Marca promoted_to nel DB
@@ -1279,13 +1280,13 @@ def court_review_lesson_promotion(project_path: str) -> dict:
                         "status": "applied",
                         "promoted_to": f"SKILL.md §14 (auto, {today})"
                     }).encode()
-                    req = urllib.request.Request(
+                    req = _ur.Request(
                         f"{dashboard_url}/api/lessons",
                         data=body,
                         headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
                         method="PATCH",
                     )
-                    with urllib.request.urlopen(req, timeout=10):
+                    with _ur.urlopen(req, timeout=10):
                         pass
                 except Exception:
                     pass
@@ -1379,7 +1380,7 @@ def main() -> int:
     if args.curriculum_weekly:
         from datetime import datetime as dt
         is_sunday = dt.now().weekday() == 6
-        if is_sunday or args.curriculum_weekly:
+        if is_sunday:
             try:
                 r = run_curriculum_weekly(project_path)
             except Exception as e:
