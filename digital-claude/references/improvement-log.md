@@ -10,6 +10,7 @@ Diario sintetico delle modifiche alla skill. Una riga per modifica.
 
 ## Voci
 
+- 2026-06-07 — jarvis-guardrails fase 1 — circuit breaker finanziario (`budget_guard.py`): tripla difesa anti-loop (--max-budget-usd nativo + --max-turns + timeout) su drain.py e supreme_court.py; sandbox patching (`validate_patch.py`): gate deterministici (tsc/lint/build/pytest/validate_skill) su worktree isolato prima del merge; pricing.ts per-modello (haiku/sonnet/opus, non più solo opus); `references/jarvis-guardrails.md` con piano fase 2
 - 2026-06-06 — loop self-management + Reasoning Trap — SKILL.md §3: regola `thinking: adaptive` vietata su tool-routing (arxiv 2510.22977 Reasoning Trap); tabella DB `skill_feedback` + endpoint REST + inject_lessons.py consuma feedback dalla dashboard; `lessons.status` (pending/applied/ineffective) + PATCH API; azione `sync-skill` in allowlist QuickActions — chiude il loop bidirezionale skill↔dashboard
 - 2026-05-24 — scope-drift-detector (improvement 1) — predictive_scope_creep: estrapola trend file al completamento, accelera avviso se a X% del task hai Y% dei file — previene scope creep silenzioso
 - 2026-05-24 — SKILL.md §1.5 (improvement 2) — auto-scope-checkpoint: debate automatico se brief ha 2+ verbi separati o parole vaghe — costo $0.01 vs rischio $5, pattern emerso da 100+ sessioni

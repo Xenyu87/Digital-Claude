@@ -16,6 +16,16 @@ Note di rilascio sul comportamento osservabile della skill. Pensate per chi la u
 - ...
 ```
 
+## v1.3.0 — 2026-06-07
+### Aggiunto
+- **Circuit Breaker Finanziario** (`scripts/budget_guard.py`): ogni subprocess `claude` spawnato dalla skill ora gira con tripla guardia — `--max-budget-usd` nativo (hard kill della CLI), `--max-turns`, timeout wall-clock. Al breach: log in `reports/circuit-breaker.jsonl` + alert in `/api/skill-feedback`. Wired in `drain.py` (10¢/task) e `supreme_court.py` (5¢/giudice).
+- **Sandbox Patching** (`scripts/validate_patch.py`): gate deterministici (tsc/lint/build/pytest/validate_skill) eseguiti su worktree isolato prima del merge. Solo le patch che compilano raggiungono il branch. Protocollo: `references/sandbox-patching.md`.
+- **Pricing per-modello** (dashboard `pricing.ts`): `PRICES_BY_MODEL` con tariffe reali per haiku/sonnet/opus. I costi mostrati in `/economy` ora riflettono il modello effettivamente usato; i task haiku costano ~15× meno di prima nell'interfaccia.
+
+### Cambiato
+- `supreme_court.py`: ogni agente usa `run_guarded()` invece di `subprocess.run` cieco — cap 5¢, max 3 turni, timeout 45s.
+- `drain.py resolve_tbd_lessons`: spawn `claude` sostituito con `run_guarded()` — cap 10¢, max 4 turni.
+
 ## v1.2.0 — 2026-06-06
 ### Aggiunto
 - **Reasoning Trap (§3)**: vietato `thinking: adaptive` e reasoning esteso per decisioni tool-routing. Fonte: arxiv 2510.22977. Riduce tool hallucination in task agentici.
@@ -127,71 +137,13 @@ Note di rilascio sul comportamento osservabile della skill. Pensate per chi la u
 ### Note di migrazione
 - ora puoi citare tool MCP nei prompt (`GitHub:create_issue`, ecc.); i write su sistemi esterni sono gate hard.
 
-## v0.7.0 — 2026-05-13
-### Aggiunto
-- §17: cadenza review skill a ogni minor + drift map.
-- validator: `check_recipes`/`check_scripts`/`check_templates` + supporto glob.
-- §4: `AI_STRUCTURE.md` e `AI_DECISIONS.md` come letture condizionate.
-- `specialist-agents.md`: 9 `subagent_type` tipi documentati.
-### Cambiato
-- `description`: ~620→~360 char. §2 rimanda a budget default per categoria.
-- §9: lista `subagent_type` centralizzata. `progressive-loading.md`: tabella include `default-stacks`/`deploy-paths`/`visual-first-testing` (drift v0.5.0).
-- `sync_skill.py`: include `recipes/`. §12 Step 2: "dopo" il primo dev locale.
-### Note di migrazione
-- rieseguire `sync_skill.py` per ricevere `recipes/`. Matcher più preciso + budget default coerenti.
-
-## v0.6.0 — 2026-05-03
-### Aggiunto
-- §0 "Fast path": modifiche locali (1-3 file noti, niente auth/dati/deploy) saltano il protocollo. Scenario 9.
-### Cambiato
-- `description` esplicita NON-trigger (fix stringa, rename, modifica isolata, domande).
-- SKILL.md compattato 307→~190 righe; tabella sub-agent in `specialist-agents.md`.
-### Note di migrazione
-- task piccoli consumano meno token (no reference né spawn). Task non triviali invariati.
-
-## v0.5.0 — 2026-05-02
-### Aggiunto
-- `recipes/` con 5 ricette (landing-page, crud-with-auth, data-dashboard, content-site, bot).
-- `default-stacks.md` (3 stack), `deploy-paths.md` + script Vercel/Netlify/Railway, `visual-first-testing.md`. Scenario 8.
-### Cambiato
-- §12 workflow nuova app: Step 0 (ricetta) / Step 2 (deploy) / Step 3 (test visivo). Mappa progressive loading allineata.
-
-## v0.4.1 — 2026-05-02
-### Aggiunto
-- pattern di comunicazione tra sub-agent: handoff via coordinator (default), via `AI_HANDOFF.md` (task lunghi), `SendMessage` (riprendere agent attivo). Scenario 7.
-### Cambiato
-- SKILL.md §10 distingue "tra agenti diversi" da "tra sub-agent dello stesso coordinator".
-
-## v0.4.0 — 2026-05-02
-### Aggiunto
-- selezione automatica del modello per i sub-agent (haiku/sonnet/opus in tabella SKILL §3 + `specialist-agents.md`). Scenario 6.
-### Cambiato
-- §3 SKILL.md distingue main agent (modello fisso) da sub-agent (modello impostato automaticamente).
-
-## v0.3.1 — 2026-05-02
-### Aggiunto
-- checklist copiabile in `self-improvement.md` (pattern Anthropic) + pattern "istanza fresca" (Claude A → B).
-- `evaluations/scenarios.md` con 6 scenari di comportamento atteso in italiano.
-- validator: conformità frontmatter `name`/`description` + costanti documentate.
-
-## v0.3.0 — 2026-05-02
-### Aggiunto
-- `assets/templates/` con 7 file copiabili (`AI_*.md`, `AGENTS.md`, `CLAUDE.md`) + check coerenza nel validator.
-- `scripts/sync_skill.py` per sync sorgente → installata cross-platform.
-- esempi di trigger per categoria in "Classificazione" + 3 regole atomiche al SKILL.md.
-### Cambiato
-- `description` riscritta in terza persona con trigger phrases (best-practice Anthropic).
-- `app-creation-blueprint.md` punta a `assets/templates/`; reference `*-template.md` solo regole d'uso.
-### Note di migrazione
-- per nuovi progetti: copia `assets/templates/*.md` nella root.
-
-## v0.2.0 — 2026-05-02
-### Aggiunto
-- sezioni "Selezione del modello", "Working loop", "Definition of Done" + template self-improvement.
-- `references/progressive-loading.md` e `self-improvement.md`.
-### Cambiato
-- "Specialisti" con criteri "quando NON attivare". `maintenance-compaction.md` non duplica più soglie di `compression-pass.md`.
-- validator richiede "Working loop" e "Definition of Done".
+## v0.2.0–v0.7.0 — 2026-05-02/13 *(archivio compatto)*
+- v0.7: validator glob, specialist-agents.md, §4 AI_STRUCTURE/AI_DECISIONS condizionati, sync_skill include recipes
+- v0.6: §0 Fast path; SKILL.md 307→190 righe
+- v0.5: recipes/ (5), default-stacks, deploy-paths, visual-first-testing; §12 Step 0/2/3
+- v0.4.1/v0.4: comunicazione sub-agent via AI_HANDOFF.md; selezione modello sub-agent auto
+- v0.3.x: assets/templates/, sync_skill.py, validator frontmatter, evaluations/scenarios.md
+- v0.2: §3 model selection, §6 working loop, §11 definition of done, progressive-loading.md
 
 
 ---
