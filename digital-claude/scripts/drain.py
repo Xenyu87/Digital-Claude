@@ -18,11 +18,14 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 DRAIN_BRANCH_PREFIX = "drain"
+
+sys.path.insert(0, str(SKILL_DIR / "scripts"))
+from budget_guard import run_guarded, notify_breach  # type: ignore
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -93,15 +96,18 @@ def complete_tbd_entries(project_path: str) -> dict:
         "Niente PII, niente nomi propri."
     )
 
-    code, out, err = run(
-        # --permission-mode default evita lo skip dangerous (rifiutato da root via systemd).
-        # Niente tool call previste: il drain applica le sostituzioni in Python.
-        ["claude", "--permission-mode", "default", "--model", "haiku", "--print", prompt],
-        cwd=project_path,
-    )
+    guarded = run_guarded(prompt, model="haiku", budget_cents=10, max_turns=4, timeout=120)
+    if guarded["killed"]:
+        notify_breach("resolve_tbd_lessons", 10, guarded.get("cost_usd"), guarded["reason"])
+        result["status"] = "error"
+        result["detail"] = f"circuit breaker: {guarded['reason']}"
+        return result
+    out = guarded["text"]
+    code = guarded["exit_code"]
+    err = ""
     if code != 0:
         result["status"] = "error"
-        result["detail"] = f"claude CLI: {err[:200]}"
+        result["detail"] = f"claude CLI exit {code}"
         return result
 
     # Applica le sostituzioni nel file.
@@ -238,10 +244,86 @@ def analyze_tool_errors(project_path: str) -> dict:
                 except Exception:
                     pass
 
+    reg_added = _update_mistake_register(project_path, recurring)
     result["status"] = "ok"
     result["detail"] = (
-        f"{len(recurring)} pattern ricorrenti, {lessons_created} lezioni create e risolti"
+        f"{len(recurring)} pattern ricorrenti, {lessons_created} lezioni create"
+        + (f", {reg_added} aggiunti a AI_MISTAKE_REGISTER.md" if reg_added else "")
     )
+    return result
+
+
+def _update_mistake_register(project_path: str, patterns: list[dict]) -> int:
+    """Aggiunge pattern verificati ad AI_MISTAKE_REGISTER.md. Ritorna righe aggiunte."""
+    register_file = Path(project_path) / "AI_MISTAKE_REGISTER.md"
+    if not register_file.exists() or not patterns:
+        return 0
+    text = register_file.read_text(encoding="utf-8")
+    today = date.today().isoformat()
+    added = 0
+    for p in patterns:
+        sample = p.get("message_sample", "")[:80].replace("|", "/")
+        area = p.get("error_type", "generico")[:30]
+        count = int(p.get("count", 1))
+        # Salta se pattern simile già presente (prime 35 char come fingerprint)
+        if sample[:35] in text:
+            continue
+        row = f"| {sample} | {area} | {count} | {today} | verificare — aggiornare Fix |"
+        # Inserisci prima della riga vuota dopo la tabella (o in fondo)
+        lines = text.splitlines()
+        insert_at = len(lines)
+        for i in range(len(lines) - 1, -1, -1):
+            if lines[i].startswith("| ") and "|---|" not in lines[i]:
+                insert_at = i + 1
+                break
+        lines.insert(insert_at, row)
+        text = "\n".join(lines) + "\n"
+        added += 1
+    if added:
+        register_file.write_text(text, encoding="utf-8")
+    return added
+
+
+def decay_mistake_register(project_path: str) -> dict:
+    """Decrementa peso dei pattern in AI_MISTAKE_REGISTER.md non visti da 30+ giorni.
+    Rimuove le righe con peso ≤ 0.
+    """
+    result = {"name": "decay_mistake_register", "status": "skip", "detail": ""}
+    register_file = Path(project_path) / "AI_MISTAKE_REGISTER.md"
+    if not register_file.exists():
+        result["detail"] = "AI_MISTAKE_REGISTER.md non trovato"
+        return result
+    text = register_file.read_text(encoding="utf-8")
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).date()
+    lines = text.splitlines()
+    new_lines: list[str] = []
+    decayed = removed = 0
+    for line in lines:
+        # Righe dati: | testo | area | NUMERO | YYYY-MM-DD | fix |
+        if line.startswith("| ") and "|---|" not in line:
+            parts = [p.strip() for p in line.split("|")]
+            # parts[0]="" parts[1]=pattern parts[2]=area parts[3]=peso parts[4]=data parts[5]=fix parts[6]=""
+            if len(parts) >= 6 and parts[3].isdigit() and re.match(r"\d{4}-\d{2}-\d{2}", parts[4]):
+                try:
+                    ultimo = date.fromisoformat(parts[4])
+                    peso = int(parts[3])
+                    if ultimo < cutoff:
+                        peso -= 1
+                        decayed += 1
+                        if peso <= 0:
+                            removed += 1
+                            continue
+                        parts[3] = str(peso)
+                        line = "| " + " | ".join(parts[1:-1]) + " |"
+                except ValueError:
+                    pass
+        new_lines.append(line)
+    if decayed == 0:
+        result["detail"] = "nessun pattern da decadere"
+        return result
+    register_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+    result["status"] = "ok"
+    result["detail"] = f"{decayed} pattern decaduti, {removed} rimossi (peso 0)"
     return result
 
 
@@ -762,6 +844,32 @@ def run_ai_news_intake(project_path: str) -> dict:
     return result
 
 
+def run_ideation(project_path: str) -> dict:
+    """Lancia intake-ideation.mjs ogni 7+ giorni: skill che analizza sé stessa."""
+    result = {"name": "run_ideation", "status": "skip", "detail": ""}
+    script = Path(project_path) / "ops" / "intake-ideation.mjs"
+    if not script.exists():
+        result["detail"] = "intake-ideation.mjs non trovato"
+        return result
+    state_file = Path(project_path) / "ops" / "lib" / "ideation-state.json"
+    try:
+        state = json.loads(state_file.read_text()) if state_file.exists() else {}
+        if state.get("last_run_at"):
+            from datetime import datetime as dt
+            elapsed_d = (datetime.now(timezone.utc) - dt.fromisoformat(state["last_run_at"].replace("Z", "+00:00"))).total_seconds() / 86400
+            if elapsed_d < 7:
+                result["detail"] = f"ultimo run {int(elapsed_d)}gg fa, skip (soglia 7gg)"
+                return result
+    except Exception:
+        pass
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    env = {**os.environ, "DASHBOARD_API": dashboard_url}
+    code, out, err = run(["node", str(script)], cwd=project_path, capture=True, env=env)
+    result["status"] = "ok" if code == 0 else "error"
+    result["detail"] = (out + " " + err).strip()[:200] or f"exit {code}"
+    return result
+
+
 def auto_process_ai_news(project_path: str) -> dict:
     """Auto-processa le AI news: dismiss vecchie low/none, skill_feedback per high+skill.
 
@@ -950,6 +1058,132 @@ def promote_acknowledged_feedback(project_path: str) -> dict:
     return result
 
 
+def court_review_lesson_promotion(project_path: str) -> dict:
+    """Corte Suprema: delibera sulla promozione automatica di lezioni ad alta ricorrenza.
+
+    Lezioni con occurrences >= 5, status != ineffective, promoted_to IS NULL
+    vengono sottoposte alla Corte (3 agenti paralleli). Se approvate, vengono
+    promosse in SKILL.md §14 e marcate promoted_to nel DB.
+    """
+    result = {"name": "court_review_lesson_promotion", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    PROMOTION_THRESHOLD = 5
+
+    try:
+        import urllib.request as _ur
+        req = _ur.Request(f"{dashboard_url}/api/lessons?limit=50")
+        with _ur.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+        rows = data.get("rows", [])
+    except Exception as e:
+        result["detail"] = f"fetch lessons fallito: {e}"
+        return result
+
+    candidates = [
+        r for r in rows
+        if (r.get("occurrences") or 0) >= PROMOTION_THRESHOLD
+        and r.get("status", "pending") != "ineffective"
+        and not r.get("promoted_to")
+    ]
+
+    if not candidates:
+        result["detail"] = f"nessuna lezione con occurrences>={PROMOTION_THRESHOLD} da promuovere"
+        return result
+
+    court_script = SKILL_DIR / "scripts" / "supreme_court.py"
+    if not court_script.exists():
+        result["detail"] = "supreme_court.py non trovato"
+        return result
+
+    skill_md = SKILL_DIR / "SKILL.md"
+    approved = []
+    rejected = []
+
+    for lesson in candidates[:3]:  # max 3 per run per contenere i costi
+        rule = (lesson.get("rule") or "").strip()
+        occ = lesson.get("occurrences", 0)
+        if not rule:
+            continue
+
+        question = f"Promuovere questa lezione in SKILL.md §14 (auto-curriculum)?"
+        context = (
+            f"Regola: {rule}\n"
+            f"Occorrenze: {occ} sessioni reali\n"
+            f"Pattern type: {lesson.get('pattern_type', 'N/A')}\n"
+            f"Ultima vista: {str(lesson.get('last_seen_at', ''))[:10]}"
+        )
+
+        try:
+            proc = subprocess.run(
+                ["python3", str(court_script),
+                 "--question", question,
+                 "--context", context],
+                capture_output=True, text=True, timeout=120
+            )
+            verdict = "approve" if proc.returncode == 0 else "reject"
+        except Exception as e:
+            verdict = "reject"
+            log(f"court error per lezione {lesson.get('id')}: {e}")
+
+        if verdict == "approve":
+            approved.append(lesson)
+            # Appendi in SKILL.md §14
+            today = date.today().isoformat()
+            entry = f"\n- [{today}] (auto-promosso, {occ}×) {rule}"
+            try:
+                content = skill_md.read_text(encoding="utf-8")
+                if "## 14." in content or "## 14 " in content:
+                    # Inserisci dopo la prima riga del §14
+                    marker = next(
+                        (m for m in ["## 14.", "## 14 "] if m in content), None
+                    )
+                    if marker:
+                        idx = content.index(marker)
+                        next_section = content.find("\n## ", idx + 1)
+                        insert_at = next_section if next_section != -1 else len(content)
+                        content = content[:insert_at] + entry + "\n" + content[insert_at:]
+                        skill_md.write_text(content, encoding="utf-8")
+                else:
+                    with open(skill_md, "a", encoding="utf-8") as f:
+                        f.write(f"\n\n## 14. Auto-curriculum (promozioni automatiche)\n{entry}\n")
+            except Exception as e:
+                log(f"scrittura SKILL.md fallita: {e}")
+                continue
+
+            # Marca promoted_to nel DB
+            if admin_secret:
+                try:
+                    body = json.dumps({
+                        "id": lesson["id"],
+                        "status": "applied",
+                        "promoted_to": f"SKILL.md §14 (auto, {today})"
+                    }).encode()
+                    req = urllib.request.Request(
+                        f"{dashboard_url}/api/lessons",
+                        data=body,
+                        headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                        method="PATCH",
+                    )
+                    with urllib.request.urlopen(req, timeout=10):
+                        pass
+                except Exception:
+                    pass
+        else:
+            rejected.append(lesson)
+
+    parts = []
+    if approved:
+        parts.append(f"{len(approved)} promosse in SKILL.md §14")
+    if rejected:
+        parts.append(f"{len(rejected)} rifiutate dalla Corte")
+
+    result["status"] = "ok" if approved else ("skip" if not candidates else "ok")
+    result["detail"] = ", ".join(parts) if parts else "nessuna azione"
+    return result
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -993,6 +1227,7 @@ def main() -> int:
     for fn in [
         lambda: complete_tbd_entries(project_path),
         lambda: analyze_tool_errors(project_path),
+        lambda: decay_mistake_register(project_path),
         lambda: run_compaction(project_path),
         lambda: validate_skill_drift(project_path),
         lambda: evaluate_lessons(project_path) if _autopilot_enabled(dashboard_url) else {"name": "evaluate_lessons", "status": "skip", "detail": "autopilot disabilitato"},
@@ -1000,6 +1235,8 @@ def main() -> int:
         lambda: run_ai_news_intake(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ai_news_intake", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: auto_process_ai_news(project_path) if _autopilot_enabled(dashboard_url) else {"name": "auto_process_ai_news", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
+        lambda: run_ideation(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ideation", "status": "skip", "detail": "autopilot disabilitato"},
+        lambda: court_review_lesson_promotion(project_path) if _autopilot_enabled(dashboard_url) else {"name": "court_review_lesson_promotion", "status": "skip", "detail": "autopilot disabilitato"},
     ]:
         try:
             r = fn()

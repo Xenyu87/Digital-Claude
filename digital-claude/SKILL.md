@@ -176,13 +176,15 @@ Four gates that main agent must respect before executing inline. Bypassable only
 
 Only these files if they exist, in order:
 
-1. `AI_HANDOFF.md` (if taking over from another agent)
-2. `AI_CONTEXT.md`
-3. `AGENTS.md`
-4. `CLAUDE.md`
-5. `AI_STRUCTURE.md` (only if task touches modules or contracts)
-6. `AI_DECISIONS.md` (only if current decision crosses past one)
-7. `README.md` (only if previous ones insufficient)
+1. `AI_RESUME.md` — cross-project session memory entry point: what was in progress, last file touched, next step. Read first, even on seemingly small tasks. See `references/session-memory.md`.
+2. `AI_HANDOFF.md` (if taking over from another agent)
+3. `AI_MISTAKE_REGISTER.md` — per-project mistake registry: pattern ricorrenti specifici del codebase, con peso e decadimento. Leggere se il task tocca le aree elencate (pricing, SQL, tipi TypeScript, ecc.).
+4. `AI_CONTEXT.md`
+4. `AGENTS.md`
+5. `CLAUDE.md`
+6. `AI_STRUCTURE.md` (only if task touches modules or contracts)
+7. `AI_DECISIONS.md` (only if current decision crosses past one)
+8. `README.md` (only if previous ones insufficient)
 
 Don't read entire repo: preventive reading burns context on unused files.
 
@@ -215,14 +217,19 @@ Reference activation map:
 - self-improvement → `references/self-improvement.md`, `references/reflexion-loop.md`
 - auto-promoted rules (confirmed via dashboard /feedback) → `references/auto-promoted-lessons.md`
 - drain / auto-curriculum / overnight maintenance → `references/background-drain.md`
+- jarvis guardrails (circuit breaker, sandbox patching, fase 2 inbox/eventi) → `references/jarvis-guardrails.md`
+- sandbox patching protocol (worktree + validate_patch.py loop) → `references/sandbox-patching.md`
 - coordination log / sedimentation → `references/coordination-sedimentation.md`
 - DAG pipeline of subagents → `references/pipeline-dsl.md`
 - external routing opt-in → `references/external-routing.md`
 - loading tuning → `references/progressive-loading.md`
+- session memory / resume across machines / per-file memo → `references/session-memory.md`
 
 ## 6. Working loop
 
 For non-trivial tasks: budget+model internally → minimal context → mini-plan if needed → small patches → targeted verification → short closure. Stop planning when next step is obvious.
+
+After each non-trivial file edit: update `AI_HANDOFF.md` section "File toccati in questo task" with `path → one-line memo` (per-file working memory, last line = last touched file). See `references/session-memory.md`.
 
 ### 6.5 In-Flight Scope Drift Check
 
@@ -283,6 +290,15 @@ Profiles: `references/role-profiles.md`, `references/specialist-agents.md`, `ref
 
 Default: sequential. See `recipes/parallel-swarm.md` for examples and anti-patterns.
 
+### 9.2 Delegation brief quality (code tasks)
+
+When briefing `code-implementer` or `code-debugger` for functions >20 lines, SQL queries, or React components, include explicitly in the prompt:
+- Null/undefined: ogni prop required è garantita? ogni array può essere vuoto?
+- Async: ogni `await` ha error boundary o è in try/catch del chiamante?
+- Tipi: confronti cross-layer usano stesso tipo (cast esplicito se necessario)?
+- SQL: ogni subquery correlata su tutti i campi di raggruppamento, mai interpolazione diretta di input utente
+- Leggere `AI_MISTAKE_REGISTER.md` se il task tocca aree a rischio noto nel progetto
+
 ## 10. Handoff between agents
 
 Two levels:
@@ -304,6 +320,7 @@ Task closed when: behavior handled, files touched limited to task, relevant chec
 - User can actually see/use the change right now without extra steps?
 
 If any answer is no → do it, don't delegate it.
+- Session memory saved? Update `## State` + `## Next Step` in `AI_HANDOFF.md`, then run `python scripts/update_ai_resume.py <project_root>` so `AI_RESUME.md` reflects the latest state for the next session or machine.
 
 ## 12. Creating a new app
 
