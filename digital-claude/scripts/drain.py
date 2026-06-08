@@ -1271,6 +1271,13 @@ def discover_cost_thresholds(project_path: str) -> dict:
     return result
 
 
+def _ts_to_epoch(ts: str) -> float:
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return 0.0
+
+
 def detect_dead_rules(project_path: str) -> dict:
     """Rileva categorie/modelli definiti in SKILL.md ma mai visti nei dati reali (90gg).
 
@@ -1347,10 +1354,24 @@ def detect_dead_rules(project_path: str) -> dict:
     dead_models = sorted(defined_models - seen_models)
     delegation_not_tracked = not agents_ever_used
 
+    # Auto-check: ultimi 7 giorni — verifica se il tracking delegation è migliorato
+    cutoff_7d = (datetime.now(timezone.utc) - timedelta(days=7)).timestamp()
+    recent_total = sum(1 for r in rows if _ts_to_epoch(r.get("ts", "")) >= cutoff_7d)
+    recent_with_agents = sum(
+        1 for r in rows
+        if _ts_to_epoch(r.get("ts", "")) >= cutoff_7d and r.get("agents_used")
+    )
+    tracking_check = {
+        "sessions_last_7d": recent_total,
+        "with_agents_tracked": recent_with_agents,
+        "fix_working": recent_with_agents > 0,
+    }
+
     findings = {
         "dead_categories": dead_categories,
         "dead_models": dead_models,
         "delegation_not_tracked": delegation_not_tracked,
+        "tracking_check": tracking_check,
     }
 
     today = date.today().isoformat()

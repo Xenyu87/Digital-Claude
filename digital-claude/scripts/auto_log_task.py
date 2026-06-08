@@ -179,6 +179,8 @@ def parse_session_meta(jsonl_path: Path) -> dict:
     ts_max = None
     tool_calls = 0
     tool_errors = 0
+    agents_used: list[str] = []
+    agent_models: list[str] = []
     # Manteniamo l'ULTIMO prompt reale (non il primo): il jsonl accumula
     # sessioni resume su resume, quindi il "primo" e' sempre lo stesso
     # messaggio storico. L'ultimo prompt utente prima dello Stop e' il
@@ -206,6 +208,14 @@ def parse_session_meta(jsonl_path: Path) -> dict:
                         if isinstance(c, dict):
                             if c.get("type") == "tool_use":
                                 tool_calls += 1
+                                if c.get("name") == "Agent":
+                                    inp = c.get("input") or {}
+                                    st = inp.get("subagent_type")
+                                    if st and st not in agents_used:
+                                        agents_used.append(st)
+                                    am = inp.get("model")
+                                    if am and am not in agent_models:
+                                        agent_models.append(am)
                             elif c.get("type") == "tool_result" and c.get("is_error") is True:
                                 tool_errors += 1
                 if obj.get("type") == "user" and msg.get("role") == "user":
@@ -255,6 +265,8 @@ def parse_session_meta(jsonl_path: Path) -> dict:
         "tool_errors_count": tool_errors,
         "summary": summary,
         "first_user_text": first_user_text or "",
+        "agents_used": agents_used,
+        "agent_models": agent_models,
     }
 
 
@@ -429,6 +441,8 @@ def main() -> int:
         "cache_creation_tokens": usage["cache_creation_input_tokens"],
         "session_jsonl": jsonl.name,
         "model_used": usage.get("model_used"),
+        "agents_used": meta.get("agents_used", []),
+        "models": list({usage.get("model_used"), *meta.get("agent_models", [])} - {None}),
     }
     # Bridge da UserPromptSubmit hook: leggi l'ultimo suggerimento di routing
     # per questa sessione (se presente).
