@@ -1,0 +1,9 @@
+{
+  "allowlist": {
+    "digital-claude-dashboard": "github.com:Xenyu87/digital-claude-dashboard",
+    "digital-claude-skill":     "github.com:Xenyu87/Digital-Claude",
+    "digital-codex":            "github.com:Xenyu87/digital-codex",
+    "homelab":                  "github.com:Xenyu87/homelab"
+  },
+  "note": "Lista autoritativa dei remote autorizzati per progetto. Aggiornare qui prima di usare un nuovo repo."
+}

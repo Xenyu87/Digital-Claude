@@ -172,6 +172,12 @@ Four gates that main agent must respect before executing inline. Bypassable only
 
 **Gate 5 — bypass-guardian in bypass mode**: if user activated bypass-permissions (`/permission 3` or equivalent) **and** task contains risky/irreversible actions (rm, force-push, DROP, modify `/etc/`, credentials, deploy to stable), spawn `bypass-guardian` (sonnet) **before** executing. Proceed only after verdict 🟢 GREEN or 🟡 YELLOW with recommendations followed. On 🔴 RED stop and ask explicit user confirmation. This gate is NOT bypassable by "do it yourself" — requires explicit confirmation on specific risk.
 
+**Gate 6 — git remote verification (ALWAYS, non bypassable)**: before ANY `git push` (normal or force), verify:
+1. Read `scripts/.git_remotes.json` — check that the repo being pushed matches the allowlist entry for this project.
+2. Show the user: `PUSH → <remote_url> (<repo_name>)` and wait for explicit confirmation.
+3. On `--force`: also show which remote commits will be overwritten (`git log HEAD..origin/branch --oneline`).
+If the remote URL does NOT match the allowlist → **stop immediately**, show the mismatch, ask user to confirm or correct the remote. This gate was added after an accidental force-push to the wrong repo (`digital-codex` instead of `Digital-Claude`).
+
 ## 4. Initial context reading
 
 Only these files if they exist, in order:
