@@ -1125,6 +1125,267 @@ def detect_session_anomalies(project_path: str) -> dict:
     return result
 
 
+def discover_cost_thresholds(project_path: str) -> dict:
+    """Calcola p75/p90 di cost_usd per categoria dal coordination-log.jsonl.
+
+    Aggiorna il blocco <!-- thresholds-auto --> in SKILL.md se i valori sono cambiati.
+    Se SKILL.md supererebbe 450 righe, scrive solo scripts/thresholds.json.
+    """
+    from collections import defaultdict
+
+    result = {"name": "discover_cost_thresholds", "status": "skip", "detail": ""}
+
+    slug = proj_slug(project_path)
+    log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
+    if not log_path.exists():
+        result["detail"] = "coordination-log.jsonl non trovato"
+        return result
+
+    cat_costs: dict[str, list[float]] = defaultdict(list)
+    total = 0
+    try:
+        for line in log_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            cat = rec.get("category", "").strip()
+            cost = rec.get("cost_usd")
+            if cat and cost is not None:
+                try:
+                    cat_costs[cat].append(float(cost))
+                    total += 1
+                except (ValueError, TypeError):
+                    pass
+    except Exception as e:
+        result["status"] = "error"
+        result["detail"] = str(e)
+        return result
+
+    if total == 0:
+        result["detail"] = "nessun record con category+cost_usd"
+        return result
+
+    def percentile(values: list[float], p: float) -> float:
+        sorted_v = sorted(values)
+        idx = (len(sorted_v) - 1) * p / 100
+        lo, hi = int(idx), min(int(idx) + 1, len(sorted_v) - 1)
+        return sorted_v[lo] + (sorted_v[hi] - sorted_v[lo]) * (idx - lo)
+
+    today = date.today().isoformat()
+    rows: list[dict] = []
+    for cat, costs in cat_costs.items():
+        if len(costs) < 5:
+            continue
+        rows.append({
+            "categoria": cat,
+            "warn_p75": round(percentile(costs, 75), 2),
+            "ceiling_p90": round(percentile(costs, 90), 2),
+            "n": len(costs),
+        })
+
+    if not rows:
+        result["detail"] = f"{total} sessioni analizzate, nessuna categoria con ≥5 sessioni"
+        return result
+
+    # Scrivi thresholds.json (sempre)
+    thresholds_json = SKILL_DIR / "scripts" / "thresholds.json"
+    new_data = {"updated_at": today, "n_sessions": total, "thresholds": rows}
+    old_data: dict = {}
+    if thresholds_json.exists():
+        try:
+            old_data = json.loads(thresholds_json.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    old_rows = {r["categoria"]: r for r in old_data.get("thresholds", [])}
+    new_rows = {r["categoria"]: r for r in rows}
+    changed_cats = [
+        cat for cat, r in new_rows.items()
+        if old_rows.get(cat, {}).get("warn_p75") != r["warn_p75"]
+        or old_rows.get(cat, {}).get("ceiling_p90") != r["ceiling_p90"]
+    ]
+
+    thresholds_json.write_text(json.dumps(new_data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    if not changed_cats:
+        result["status"] = "skip"
+        result["detail"] = f"{total} sessioni analizzate, {len(rows)} categorie invariate"
+        return result
+
+    # Costruisci blocco markdown
+    table_rows = "\n".join(
+        f"| {r['categoria']} | ${r['warn_p75']:.2f} | ${r['ceiling_p90']:.2f} | {r['n']} |"
+        for r in sorted(rows, key=lambda x: x["n"], reverse=True)
+    )
+    block = (
+        f"<!-- thresholds-auto -->\n"
+        f"## Auto-Discovered Cost Thresholds (updated {today}, n={total} sessioni)\n"
+        f"| categoria | warn (p75) | ceiling (p90) | n |\n"
+        f"|---|---|---|---|\n"
+        f"{table_rows}\n"
+        f"Superare ceiling = sessione in overrun. Chiudi e apri nuovo task.\n"
+        f"<!-- /thresholds-auto -->"
+    )
+
+    skill_md = SKILL_DIR / "SKILL.md"
+    if not skill_md.exists():
+        result["detail"] = "SKILL.md non trovato, thresholds.json scritto"
+        result["status"] = "ok"
+        return result
+
+    content = skill_md.read_text(encoding="utf-8")
+
+    # Sostituisci blocco esistente o inseriscilo dopo la riga "## 2. Budget mode"
+    if "<!-- thresholds-auto -->" in content:
+        new_content = re.sub(
+            r"<!-- thresholds-auto -->.*?<!-- /thresholds-auto -->",
+            block,
+            content,
+            flags=re.DOTALL,
+        )
+    else:
+        # Inserisci dopo la riga "## 2. Budget mode"
+        insert_marker = "## 2. Budget mode"
+        if insert_marker in content:
+            idx = content.index(insert_marker)
+            end_of_line = content.index("\n", idx)
+            new_content = content[:end_of_line + 1] + "\n" + block + "\n" + content[end_of_line + 1:]
+        else:
+            new_content = content + "\n\n" + block + "\n"
+
+    new_line_count = len(new_content.splitlines())
+    if new_line_count > 450:
+        result["status"] = "ok"
+        result["detail"] = (
+            f"{total} sessioni analizzate, {len(changed_cats)} categorie aggiornate — "
+            f"SKILL.md salterebbe a {new_line_count} righe (>450), solo thresholds.json scritto"
+        )
+        return result
+
+    skill_md.write_text(new_content, encoding="utf-8")
+    result["status"] = "ok"
+    result["detail"] = f"{total} sessioni analizzate, {len(changed_cats)} categorie aggiornate in SKILL.md"
+    return result
+
+
+def detect_dead_rules(project_path: str) -> dict:
+    """Rileva categorie/modelli definiti in SKILL.md ma mai visti nei dati reali (90gg).
+
+    Scrive findings in drain-log.jsonl e scripts/dead-rules-cache.json.
+    """
+    result = {"name": "detect_dead_rules", "status": "skip", "detail": ""}
+
+    slug = proj_slug(project_path)
+    log_path_coord = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
+    if not log_path_coord.exists():
+        result["detail"] = "coordination-log.jsonl non trovato"
+        return result
+
+    cutoff_90d = datetime.now(timezone.utc).timestamp() - 90 * 86400
+
+    seen_categories: set[str] = set()
+    seen_models: set[str] = set()
+    agents_ever_used = False
+    n_sessions = 0
+
+    try:
+        for line in log_path_coord.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            n_sessions += 1
+            ts_str = rec.get("ts", "")
+            try:
+                from datetime import datetime as dt
+                ts = dt.fromisoformat(str(ts_str).replace("Z", "+00:00")).timestamp()
+            except Exception:
+                ts = 0
+
+            if ts >= cutoff_90d:
+                cat = rec.get("category", "").strip()
+                if cat:
+                    seen_categories.add(cat)
+                models = rec.get("models", []) or []
+                if isinstance(models, list):
+                    for m in models:
+                        if isinstance(m, str):
+                            seen_models.add(m.lower())
+                agents = rec.get("agents_used", []) or []
+                if agents:
+                    agents_ever_used = True
+    except Exception as e:
+        result["status"] = "error"
+        result["detail"] = str(e)
+        return result
+
+    # Leggi SKILL.md per estrarre categorie e modelli definiti
+    skill_md = SKILL_DIR / "SKILL.md"
+    defined_categories: set[str] = set()
+    defined_models: set[str] = set()
+
+    if skill_md.exists():
+        skill_text = skill_md.read_text(encoding="utf-8")
+        # Categorie: pattern **nome** grassetto vicino a parole chiave categoria
+        cat_patterns = re.findall(r"\*\*([a-z_]+(?:\s+[a-z_]+)?)\*\*", skill_text)
+        known_cats = {"new app", "modify app", "audit", "bug_rescue", "bug rescue",
+                      "skill improvement", "ops", "modifica", "domanda", "nuova_app"}
+        for cp in cat_patterns:
+            if cp.lower() in known_cats:
+                defined_categories.add(cp.lower())
+        # Modelli citati
+        for model in ("haiku", "sonnet", "opus"):
+            if model in skill_text.lower():
+                defined_models.add(model)
+
+    dead_categories = sorted(defined_categories - {c.lower() for c in seen_categories})
+    dead_models = sorted(defined_models - seen_models)
+    delegation_not_tracked = not agents_ever_used
+
+    findings = {
+        "dead_categories": dead_categories,
+        "dead_models": dead_models,
+        "delegation_not_tracked": delegation_not_tracked,
+    }
+
+    today = date.today().isoformat()
+
+    # Scrivi in drain-log.jsonl
+    drain_log = drain_log_path(project_path)
+    record = {
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "type": "dead_rules_report",
+        "project": Path(project_path).name,
+        "findings": findings,
+        "n_sessions_analyzed": n_sessions,
+        "window_days": 90,
+    }
+    try:
+        append_drain_log(drain_log, record)
+    except Exception:
+        pass
+
+    # Scrivi dead-rules-cache.json
+    cache_path = SKILL_DIR / "scripts" / "dead-rules-cache.json"
+    cache_data = {**findings, "updated_at": today, "n_sessions": n_sessions, "window_days": 90}
+    try:
+        cache_path.write_text(json.dumps(cache_data, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:
+        result["status"] = "error"
+        result["detail"] = f"scrittura dead-rules-cache.json fallita: {e}"
+        return result
+
+    n_dead = len(dead_categories) + len(dead_models) + (1 if delegation_not_tracked else 0)
+    result["status"] = "ok"
+    result["detail"] = f"{n_dead} regole inattive trovate (cat:{len(dead_categories)}, models:{len(dead_models)}, delegation:{delegation_not_tracked})"
+    return result
+
+
 def auto_process_ai_news(project_path: str) -> dict:
     """Auto-processa le AI news: dismiss vecchie low/none, skill_feedback per high+skill.
 
@@ -1492,6 +1753,8 @@ def main() -> int:
         lambda: run_ai_news_intake(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ai_news_intake", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: auto_process_ai_news(project_path) if _autopilot_enabled(dashboard_url) else {"name": "auto_process_ai_news", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: detect_session_anomalies(project_path),
+        lambda: discover_cost_thresholds(project_path),
+        lambda: detect_dead_rules(project_path),
         lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: run_ideation(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ideation", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: court_review_lesson_promotion(project_path) if _autopilot_enabled(dashboard_url) else {"name": "court_review_lesson_promotion", "status": "skip", "detail": "autopilot disabilitato"},

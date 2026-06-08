@@ -1,0 +1,16 @@
+{
+  "dead_categories": [
+    "audit",
+    "bug rescue",
+    "modify app",
+    "new app",
+    "skill improvement"
+  ],
+  "dead_models": [
+    "haiku"
+  ],
+  "delegation_not_tracked": true,
+  "updated_at": "2026-06-08",
+  "n_sessions": 152,
+  "window_days": 90
+}

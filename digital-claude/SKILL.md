@@ -62,6 +62,16 @@ Even without explicit declaration, classify from the main verb and repo state. D
 
 ## 2. Budget mode
 
+<!-- thresholds-auto -->
+## Auto-Discovered Cost Thresholds (updated 2026-06-08, n=152 sessioni)
+| categoria | warn (p75) | ceiling (p90) | n |
+|---|---|---|---|
+| modifica | $60.72 | $77.38 | 125 |
+| domanda | $2.39 | $9.10 | 15 |
+| ops | $0.21 | $0.36 | 12 |
+Superare ceiling = sessione in overrun. Chiudi e apri nuovo task.
+<!-- /thresholds-auto -->
+
 - **Economical** (default): minimal reads, short output
 - **Balanced**: targeted reads on impacted files
 - **Maximum safety**: extended reads, double-check, audit
