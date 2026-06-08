@@ -990,6 +990,141 @@ def run_ideation(project_path: str) -> dict:
     return result
 
 
+def detect_session_anomalies(project_path: str) -> dict:
+    """Rileva sessioni anomale per costo (>3x media categoria, ultime 24h).
+
+    Fonte dati: GET /api/coordination-log?limit=500 (ultimi 30gg).
+    Fallback: query Postgres diretta via psycopg2 o subprocess psql.
+    Scrive record tipo "anomaly" in drain-log.jsonl.
+    """
+    import urllib.request
+
+    result = {"name": "detect_anomalies", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    log_path = drain_log_path(project_path)
+
+    cutoff_30d = datetime.now(timezone.utc).timestamp() - 30 * 86400
+    cutoff_24h = datetime.now(timezone.utc).timestamp() - 86400
+
+    rows: list[dict] = []
+
+    # Tentativo 1: HTTP GET sull'endpoint dashboard
+    try:
+        req = urllib.request.Request(f"{dashboard_url}/api/coordination-log?limit=500")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+        rows = data.get("rows", [])
+    except Exception:
+        rows = []
+
+    # Tentativo 2: psycopg2 diretto
+    if not rows:
+        db_url = os.environ.get("DATABASE_URL", "")
+        if db_url:
+            try:
+                import psycopg2  # type: ignore
+                conn = psycopg2.connect(db_url)
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT ts, category, cost_usd FROM coordination_log "
+                    "WHERE ts >= now() - interval '30 days' ORDER BY ts DESC LIMIT 500"
+                )
+                for r in cur.fetchall():
+                    rows.append({"ts": r[0].isoformat(), "category": r[1], "cost_usd": float(r[2] or 0)})
+                cur.close()
+                conn.close()
+            except ImportError:
+                pass
+            except Exception:
+                pass
+
+    # Tentativo 3: subprocess psql
+    if not rows:
+        db_url = os.environ.get("DATABASE_URL", "")
+        if db_url:
+            query = (
+                "SELECT ts, category, cost_usd FROM coordination_log "
+                "WHERE ts >= now() - interval '30 days' ORDER BY ts DESC LIMIT 500;"
+            )
+            code, out, _ = run(["psql", db_url, "-t", "-A", "-F", "\t", "-c", query])
+            if code == 0:
+                for line in out.strip().splitlines():
+                    parts = line.split("\t")
+                    if len(parts) >= 3:
+                        try:
+                            rows.append({
+                                "ts": parts[0],
+                                "category": parts[1],
+                                "cost_usd": float(parts[2]),
+                            })
+                        except (ValueError, IndexError):
+                            pass
+
+    if not rows:
+        result["detail"] = "dati non disponibili (endpoint e DB non raggiungibili)"
+        return result
+
+    # Calcola media per categoria sugli ultimi 30gg
+    from collections import defaultdict
+    cat_costs: dict[str, list[float]] = defaultdict(list)
+    recent_rows: list[dict] = []
+
+    for r in rows:
+        ts_str = r.get("ts", "")
+        try:
+            from datetime import datetime as dt
+            ts = dt.fromisoformat(str(ts_str).replace("Z", "+00:00")).timestamp()
+        except Exception:
+            continue
+        cost = float(r.get("cost_usd") or 0)
+        cat = r.get("category", "unknown")
+        if ts >= cutoff_30d:
+            cat_costs[cat].append(cost)
+        if ts >= cutoff_24h:
+            recent_rows.append({"ts": ts_str, "ts_epoch": ts, "category": cat, "cost_usd": cost})
+
+    if not recent_rows:
+        result["detail"] = "nessuna sessione nelle ultime 24h"
+        return result
+
+    cat_avg: dict[str, float] = {
+        cat: sum(costs) / len(costs) for cat, costs in cat_costs.items() if costs
+    }
+
+    anomalies_written = 0
+    for r in recent_rows:
+        cat = r["category"]
+        cost = r["cost_usd"]
+        avg = cat_avg.get(cat, 0)
+        if avg <= 0:
+            continue
+        ratio = cost / avg
+        if ratio > 3.0:
+            record = {
+                "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "type": "anomaly",
+                "session_ts": r["ts"],
+                "category": cat,
+                "cost_usd": cost,
+                "avg_cost": round(avg, 6),
+                "ratio": round(ratio, 2),
+            }
+            try:
+                append_drain_log(log_path, record)
+                anomalies_written += 1
+            except Exception:
+                pass
+
+    result["status"] = "ok"
+    result["detail"] = (
+        f"{anomalies_written} anomalie rilevate"
+        if anomalies_written
+        else f"nessuna anomalia su {len(recent_rows)} sessioni (ultime 24h)"
+    )
+    return result
+
+
 def auto_process_ai_news(project_path: str) -> dict:
     """Auto-processa le AI news: dismiss vecchie low/none, skill_feedback per high+skill.
 
@@ -1356,6 +1491,7 @@ def main() -> int:
         lambda: create_lessons_from_failed_tasks(project_path) if _autopilot_enabled(dashboard_url) else {"name": "create_lessons_from_failed_tasks", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: run_ai_news_intake(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ai_news_intake", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: auto_process_ai_news(project_path) if _autopilot_enabled(dashboard_url) else {"name": "auto_process_ai_news", "status": "skip", "detail": "autopilot disabilitato"},
+        lambda: detect_session_anomalies(project_path),
         lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: run_ideation(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ideation", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: court_review_lesson_promotion(project_path) if _autopilot_enabled(dashboard_url) else {"name": "court_review_lesson_promotion", "status": "skip", "detail": "autopilot disabilitato"},
