@@ -69,6 +69,38 @@ def _append_line(log_path: Path, record: dict) -> None:
     tmp.replace(log_path)
 
 
+def _post_to_dashboard(record: dict) -> None:
+    """POST al DB dashboard via API locale. Fail-safe: errori silenziosi."""
+    try:
+        import urllib.request
+        base = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001").rstrip("/")
+        payload = json.dumps({
+            "ts": record["ts"],
+            "task_id": record["task_id"],
+            "project": record["project"],
+            "category": record["category"],
+            "trigger_keywords": record["trigger_keywords"],
+            "agents_used": record["agents_used"],
+            "models": record["models"],
+            "models_share": record["models_share"],
+            "tokens": record["tokens"],
+            "cost_usd": record["cost_usd"],
+            "duration_s": record["duration_s"],
+            "outcome": record["outcome"],
+            "files_touched": record["files_touched"],
+            "lesson": record["lesson"],
+        }).encode()
+        req = urllib.request.Request(
+            f"{base}/api/coordination-log",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=3)
+    except Exception:
+        pass  # dashboard offline o non raggiungibile — non bloccare
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Append riga coordination-log.jsonl")
     ap.add_argument("--project", default=os.getcwd(), help="path o slug progetto")
@@ -124,6 +156,9 @@ def main() -> int:
         log_path = _coordination_log_path(project_path)
         _append_line(log_path, record)
         print(f"log_coordination: registrato in {log_path}", file=sys.stderr)
+
+        # Sync al DB dashboard (best-effort, non bloccante)
+        _post_to_dashboard(record)
 
     except Exception as e:
         print(f"log_coordination: errore ({e}), skip.", file=sys.stderr)
