@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-06-08",
-  "n_sessions": 152,
+  "updated_at": "2026-06-09",
+  "n_sessions": 157,
   "thresholds": [
     {
       "categoria": "modifica",
-      "warn_p75": 60.72,
-      "ceiling_p90": 77.38,
-      "n": 125
+      "warn_p75": 58.91,
+      "ceiling_p90": 77.36,
+      "n": 130
     },
     {
       "categoria": "ops",

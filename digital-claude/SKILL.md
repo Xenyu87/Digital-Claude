@@ -63,10 +63,10 @@ Even without explicit declaration, classify from the main verb and repo state. D
 ## 2. Budget mode
 
 <!-- thresholds-auto -->
-## Auto-Discovered Cost Thresholds (updated 2026-06-08, n=152 sessioni)
+## Auto-Discovered Cost Thresholds (updated 2026-06-09, n=157 sessioni)
 | categoria | warn (p75) | ceiling (p90) | n |
 |---|---|---|---|
-| modifica | $60.72 | $77.38 | 125 |
+| modifica | $58.91 | $77.36 | 130 |
 | domanda | $2.39 | $9.10 | 15 |
 | ops | $0.21 | $0.36 | 12 |
 Superare ceiling = sessione in overrun. Chiudi e apri nuovo task.
@@ -361,6 +361,10 @@ Files `AI_*.md`, `AGENTS.md`, `CLAUDE.md` ready in `assets/templates/`. Usage ru
 ## 14. Audit
 
 Read-only, no modifications without OK. Output: findings with severity, file:line, proposed fix. No narration.
+
+- [2026-06-09] (auto-promosso, 155×) quando si aggiunge un nuovo enum al sistema (categoria/stato), allineare subito tutti i punti — DB, label UI, colori, regex, docs — prima di chiudere il task.
+
+- [2026-06-09] (auto-promosso, 8×) Spezzare in commit atomici per feature (scaffolding base → chat → jobs → terminal → sync) riduce il rischio di rollback e semplifica la review.
 
 ## 15. Bug rescue
 
