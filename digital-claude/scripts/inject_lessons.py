@@ -8,12 +8,46 @@ Scopo: la skill usa automaticamente le lezioni passate, decision snapshot, e fee
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+_CACHE_FILE = Path.home() / ".claude" / "skill-inject-cache.json"
+_CACHE_TTL_H = 4  # skip re-injection se output identico nelle ultime 4 ore
+
+
+def _load_cache() -> dict:
+    try:
+        return json.loads(_CACHE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_cache(digest: str) -> None:
+    try:
+        _CACHE_FILE.write_text(
+            json.dumps({"digest": digest, "ts": datetime.now(timezone.utc).isoformat()},
+                       ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+
+
+def _cache_hit(digest: str) -> bool:
+    c = _load_cache()
+    if c.get("digest") != digest:
+        return False
+    try:
+        age_h = (datetime.now(timezone.utc) -
+                 datetime.fromisoformat(c["ts"])).total_seconds() / 3600
+        return age_h < _CACHE_TTL_H
+    except Exception:
+        return False
 
 
 BASE = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
@@ -167,7 +201,12 @@ def main() -> None:
             lines.append(drain_summary)
 
     if lines:
-        print("\n".join(lines))
+        output = "\n".join(lines)
+        digest = hashlib.md5(output.encode()).hexdigest()[:16]
+        if _cache_hit(digest):
+            return  # dati invariati nelle ultime 4h — skip injection
+        _save_cache(digest)
+        print(output)
 
 
 if __name__ == "__main__":
