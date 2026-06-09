@@ -1595,6 +1595,17 @@ def promote_acknowledged_feedback(project_path: str) -> dict:
     return result
 
 
+def _run_skill_assay_safe(project_path: str) -> dict:
+    """Wrapper isolato per run_skill_assay: importa skill_assay.py a runtime."""
+    try:
+        from skill_assay import run_skill_assay  # type: ignore
+        return run_skill_assay(project_path)
+    except ImportError:
+        return {"name": "skill_assay", "status": "skip", "detail": "skill_assay.py non trovato"}
+    except Exception as e:
+        return {"name": "skill_assay", "status": "error", "detail": str(e)}
+
+
 def court_review_lesson_promotion(project_path: str) -> dict:
     """Corte Suprema: delibera sulla promozione automatica di lezioni ad alta ricorrenza.
 
@@ -1776,6 +1787,7 @@ def main() -> int:
         lambda: detect_session_anomalies(project_path),
         lambda: discover_cost_thresholds(project_path),
         lambda: detect_dead_rules(project_path),
+        lambda: _run_skill_assay_safe(project_path),
         lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: run_ideation(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ideation", "status": "skip", "detail": "autopilot disabilitato"},
         lambda: court_review_lesson_promotion(project_path) if _autopilot_enabled(dashboard_url) else {"name": "court_review_lesson_promotion", "status": "skip", "detail": "autopilot disabilitato"},
