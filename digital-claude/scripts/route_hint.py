@@ -52,9 +52,17 @@ _ROUTING = {
     "ops":                 ("ops-runner",       "haiku",  50_000),
     "miglioramento_skill": ("code-implementer", "sonnet", 200_000),
     "nuova_app":           ("architect",        "opus",   600_000),
-    "audit":               ("code-reviewer",    "opus",   400_000),
+    "audit":               ("code-reviewer",    "sonnet", 400_000),
     "bug_rescue":          ("code-debugger",    "sonnet", 250_000),
     "modifica":            ("code-implementer", "sonnet", 200_000),
+}
+
+# Rapporto di costo rispetto al modello di sessione (approssimato).
+# Mostrato nel routing-hint per rendere la scelta visceralmente visibile.
+_COST_LABEL = {
+    "haiku":  "~15× più economico di sonnet",
+    "sonnet": "modello di default",
+    "opus":   "~5× più costoso di sonnet — solo se strettamente necessario",
 }
 
 
@@ -82,6 +90,8 @@ def route(prompt: str) -> dict:
             "subagent": "Explore",
             "model": "haiku",
             "budget": 30_000,
+            "cost_label": _COST_LABEL["haiku"],
+            "spawn_hint": 'Agent(subagent_type="Explore", prompt="...")',
             "reason": reason,
         }
     subagent, model, budget = _ROUTING.get(cat, _ROUTING["modifica"])
@@ -91,6 +101,8 @@ def route(prompt: str) -> dict:
         "model": model,
         "budget": budget,
         "reason": reason,
+        "cost_label": _COST_LABEL.get(model, ""),
+        "spawn_hint": f'Agent(subagent_type="{subagent}", prompt="...")',
     }
 
 
@@ -128,15 +140,20 @@ def main() -> int:
             os.chmod(tmp_path, 0o600)
         except OSError:
             pass
-    print(
-        "<routing-hint>\n"
-        f"classified: {r['category']}\n"
-        f"suggested_subagent: {r['subagent']}\n"
-        f"model: {r['model']}\n"
-        f"budget_max: {r['budget']}\n"
-        f"reason: {r['reason']}\n"
-        "</routing-hint>"
-    )
+    lines = [
+        "<routing-hint>",
+        f"classified: {r['category']}",
+        f"suggested_subagent: {r['subagent']}",
+        f"model: {r['model']}",
+        f"budget_max: {r['budget']}",
+        f"reason: {r['reason']}",
+    ]
+    if r.get("cost_label"):
+        lines.append(f"cost: {r['cost_label']}")
+    if r.get("spawn_hint"):
+        lines.append(f"spawn: {r['spawn_hint']}")
+    lines.append("</routing-hint>")
+    print("\n".join(lines))
     return 0
 
 
