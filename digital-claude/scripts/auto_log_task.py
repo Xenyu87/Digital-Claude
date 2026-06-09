@@ -417,11 +417,12 @@ def main() -> int:
         elif any(k in files_lower for k in ("/etc/systemd/", ".service", "crontab", "/ops/", "nginx", "/etc/cron")):
             category = "ops"
 
-    # status: 'partial' se ci sono errori unresolved (heuristic: >2 tool errors o
-    # >20% delle tool call hanno fallito). Altrimenti 'ok'.
+    # status: 'partial' solo se gli errori tool sono chiaramente anomali.
+    # Soglia alzata: 3 errori su sessioni complesse sono normali (file non trovato,
+    # bash non-zero, retry). Richiede ≥6 errori E tasso >35%.
     calls = meta["tool_calls_count"] or 0
     errs = meta["tool_errors_count"] or 0
-    if errs >= 3 or (calls > 0 and errs / calls > 0.20):
+    if errs >= 6 and (calls > 0 and errs / calls > 0.35):
         status = "partial"
     else:
         status = "ok"
