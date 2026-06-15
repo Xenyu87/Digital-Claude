@@ -92,7 +92,7 @@ Default Economical, automatic escalation on risk gates. User can force. Category
 
 **Main agent**: chosen by user, not changeable by skill. If risk rises (auth, migrations), suggest changing model with `/model` (press `d` in picker to make it default in session), don't assume.
 
-**Fallback model anti-blocco** (CLI ≥2.1.166): `fallbackModel` in settings o `--fallback-model` (fino a 3) fa degradare in automatico se il modello scelto non è disponibile, invece di fallire/loopare. Per l'escalation anti-loop (§15): suggerisci all'utente di configurare `fallbackModel: ["opus","sonnet"]` così un main agent bloccato scala da solo senza intervento manuale — risponde all'incidente submi/xmanager (Sonnet in loop, Opus mai raggiunto).
+**Fallback model per overload/indisponibilità** (CLI ≥2.1.166): flag di avvio `--fallback-model <a,b>` (lista comma-separated, riprova il primario all'inizio). NON è una chiave di `settings.json` (lo schema 2.1.x non la accetta): per renderlo "default" serve un alias di shell, es. `alias claude='claude --fallback-model claude-opus-4-8,claude-sonnet-4-6'`. Attenzione: scatta solo su modello *overloaded/non disponibile*, NON su risposte sbagliate in loop — il caso submi/xmanager resta coperto dall'escalation manuale di §15 (`/model opus`), non da questo flag.
 
 **Sub-agent (routing by sub-task category)**: automatically sets `model` on `Agent`:
 
