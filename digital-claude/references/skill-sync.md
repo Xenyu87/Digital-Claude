@@ -41,6 +41,7 @@ Quando una modifica fatta in versione globale deve arrivare al progetto (o vicev
 2. Sync automatico: `python scripts/sync_skill.py` copia `SKILL.md`, `references/`, `assets/`, `scripts/` verso `~/.claude/skills/digital-claude/`. Usa `--dry-run` per anteprima e `--dest <path>` per destinazioni custom.
 3. Esegui validator in destinazione.
 4. Aggiorna `improvement-log.md` solo nella canonica.
+5. Ricarica la skill senza riavviare la sessione: comando `/reload-skills` (CLI ≥2.1.152) ri-scansiona le cartelle skill. In automatico un hook SessionStart può restituire `reloadSkills: true`. Senza questo passo la sessione corrente usa ancora la versione pre-sync.
 
 ## Anti-pattern
 

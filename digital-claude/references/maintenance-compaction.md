@@ -45,6 +45,11 @@ Per sessioni agentic lunghe con molte tool call (file read, search, screenshot):
 - **Come attivare**: parametro nella chiamata SDK (vedi docs Anthropic `context-editing`)
 - **Quando preferirla alla compaction manuale**: sessioni pure-API o script automatizzati (drain, schedule); per sessioni Claude Code interattive, la compaction automatica del runtime già gestisce questo
 
+## Troubleshooting CLI (skill/hook/plugin che si comportano male)
+
+- **`--safe-mode`** (CLI ≥2.1.169): avvia Claude Code disabilitando CLAUDE.md, plugin, skill, hook e MCP. Usalo per isolare la causa quando la skill, un hook (es. `delegation_gate.py`) o un plugin (es. `security-guidance`) sembra rompere il flusso: se il problema sparisce in safe-mode, è una customizzazione.
+- **Stop-hook che chiude il turno da solo**: dopo 8 blocchi consecutivi di hook il turno termina con warning (CLI ≥2.1.147). Il plugin `security-guidance` usa Stop hook `asyncRewake`: se vedi un turno chiudersi inatteso dopo molte review, è il cap. Regolabile con `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
+
 ## Anti-pattern
 
 - compaction durante una feature attiva (rischia di perdere stato)
