@@ -285,6 +285,8 @@ Sub-agent only if risk or time saved justifies token cost. **Never parallelize b
 
 **Anti-pattern spawn eccessivo** (Anthropic warning): Claude Opus 4.x tende a spawnare subagenti anche per task sequenziali o edit singolo file. Gate 1-5 sono il freno — rispettarli anche quando sembra "utile" delegare.
 
+**Nested subagents** (Claude Code ≥2.1.172, depth ≤5): un subagente con tool `Agent` può spawnare a sua volta subagenti. Ogni livello moltiplica i token ~7×/ramo — usa solo per pattern già previsti (es. `mar-reviewer` con 3 reviewer + aggregatore), default depth 1.
+
 In Claude Code: tool `Agent` with `subagent_type` — list depends on environment, see `references/specialist-agents.md`. Self-contained briefing: objective, minimal context, format. Never "you decide".
 
 **Escalation subagente fallito**: se un subagente fallisce o restituisce output insufficiente → 1° retry con contesto aggiuntivo; se fallisce ancora → escalation al modello superiore (haiku→sonnet→opus); se fallisce a opus → stop e chiedi all'utente.
