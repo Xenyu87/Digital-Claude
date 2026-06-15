@@ -127,10 +127,45 @@ _OPS_RE       = re.compile(r"\b(systemd|journalctl|ssh|lxc|porta|servizio|syncth
 _AUDIT_RE     = re.compile(r"\b(rivedi|review|controlla|sicurezza|audit|verifica)\b", re.I)
 _BUG_RE       = re.compile(r"\b(non funziona|errore|crash|bug|fix|broken|rotto|fallisce)\b", re.I)
 _NEW_APP_RE   = re.compile(r"\b(crea|scaffold|parti da zero|nuova app|nuovo progetto|init)\b", re.I)
-_SKILL_RE     = re.compile(r"automiglior|\bmigliorati\b|(aggiorna|modifica|migliora) la skill", re.I)
+_SKILL_RE     = re.compile(r"automiglior|\bmigliorati\b|(aggiorna|modifica|migliora) la skill|(check|controlla|verifica)[^.\n]{0,40}\bskill\b", re.I)
 # Categoria "domanda": prompt corti, interrogativi, senza imperativi forti
 _INTERR_RE    = re.compile(r"^(cos[aà'’]|come|perch[éè]|quando|dove|chi|quale|quanto|spiega|dimmi|raccont|mostr[ai]?\b)", re.I)
 _IMPERATIVE_RE = re.compile(r"\b(aggiungi|modifica|crea|implementa|scrivi|aggiorna|sposta|togli|rimuovi|cambia|refactor|integra|installa)\b", re.I)
+
+
+_SKILL_PATH_RE = re.compile(r"\.claude/skills/digital-claude", re.I)
+
+
+def _touches_skill_files(jsonl_path: Path) -> bool:
+    """True se la sessione ha letto/modificato file della skill digital-claude.
+
+    Scansiona i tool_use (Read/Edit/Write/Glob/Grep) per path che contengano
+    ".claude/skills/digital-claude". Usato come segnale forte indipendente
+    dal testo del primo prompt.
+    """
+    try:
+        for line in jsonl_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if "digital-claude" not in line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            content = entry.get("message", {}).get("content")
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if not isinstance(block, dict) or block.get("type") != "tool_use":
+                    continue
+                if block.get("name") not in ("Read", "Edit", "Write", "Glob", "Grep"):
+                    continue
+                inp = block.get("input") or {}
+                path = str(inp.get("file_path") or inp.get("path") or inp.get("pattern") or "")
+                if _SKILL_PATH_RE.search(path):
+                    return True
+    except Exception:
+        pass
+    return False
 
 
 def _detect_category(jsonl_path: Path) -> str:
@@ -139,7 +174,13 @@ def _detect_category(jsonl_path: Path) -> str:
     Ordine di priorita': ops > bug > audit > new_app > skill > domanda > modifica.
     "domanda" intercetta prompt corti/interrogativi senza verbi imperativi
     (es. "cosa fa X", "come funziona Y", "dimmi Z") che prima cadevano in "modifica".
+
+    Override: se la sessione ha letto/modificato file sotto
+    ~/.claude/skills/digital-claude/, e l'esito non e' ops/bug/audit/nuova_app,
+    la categoria diventa "miglioramento_skill" anche se il primo prompt
+    non matcha _SKILL_RE testualmente.
     """
+    touches_skill = _touches_skill_files(jsonl_path)
     try:
         for line in jsonl_path.read_text(encoding="utf-8", errors="ignore").splitlines():
             try:
@@ -162,6 +203,7 @@ def _detect_category(jsonl_path: Path) -> str:
             if _AUDIT_RE.search(content):   return "audit"
             if _NEW_APP_RE.search(content): return "nuova_app"
             if _SKILL_RE.search(content):   return "miglioramento_skill"
+            if touches_skill:                return "miglioramento_skill"
             # Distinzione domanda vs modifica:
             # - corto (<120 char) e interrogativo e SENZA verbi imperativi -> domanda
             # - finisce con ? e nessun imperativo -> domanda
@@ -175,7 +217,7 @@ def _detect_category(jsonl_path: Path) -> str:
             return "modifica"
     except Exception:
         pass
-    return "modifica"
+    return "miglioramento_skill" if touches_skill else "modifica"
 
 
 def main() -> int:

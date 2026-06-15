@@ -22,13 +22,13 @@ In these cases, respond directly without protocol.
 
 ## 0. Fast path (small modifications)
 
-If the task is a local change (1-3 known files, clear scope, no auth/data/migrations/deploy):
+If the task is a local change (≤5 known files, clear scope, no auth/data/migrations/deploy):
 
 - do not open `references/`, do not open `recipes/`, do not spawn `Agent`
 - just modify
 - output in 2 lines: `Done: ... / Verify: ...`
 
-All remaining sections (1-19) are for tasks that do NOT fall here. When in doubt, start with fast path; escalate to full protocol only if you discover greater scope or risk.
+All remaining sections (1-20) are for tasks that do NOT fall here. When in doubt, start with fast path; escalate to full protocol only if you discover greater scope or risk.
 
 ## 1. Task classification
 
@@ -63,14 +63,16 @@ Even without explicit declaration, classify from the main verb and repo state. D
 ## 2. Budget mode
 
 <!-- thresholds-auto -->
-## Auto-Discovered Cost Thresholds (updated 2026-06-09, n=157 sessioni)
+## Auto-Discovered Cost Thresholds (updated 2026-06-12, n=225 sessioni)
 | categoria | warn (p75) | ceiling (p90) | n |
 |---|---|---|---|
-| modifica | $58.91 | $77.36 | 130 |
+| modifica | $51.00 | $75.70 | 194 |
+| ops | $0.29 | $0.89 | 16 |
 | domanda | $2.39 | $9.10 | 15 |
-| ops | $0.21 | $0.36 | 12 |
 Superare ceiling = sessione in overrun. Chiudi e apri nuovo task.
 <!-- /thresholds-auto -->
+
+Nota: questa tabella ($, auto-aggiornata da dati osservati) copre solo le 3 categorie con dati sufficienti. §18 usa cap in **token** per le 6 categorie di §1 — sono limiti diversi (monitoraggio costo vs hard cap pre-task), non in conflitto.
 
 - **Economical** (default): minimal reads, short output
 - **Balanced**: targeted reads on impacted files
@@ -80,7 +82,7 @@ Default Economical, automatic escalation on risk gates. User can force. Category
 
 ## 3. Model selection
 
-Smallest model capable of closing the task (`haiku` < `sonnet` < `opus` by cost).
+**Default: Haiku.** Scala solo su fallimento esplicito o categoria complessa. Non "il più piccolo capace" come valutazione — Haiku diretto, escalation su evidenza.
 
 **Baseline 2026-06**: Haiku 4.5 · Sonnet 4.6 · Opus 4.8. Escalation rules refer to family, not minor version.
 
@@ -101,8 +103,6 @@ Smallest model capable of closing the task (`haiku` < `sonnet` < `opus` by cost)
 | architectural design, stack choice, migration plan | `opus` | only if main agent is already Opus or Maximum Safety gate |
 | final synthesis / pre-commit review of long plan | `opus` | when retry cost > Opus cost |
 
-Scoring heuristic (choose between nearby options): `quality × 1 / log(1 + cost_ratio)`. Favors cheap-and-good over expensive-and-marginally-better.
-
 Default per main category (combined with budget §2):
 
 - **ops** + Economical → Haiku for main agent suggested (commands and logs)
@@ -112,31 +112,18 @@ Default per main category (combined with budget §2):
 - **bug rescue** → Sonnet; Haiku for reproduction/logs; Opus only if cause unclear after 2 attempts
 - **skill improvement** → Sonnet; Opus for section redesign, never for small edits
 
-When in doubt choose the smallest. Single escalation per turn: if Haiku fails, escalate to Sonnet with context of failure, don't restart from scratch. Extended table for specialist agent in `references/specialist-agents.md`.
+Single escalation per turn: if Haiku fails, escalate to Sonnet with context of failure, don't restart from scratch — coerente con "Haiku default" sopra.
 
-**Local subagent catalog** (in `~/.claude/agents/`, each with explicit `model:`):
+**Core subagent (uso frequente)** — catalogo completo (27 agenti) in `references/specialist-agents.md`:
 
 | Subagent | Model | Use for |
 |---|---|---|
 | `Explore` (built-in) | haiku | grep/glob, "where is X", fast file read on known paths |
 | `ops-runner` | haiku | systemctl/journalctl/cron/ss/df: quick commands, no decisions |
-| `homelab-admin` | sonnet | sysadmin decisions: configure services, LXC, network, Proxmox, port allocation, deploy workflow |
-| `security-hardener` | sonnet | server/LXC security audit: SSH, firewall, ports, permissions — read-only and recommendations |
-| `pentest-agent` | haiku | legge report pentest homelab + può triggerare scan on-demand; usa nmap/nikto/nuclei/shodan su LXC dev+stable+IP pubblico |
-| `code-security-scanner` | sonnet | OWASP-aware app code scan: injection, XSS, auth, secrets, misconfig — HIGH confidence only, pre-deploy |
-| `secrets-scanner` | haiku | hardcoded API keys, tokens, passwords, .env not in .gitignore — fast, pre-commit/pre-deploy |
-| `bypass-guardian` | sonnet | pre-execution review when bypass-permissions is ON and risky/irreversible actions present |
-| `dependency-checker` | haiku | npm/pip audit: obsolete versions, known CVEs, unmaintained packages — read-only |
-| `db-migrator` | sonnet | safe DB migrations with rollback: ALTER/DROP/ADD, SQLite↔Postgres conversions, initial schema |
-| `disaster-recovery` | sonnet | environment recovery after catastrophic loss: LXC destroyed, config lost, services missing |
 | `code-implementer` | sonnet | edit 1-5 files with decided scope, local refactor, wire-up |
-| `qa-tester` | sonnet | test writing/run, regression testing on bugs |
 | `code-debugger` | sonnet | bug rescue: reproduce → isolate → fix → verify |
-| `doc-writer` | sonnet | AI_*.md / README / handoff after non-trivial modifications |
-| `code-reviewer` | sonnet | pre-commit review of non-trivial diff (independent judgment); opus solo se risk gate attivo |
-| `mar-reviewer` | opus | cross-module audit + pre-commit review of non-trivial diff (3 reviewers + aggregator) |
+| `code-reviewer` / `mar-reviewer` | sonnet / opus | pre-commit review: diff semplice → code-reviewer; cross-module o risk gate → mar-reviewer (3 reviewers) |
 | `architect` | opus | new feature, stack choice, data model design |
-| `scope-verifier` | sonnet | continuous monitor if work aligns with brief (v1.1.0) |
 
 **Flags for dispatched subagent**: subagents accept `--model`, `--permission-mode` for one-off override. Fast mode uses Opus 4.8 by default (2.5x faster output, 3x cheaper than previous fast mode). Practical examples in `references/specialist-agents.md`.
 
@@ -145,7 +132,7 @@ When in doubt choose the smallest. Single escalation per turn: if Haiku fails, e
 **Budget-Aware Override (v1.1.0)**: if `tokens_residual < 20k`, ignore task-type choice and force Haiku. Script: `scripts/budget_aware_router.py`. Check before starting big task.
 
 **Delegation rule** (anti-pattern: "I'll do it with Opus because I have it"):
-- Code exploration/grep/find on >2 files → `Explore`. Never read 10 files in main session.
+- Code exploration senza target noto, >2 round esplorativi → `Explore`. Non per grep singolo su path noto.
 - Simple ops command (status/restart/tail) → `ops-runner`. Never bash inline in main session if output needs parsing.
 - Edit with decided scope → `code-implementer`. Main session should NOT edit production code: plan + delegate.
 - Non-trivial bug → `code-debugger`. Main session should NOT debug by feel.
@@ -168,13 +155,13 @@ budget_max: <token>
 
 ### Auto-delegation gate (enforcement)
 
-Four gates that main agent must respect before executing inline. Bypassable only with explicit override (see below).
+Six gates that main agent must respect before executing inline. Bypassable only with explicit override (see below).
 
-**Gate 1 — routing-hint has priority**: if prompt contains `<routing-hint>` with non-empty `suggested_subagent` and `model: sonnet|haiku`, main agent does NOT execute inline — even if already Opus. Immediately spawn `Agent(subagent_type=<suggested>, model=<suggested_model>)`. Exception: trivial task (<2 files, <1 turn, clear fast path).
+**Gate 1 — routing-hint has priority**: if prompt contains `<routing-hint>` with non-empty `suggested_subagent` and `model: sonnet|haiku`, main agent does NOT execute inline — even if already Opus. Immediately spawn `Agent(subagent_type=<suggested>, model=<suggested_model>)`. Exception: trivial task (<2 files, <1 turn, clear fast path). **Se routing-hint assente** → applica default per categoria dalla tabella §3.
 
 **Gate 2 — Opus ceiling for modify category**: if task requires edits on >3 files, delegation to `code-implementer` (sonnet) is mandatory. Main agent only does planning + result verification; does not directly touch production files.
 
-**Gate 3 — Haiku for exploration**: pattern "grep/find on >2 files", "read README/structure", "where is X" → `Explore` (haiku) always. Main agent does not execute grep inline on >2 files.
+**Gate 3 — Haiku for exploration**: ricerca senza target noto, >2 round esplorativi, "where is X", "read README/structure" → `Explore` (haiku). Non scatta su grep singolo con path noto — solo su esplorazione iterativa senza destinazione chiara.
 
 **Gate 4 — ops + Economical**: ops category + Economical budget → `ops-runner` (haiku) for systemctl/journalctl/cron/ss/df commands. No bash inline if output needs parsing.
 
@@ -248,20 +235,24 @@ For non-trivial tasks: budget+model internally → minimal context → mini-plan
 
 After each non-trivial file edit: update `AI_HANDOFF.md` section "File toccati in questo task" with `path → one-line memo` (per-file working memory, last line = last touched file). See `references/session-memory.md`.
 
+**Context rot** (Anthropic, 2026): la precisione cala all'aumentare dei token nel context. Se `turns > 8` oppure `token_burn > 120k`: prima scrivi stato corrente in `AI_HANDOFF.md`, poi suggerisci compaction ("apriamo un nuovo task?"). Lo stato va salvato **prima** della compaction, non dopo.
+
 ### 6.5 In-Flight Scope Drift Check
 
-Every 3 turns (or on trigger: files +3, token burn >150% expected, category shift): calculate drift score between original brief and completed work.
+Solo su trigger (non ogni 3 turni): utente cambia obiettivo dichiarato, oppure prima di una delega a subagente. Calcola drift score tra brief originale e lavoro completato.
 
 **Thresholds**:
-- 0.0–0.3: ✅ ON_TRACK continue
-- 0.3–0.6: ⚠️ DRIFT_WARNING → log + ask user confirmation before proceeding
-- >0.6: 🛑 HARD_DIVERGENCE → offer "should we stop? can I open task2 for the rest?"
+- 0.0–0.3: ✅ ON_TRACK — continua
+- 0.3–0.6: ⚠️ DRIFT_WARNING → riallinea il piano in una riga, chiedi conferma utente prima di procedere
+- >0.6: 🛑 HARD_DIVERGENCE → stop immediato, mostra divergenza all'utente, attendi conferma esplicita prima di qualsiasi azione
 
 **Script**: `scripts/scope_drift_detector.py` (calculates score with file divergence heuristic, category shift, token burn, semantic divergence).
 
 **Agent monitor** (v1.1.0): for non-trivial task (>2h, >5 files), call `scope-verifier` agent (Sonnet) every 3 turns. Provides independent verdict: ON_TRACK, DRIFT, DIVERGE with score and suggestion. For small tasks, inline drift detector sufficient.
 
 **Log**: add to coordination-log the `drift_check` section with score, severity, reason. See `references/in-flight-scope-monitor.md`.
+
+**Store plan at 200k**: quando il token count si avvicina a 200k, scrivere il piano corrente in `AI_HANDOFF.md` prima di delegare ai subagenti — garantisce coerenza su task lunghi (pattern Anthropic multi-agent research, 2026).
 
 ## 7. Output economy
 
@@ -292,7 +283,13 @@ Sub-agent only if risk or time saved justifies token cost. **Never parallelize b
 
 **Activate** for: wide cross-file search, second opinion, independent slice, wide audit. **DO NOT activate** for: <3 files, local fix, copy change, single-fact lookup checkable by main.
 
+**Anti-pattern spawn eccessivo** (Anthropic warning): Claude Opus 4.x tende a spawnare subagenti anche per task sequenziali o edit singolo file. Gate 1-5 sono il freno — rispettarli anche quando sembra "utile" delegare.
+
 In Claude Code: tool `Agent` with `subagent_type` — list depends on environment, see `references/specialist-agents.md`. Self-contained briefing: objective, minimal context, format. Never "you decide".
+
+**Escalation subagente fallito**: se un subagente fallisce o restituisce output insufficiente → 1° retry con contesto aggiuntivo; se fallisce ancora → escalation al modello superiore (haiku→sonnet→opus); se fallisce a opus → stop e chiedi all'utente.
+
+**Return format obbligatorio per subagenti**: max 10-15 righe. Struttura: file toccati · esito · prossimo passo. Dettagli verbosi → scrivi su file e restituisci solo il path. Un subagente che torna 50 file con snippet brucia tutto il risparmio della delega.
 
 Profiles: `references/role-profiles.md`, `references/specialist-agents.md`, `references/qa-test-agent.md`.
 
@@ -315,6 +312,7 @@ When briefing `code-implementer` or `code-debugger` for functions >20 lines, SQL
 - Tipi: confronti cross-layer usano stesso tipo (cast esplicito se necessario)?
 - SQL: ogni subquery correlata su tutti i campi di raggruppamento, mai interpolazione diretta di input utente
 - Leggere `AI_MISTAKE_REGISTER.md` se il task tocca aree a rischio noto nel progetto
+- Tool descriptions: anche piccole precisazioni alle descrizioni degli strumenti producono miglioramenti drammatici (Anthropic SWE-bench, 2026) — curare ogni parola nel `description:` quando si definisce un nuovo tool o MCP.
 
 **Briefing compatto per subagenti**: usare `AI_SCORE.md` (skill dir) come contesto comportamentale invece di incollare SKILL.md intero. Risparmio ~2500 token per delega.
 
@@ -361,14 +359,22 @@ Files `AI_*.md`, `AGENTS.md`, `CLAUDE.md` ready in `assets/templates/`. Usage ru
 ## 14. Audit
 
 Read-only, no modifications without OK. Output: findings with severity, file:line, proposed fix. No narration.
+- [2026-06-09] (155×) nuovo enum → allineare DB, label UI, colori, regex, docs prima di chiudere.
+- [2026-06-09] (8×) commit atomici per feature riducono rischio rollback.
 
-- [2026-06-09] (auto-promosso, 155×) quando si aggiunge un nuovo enum al sistema (categoria/stato), allineare subito tutti i punti — DB, label UI, colori, regex, docs — prima di chiudere il task.
-
-- [2026-06-09] (auto-promosso, 8×) Spezzare in commit atomici per feature (scaffolding base → chat → jobs → terminal → sync) riduce il rischio di rollback e semplifica la review.
+- [2026-06-10] (auto-promosso, 8×) Spezzare in commit atomici per feature (scaffolding base → chat → jobs → terminal → sync) riduce il rischio di rollback e semplifica la review.
 
 ## 15. Bug rescue
 
 Reproduce with minimal reads → propose fix if cause non-obvious → update `AI_AGENT_LOG.md` if recurring pattern.
+
+**State cause before fixing**: per ogni fix non banale (causa non autoevidente, es. non un typo/import mancante), scrivi una riga `Hypothesis: <X causa <sintomo>>` prima di editare. Niente ipotesi = niente fix.
+
+**Same-hypothesis guard**: prima di un 2° tentativo, verifica se punta alla stessa hypothesis del fix fallito. Se sì e non è stata falsificata da nuova evidenza (log/assert) → STOP, non applicarlo: falsifica l'ipotesi o cambiane una. Conta come tentativo verso l'escalation sotto.
+
+**Error delta check**: dopo ogni tentativo, confronta l'errore prima/dopo (messaggio, riga, stack frame). Identico → il fix ha mancato il bersaglio, ri-localizza la causa. Diverso (anche se ancora fallisce) → progresso, continua sulla nuova pista invece di tornare alla precedente.
+
+**Escalation modello main agent dopo fix falliti**: se 2 fix consecutivi non risolvono lo stesso bug riportato dall'utente, fermati prima di un terzo tentativo. Riassumi in 1-2 righe i tentativi falliti e suggerisci esplicitamente `/model opus` per il main agent (vedi §3 "Main agent: chosen by user, not changeable by skill"). Non riprovare con lo stesso modello su un loop.
 
 ## 16. Skill improvement
 

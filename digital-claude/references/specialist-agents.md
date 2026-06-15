@@ -2,22 +2,42 @@
 
 Quando e come delegare a un sotto-agente in Claude Code.
 
+## Catalogo completo locale (~/.claude/agents/, 27 agenti)
+
+| Subagent | Model | Use for |
+|---|---|---|
+| `Explore` (built-in) | haiku | grep/glob, "where is X", fast file read |
+| `ops-runner` | haiku | systemctl/journalctl/cron/ss/df, no decisions |
+| `dependency-checker` | haiku | npm/pip audit: CVE, obsolete, unmaintained — read-only |
+| `secrets-scanner` | haiku | hardcoded keys/tokens/.env — pre-commit |
+| `pentest-agent` | haiku | scan esterno (nmap/nikto/nuclei) homelab |
+| `drain-analyst` | haiku | analisi log overnight drain |
+| `session-analyst` | haiku | metriche sessioni coordination-log |
+| `classifier-tuner` | haiku | tuning regole classificazione log |
+| `homelab-admin` | sonnet | config LXC/Proxmox/network/deploy workflow |
+| `homelab-syncer` | sonnet | sync note homelab → HOMELAB.md |
+| `security-hardener` | sonnet | infra security SSH/firewall/LXC — read-only |
+| `code-security-scanner` | sonnet | OWASP scan + secrets + pentest report — pre-deploy |
+| `bypass-guardian` | sonnet | review pre-azione rischiosa in bypass-permissions |
+| `db-migrator` | sonnet | migrazioni SQL con rollback |
+| `disaster-recovery` | sonnet | recovery dopo perdita ambiente |
+| `code-implementer` | sonnet | edit 1-5 file scope deciso |
+| `qa-tester` | sonnet | scrittura/esecuzione test, regressioni |
+| `code-debugger` | sonnet | bug rescue: riproduci → isola → fix → verifica |
+| `doc-writer` | sonnet | AI_*.md / README / handoff |
+| `code-reviewer` | sonnet | review pre-commit diff singolo |
+| `handoff-syncer` | sonnet | sync AI_HANDOFF.md / AI_CONTEXT.md |
+| `intent-checker` | sonnet | verifica allineamento brief↔output parziale |
+| `release-manager` | sonnet | readiness check pre-release |
+| `cost-governor` | sonnet | audit budget token/costo sessione |
+| `preflight-validator` | sonnet/opus | validazione piano prima di esecuzione rischiosa |
+| `guida` | sonnet | orchestrazione multi-dominio per utente non tecnico |
+| `architect` | opus | new feature, stack choice, data model |
+| `mar-reviewer` | opus | cross-module audit, 3 reviewer + aggregatore |
+
 ## Strumento
 
-In Claude Code la delega avviene tramite il tool `Agent`. I `subagent_type` tipicamente disponibili nelle installazioni Claude Code recenti:
-
-- `Explore` — ricerca read-only nel codice
-- `Plan` — disegno di un piano di implementazione
-- `code-reviewer` — review indipendente di un diff
-- `general-purpose` — ricerca multi-step e task open-ended
-- `doc-writer` — aggiornare/creare docs e commenti per logica non ovvia
-- `architect` — high-level design, scelte di libreria, struttura file
-- `claude-code-guide` — domande su Claude Code/SDK/API (skill, hooks, MCP)
-- `statusline-setup` — configurazione status line dell'utente
-- `claude` — fallback generico quando nessun nome match
-- `qa-tester` — scrive ed esegue test (pytest/Vitest), test di regressione post bugfix. Custom registrato in `~/.claude/agents/qa-tester.md`.
-
-I nomi effettivi dipendono dall'ambiente: se non sei sicuro che un subagent type esista, non inventarlo. Default: `general-purpose`.
+In Claude Code la delega avviene tramite il tool `Agent`. Oltre al catalogo locale sopra, built-in disponibili: `Plan`, `general-purpose` (fallback default), `claude-code-guide`, `statusline-setup`, `claude` (fallback generico). Se non sei sicuro che un subagent type esista, non inventarlo — usa `general-purpose`.
 
 ## Quando attivare
 
@@ -47,15 +67,7 @@ Niente "fai del tuo meglio". Niente "in base ai risultati, implementa X" — la 
 
 ## Modello del subagent
 
-Imposta sempre il parametro `model` del tool `Agent` in base al tipo di task. Tabella decisionale (in dubbio scegli il più piccolo):
-
-| Tipo di task del sub-agent | `model` |
-| --- | --- |
-| ricerca cross-file (`Explore`), summary, riformulazione, formato, lookup | `haiku` |
-| code review (`code-reviewer`), implementazione singolo file, debug 2-3 file, doc-writer | `sonnet` |
-| architettura (`architect`), `Plan` per task ampi, refactor cross-modulo, security/auth, audit ampio, migrazione dati | `opus` |
-
-Se il main agent è già Opus e il sub-task è leggero, `haiku` riduce il costo senza perdere qualità.
+Imposta sempre `model` in base al catalogo sopra. Default Haiku, scala su fallimento (vedi SKILL.md §3). Se il main agent è già Opus e il sub-task è leggero, `haiku` riduce il costo senza perdere qualità.
 
 ## Background vs foreground
 
@@ -96,20 +108,9 @@ Preferisci `mar-reviewer` a `code-reviewer` quando:
 
 ## Dynamic Workflows (Opus 4.8 — research preview)
 
-Tier sopra il parallel swarm per task fuori scala normale:
+Tier sopra il parallel swarm: fino a 1.000 agenti (16 concurrent), multi-giorno, codebase-wide (1k+ file), zero context pollution (script fuori context window) — vs parallel swarm (2-3 agenti, <1 sessione, <5 file).
 
-| Condizione | Parallel swarm | Dynamic Workflows |
-|---|---|---|
-| Agenti paralleli | 2–3 | fino a 1.000 (16 concurrent) |
-| Durata | <1 sessione | multi-giorno |
-| File scope | <5 | codebase-wide (1k+) |
-| Context pollution | sì | no (script fuori context window) |
-
-**Come attivare**: suggerisci all'utente di abilitare **auto mode** in Claude Code o impostare effort `xhigh` (ultracode). Non è un parametro API — Claude scrive autonomamente lo script di orchestrazione. Richiede Claude Code v2.1.154+, piano Max/Team/Enterprise.
-
-**Costo**: token significativamente più alti. Conferma sempre con utente. Quirk noti: early stopping, file deletion aggressiva su ops distruttive.
-
-**Non usare per**: task <20 file, task sequenziali, latency-sensitive, quando parallel swarm (2-3 agenti) è sufficiente.
+**Attivazione**: auto mode o effort `xhigh` (ultracode), non parametro API — Claude scrive lo script di orchestrazione. Richiede Claude Code v2.1.154+, piano Max/Team/Enterprise. Costo alto, conferma sempre con utente. Quirk: early stopping, file deletion aggressiva su ops distruttive. Non usare per: <20 file, task sequenziali, latency-sensitive.
 
 ## Anti-pattern
 

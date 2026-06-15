@@ -1,18 +1,18 @@
 {
-  "updated_at": "2026-06-09",
-  "n_sessions": 157,
+  "updated_at": "2026-06-13",
+  "n_sessions": 225,
   "thresholds": [
     {
       "categoria": "modifica",
-      "warn_p75": 58.91,
-      "ceiling_p90": 77.36,
-      "n": 130
+      "warn_p75": 51.0,
+      "ceiling_p90": 75.7,
+      "n": 194
     },
     {
       "categoria": "ops",
-      "warn_p75": 0.21,
-      "ceiling_p90": 0.36,
-      "n": 12
+      "warn_p75": 0.29,
+      "ceiling_p90": 0.89,
+      "n": 16
     },
     {
       "categoria": "domanda",

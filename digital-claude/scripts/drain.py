@@ -871,8 +871,20 @@ def create_lessons_from_failed_tasks(project_path: str) -> dict:
         result["detail"] = f"fetch tasks fallito: {e}"
         return result
 
+    # Frasi conversazionali (conferma/diniego) senza valore come lezione:
+    # frequenti su task partial di categoria miglioramento_skill, dove il
+    # "summary" è l'ultimo messaggio utente, non una descrizione dell'errore.
+    _CONFIRMATION_RE = re.compile(
+        r"^(ok|si|s[iì]|no|procedi|continua|conferma(to)?|va bene|perfetto|fatto|grazie|bene|d'accordo|esatto)[\s.,!]*$",
+        re.I,
+    )
+
     tasks = data.get("rows", [])
     tasks = [t for t in tasks if (t.get("summary") or "").strip()]
+    tasks = [
+        t for t in tasks
+        if not _CONFIRMATION_RE.match(t["summary"].strip())
+    ]
     if not tasks:
         result["detail"] = "nessun task partial/failed con summary nelle ultime 24h"
         return result
