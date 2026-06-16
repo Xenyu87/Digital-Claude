@@ -5,3 +5,8 @@ __pycache__/
 *.egg-info/
 .env
 .env.local
+
+# File di stato runtime della skill: mutano a ogni sessione (hook) e bloccavano
+# il drain notturno con "working tree modificato, skip". Non vanno versionati.
+digital-claude/reports/offline-queue.jsonl
+digital-claude/reports/circuit-breaker.jsonl
