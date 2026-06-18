@@ -22,8 +22,14 @@ import re
 
 
 def find_memory_dir() -> Path | None:
-    """Ricerca MEMORY.md nella directory corrente o genitore."""
+    """Ricerca MEMORY.md: prima in ~/.claude/projects/<slug>/memory/ (Claude Code standard), poi in <cwd>/memory/."""
     cwd = Path.cwd()
+    # Path canonico Claude Code: ~/.claude/projects/<slug>/memory/
+    slug = re.sub(r"[^a-zA-Z0-9]", "-", str(cwd)).rstrip("-")
+    claude_mem = Path.home() / ".claude" / "projects" / slug / "memory" / "MEMORY.md"
+    if claude_mem.exists():
+        return claude_mem.parent
+    # Fallback legacy: <cwd>/memory/ o <cwd.parent>/memory/
     for attempt in [cwd, cwd.parent]:
         mem_path = attempt / "memory" / "MEMORY.md"
         if mem_path.exists():
