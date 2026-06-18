@@ -1791,31 +1791,36 @@ def main() -> int:
     sub_results: list[dict] = []
     dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
 
-    # Sub-attivita' 1-5
-    for fn in [
-        lambda: complete_tbd_entries(project_path),
-        lambda: analyze_tool_errors(project_path),
-        lambda: decay_mistake_register(project_path),
-        lambda: sediment_handoff(project_path),
-        lambda: regenerate_score(project_path),
-        lambda: run_compaction(project_path),
-        lambda: validate_skill_drift(project_path),
-        lambda: evaluate_lessons(project_path) if _autopilot_enabled(dashboard_url) else {"name": "evaluate_lessons", "status": "skip", "detail": "autopilot disabilitato"},
-        lambda: create_lessons_from_failed_tasks(project_path) if _autopilot_enabled(dashboard_url) else {"name": "create_lessons_from_failed_tasks", "status": "skip", "detail": "autopilot disabilitato"},
-        lambda: run_ai_news_intake(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ai_news_intake", "status": "skip", "detail": "autopilot disabilitato"},
-        lambda: auto_process_ai_news(project_path) if _autopilot_enabled(dashboard_url) else {"name": "auto_process_ai_news", "status": "skip", "detail": "autopilot disabilitato"},
-        lambda: detect_session_anomalies(project_path),
-        lambda: discover_cost_thresholds(project_path),
-        lambda: detect_dead_rules(project_path),
-        lambda: _run_skill_assay_safe(project_path),
-        lambda: promote_acknowledged_feedback(project_path) if _autopilot_enabled(dashboard_url) else {"name": "promote_acknowledged_feedback", "status": "skip", "detail": "autopilot disabilitato"},
-        lambda: run_ideation(project_path) if _autopilot_enabled(dashboard_url) else {"name": "run_ideation", "status": "skip", "detail": "autopilot disabilitato"},
-        lambda: court_review_lesson_promotion(project_path) if _autopilot_enabled(dashboard_url) else {"name": "court_review_lesson_promotion", "status": "skip", "detail": "autopilot disabilitato"},
-    ]:
+    _auto = _autopilot_enabled(dashboard_url)
+    _skip = lambda name: {"name": name, "status": "skip", "detail": "autopilot disabilitato"}
+
+    # Tuple (nome, callable) — il nome è noto prima dell'esecuzione, così le eccezioni non diventano "unknown"
+    steps: list[tuple[str, object]] = [
+        ("complete_tbd_entries",           lambda: complete_tbd_entries(project_path)),
+        ("analyze_tool_errors",            lambda: analyze_tool_errors(project_path)),
+        ("decay_mistake_register",         lambda: decay_mistake_register(project_path)),
+        ("sediment_handoff",               lambda: sediment_handoff(project_path)),
+        ("regenerate_score",               lambda: regenerate_score(project_path)),
+        ("run_compaction",                 lambda: run_compaction(project_path)),
+        ("validate_skill_drift",           lambda: validate_skill_drift(project_path)),
+        ("evaluate_lessons",               lambda: evaluate_lessons(project_path) if _auto else _skip("evaluate_lessons")),
+        ("create_lessons_from_failed_tasks", lambda: create_lessons_from_failed_tasks(project_path) if _auto else _skip("create_lessons_from_failed_tasks")),
+        ("run_ai_news_intake",             lambda: run_ai_news_intake(project_path) if _auto else _skip("run_ai_news_intake")),
+        ("auto_process_ai_news",           lambda: auto_process_ai_news(project_path) if _auto else _skip("auto_process_ai_news")),
+        ("detect_session_anomalies",       lambda: detect_session_anomalies(project_path)),
+        ("discover_cost_thresholds",       lambda: discover_cost_thresholds(project_path)),
+        ("detect_dead_rules",              lambda: detect_dead_rules(project_path)),
+        ("skill_assay",                    lambda: _run_skill_assay_safe(project_path)),
+        ("promote_acknowledged_feedback",  lambda: promote_acknowledged_feedback(project_path) if _auto else _skip("promote_acknowledged_feedback")),
+        ("run_ideation",                   lambda: run_ideation(project_path) if _auto else _skip("run_ideation")),
+        ("court_review_lesson_promotion",  lambda: court_review_lesson_promotion(project_path) if _auto else _skip("court_review_lesson_promotion")),
+    ]
+
+    for step_name, fn in steps:
         try:
             r = fn()
         except Exception as e:
-            r = {"name": "unknown", "status": "error", "detail": str(e)}
+            r = {"name": step_name, "status": "error", "detail": str(e)}
         sub_results.append(r)
         print(f"drain [{r['name']}]: {r['status']} — {r.get('detail', '')}", file=sys.stderr)
 

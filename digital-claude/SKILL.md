@@ -99,7 +99,7 @@ Default Economical, automatic escalation on risk gates. User can force. Category
 
 ## 3. Model selection
 
-**Default: Haiku.** Scala solo su fallimento esplicito o categoria complessa. Non "il più piccolo capace" come valutazione — Haiku diretto, escalation su evidenza.
+**Default sub-agent: Haiku** per esplorazione/QA/ops. **Main agent: Sonnet** (opusplan se disponibile — Sonnet in esecuzione, Opus automatico in plan mode). Scala sub-agent su fallimento esplicito o categoria complessa.
 
 **Baseline 2026-06**: Haiku 4.5 · Sonnet 4.6 · Opus 4.8. Escalation rules refer to family, not minor version.
 
@@ -382,12 +382,8 @@ Files `AI_*.md`, `AGENTS.md`, `CLAUDE.md` ready in `assets/templates/`. Usage ru
 ## 14. Audit
 
 Read-only, no modifications without OK. Output: findings with severity, file:line, proposed fix. No narration.
-- [2026-06-09] (155×) nuovo enum → allineare DB, label UI, colori, regex, docs prima di chiudere.
-- [2026-06-09] (8×) commit atomici per feature riducono rischio rollback.
-
-- [2026-06-10] (auto-promosso, 8×) Spezzare in commit atomici per feature (scaffolding base → chat → jobs → terminal → sync) riduce il rischio di rollback e semplifica la review.
-
-- [2026-06-17] (auto-promosso, 155×) quando si aggiunge un nuovo enum al sistema (categoria/stato), allineare subito tutti i punti — DB, label UI, colori, regex, docs — prima di chiudere il task.
+- (8×) Spezzare in commit atomici per feature (scaffolding base → chat → jobs → terminal → sync) riduce il rischio di rollback e semplifica la review.
+- (155×) Quando si aggiunge un nuovo enum al sistema (categoria/stato), allineare subito tutti i punti — DB, label UI, colori, regex, docs — prima di chiudere il task. Vedi §1.6 per checklist dettagliata.
 
 ## 15. Bug rescue
 
