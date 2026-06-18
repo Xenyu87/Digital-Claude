@@ -60,15 +60,32 @@ Even without explicit declaration, classify from the main verb and repo state. D
 
 **Preventive cost** (~$0.01) vs. **scope creep risk** (~100k token wastage = ~$5). Favorable trade-off.
 
+### 1.6 Auto-trigger: Enum Sync Checklist
+
+**Attiva se il diff tocca un valore enum-like** (155× occorrenza — la lezione più ricorrente del dataset):
+- `CHECK ... = ANY(ARRAY[...])` in schema.sql
+- `type X = 'a' | 'b' | ...` o `z.enum([...])` in TypeScript
+- Array di opzioni in filter/select/tab UI
+
+**Checklist obbligatoria prima di chiudere il task** (esegui `grep` su ogni punto):
+1. `schema.sql` — CHECK constraint aggiornato
+2. Tipo TS corrispondente — union/enum allineato
+3. Componenti UI — `grep '<valore>'` nei `.tsx` che enumerano le opzioni
+4. Route API — validazioni/switch allineati al nuovo valore
+5. `coordination_log.py` / `route_hint.py` — se tocca categorie o modelli interni
+
+Se manca anche uno solo → non chiudere il task.
+
 ## 2. Budget mode
 
 <!-- thresholds-auto -->
-## Auto-Discovered Cost Thresholds (updated 2026-06-12, n=225 sessioni)
+## Auto-Discovered Cost Thresholds (updated 2026-06-18, n=267 sessioni)
 | categoria | warn (p75) | ceiling (p90) | n |
 |---|---|---|---|
-| modifica | $51.00 | $75.70 | 194 |
-| ops | $0.29 | $0.89 | 16 |
-| domanda | $2.39 | $9.10 | 15 |
+| modifica | $50.70 | $75.31 | 196 |
+| ops | $0.26 | $0.46 | 29 |
+| miglioramento_skill | $83.91 | $130.40 | 23 |
+| domanda | $3.49 | $7.00 | 19 |
 Superare ceiling = sessione in overrun. Chiudi e apri nuovo task.
 <!-- /thresholds-auto -->
 
@@ -269,6 +286,8 @@ Details only for: risks, non-obvious choices, blockers, user actions. When user 
 
 **Activation announcement**: on first turn of non-trivial session (classified category, budget chosen), open with single line like: `🛠 Skill: digital-claude · cat:<category> · budget:<mode>`. Only first line, no extra preambles. Skip to fast path.
 
+**Model mismatch warning**: immediately after the activation line, if main agent is plain `opus` (not `opusplan`) AND category is `modifica`/`domanda`/`ops`, emit: `⚠ Main agent: Opus fisso — considera \`/model opusplan\` (Sonnet in esecuzione, Opus solo in plan mode, ~3× risparmio).` Skip if already on `opusplan`, `sonnet`, or `haiku`. Skip if category is `nuova_app`, `audit`, or `skill_improvement`.
+
 Complete rules: `references/response-economy.md`.
 
 ## 8. Decision gates and risk
@@ -367,6 +386,8 @@ Read-only, no modifications without OK. Output: findings with severity, file:lin
 - [2026-06-09] (8×) commit atomici per feature riducono rischio rollback.
 
 - [2026-06-10] (auto-promosso, 8×) Spezzare in commit atomici per feature (scaffolding base → chat → jobs → terminal → sync) riduce il rischio di rollback e semplifica la review.
+
+- [2026-06-17] (auto-promosso, 155×) quando si aggiunge un nuovo enum al sistema (categoria/stato), allineare subito tutti i punti — DB, label UI, colori, regex, docs — prima di chiudere il task.
 
 ## 15. Bug rescue
 

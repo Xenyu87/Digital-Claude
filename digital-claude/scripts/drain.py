@@ -93,10 +93,16 @@ def complete_tbd_entries(project_path: str) -> dict:
         f"Voci TBD:\n" + "\n".join(tbd_lines) + "\n\n"
         "Per ognuna, scrivi una lezione tecnica breve (1 riga). "
         "Formato: <vecchia riga TBD> --> <lezione>. "
-        "Niente PII, niente nomi propri."
+        "Niente PII, niente nomi propri.\n\n"
+        "IMPORTANTE: rispondi SOLO con le righe nel formato richiesto. "
+        "Non usare tool, non leggere file — tutto il contesto è già nel prompt."
     )
 
-    guarded = run_guarded(prompt, model="haiku", budget_cents=10, max_turns=4, timeout=120)
+    # max_turns=2: consente tool_use + risposta se necessario, senza loop.
+    # Con max_turns=4 il subprocess impiegava 50+ secondi causando timeout a 120s.
+    # La istruzione no-tool nel prompt riduce ulteriormente i turni e il costo.
+    # timeout=90: margine per sistema carico di notte (misurato: ~20s interattivo, ~57s notturno).
+    guarded = run_guarded(prompt, model="haiku", budget_cents=10, max_turns=2, timeout=90)
     if guarded["killed"]:
         notify_breach("resolve_tbd_lessons", 10, guarded.get("cost_usd"), guarded["reason"])
         result["status"] = "error"
@@ -1309,6 +1315,7 @@ def detect_dead_rules(project_path: str) -> dict:
     seen_models: set[str] = set()
     agents_ever_used = False
     n_sessions = 0
+    rows: list[dict] = []
 
     try:
         for line in log_path_coord.read_text(encoding="utf-8").splitlines():
@@ -1319,6 +1326,7 @@ def detect_dead_rules(project_path: str) -> dict:
             except json.JSONDecodeError:
                 continue
             n_sessions += 1
+            rows.append(rec)
             ts_str = rec.get("ts", "")
             try:
                 from datetime import datetime as dt

@@ -17,7 +17,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 _CACHE_FILE = Path.home() / ".claude" / "skill-inject-cache.json"
-_CACHE_TTL_H = 4  # skip re-injection se output identico nelle ultime 4 ore
+_CACHE_TTL_SHORT_MIN = 15  # skip HTTP se sessione recente (es. /clear ravvicinati)
+_CACHE_TTL_LONG_H = 4      # ricarica dati freschi dopo 4h
 
 
 def _load_cache() -> dict:
@@ -27,25 +28,44 @@ def _load_cache() -> dict:
         return {}
 
 
-def _save_cache(digest: str) -> None:
+def _save_cache(digest: str, output: str) -> None:
     try:
         _CACHE_FILE.write_text(
-            json.dumps({"digest": digest, "ts": datetime.now(timezone.utc).isoformat()},
-                       ensure_ascii=False),
+            json.dumps({
+                "digest": digest,
+                "output": output,
+                "ts": datetime.now(timezone.utc).isoformat(),
+            }, ensure_ascii=False),
             encoding="utf-8",
         )
     except Exception:
         pass
 
 
+def _try_cached_output() -> str | None:
+    """Ritorna output cachato se fresco (<15 min), altrimenti None → fetch normale."""
+    c = _load_cache()
+    if not c.get("output") or not c.get("ts"):
+        return None
+    try:
+        age_min = (datetime.now(timezone.utc) -
+                   datetime.fromisoformat(c["ts"])).total_seconds() / 60
+        if age_min < _CACHE_TTL_SHORT_MIN:
+            return c["output"]
+    except Exception:
+        pass
+    return None
+
+
 def _cache_hit(digest: str) -> bool:
+    """Dati invariati nelle ultime 4h → skip print (già iniettato)."""
     c = _load_cache()
     if c.get("digest") != digest:
         return False
     try:
         age_h = (datetime.now(timezone.utc) -
                  datetime.fromisoformat(c["ts"])).total_seconds() / 3600
-        return age_h < _CACHE_TTL_H
+        return age_h < _CACHE_TTL_LONG_H
     except Exception:
         return False
 
@@ -142,6 +162,12 @@ def main() -> None:
     if not (Path.cwd() / "AI_HANDOFF.md").exists():
         return
 
+    # Fast path: se sessione recente (<15 min) riusa output cachato senza HTTP call
+    cached = _try_cached_output()
+    if cached:
+        print(cached)
+        return
+
     lines: list[str] = []
 
     # Sessione sospesa: mostra subito il lavoro pendente
@@ -205,7 +231,7 @@ def main() -> None:
         digest = hashlib.md5(output.encode()).hexdigest()[:16]
         if _cache_hit(digest):
             return  # dati invariati nelle ultime 4h — skip injection
-        _save_cache(digest)
+        _save_cache(digest, output)
         print(output)
 
 
