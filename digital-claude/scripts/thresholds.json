@@ -1,24 +1,30 @@
 {
-  "updated_at": "2026-06-13",
-  "n_sessions": 225,
+  "updated_at": "2026-06-19",
+  "n_sessions": 291,
   "thresholds": [
     {
       "categoria": "modifica",
-      "warn_p75": 51.0,
-      "ceiling_p90": 75.7,
-      "n": 194
+      "warn_p75": 50.55,
+      "ceiling_p90": 75.11,
+      "n": 197
     },
     {
       "categoria": "ops",
-      "warn_p75": 0.29,
-      "ceiling_p90": 0.89,
-      "n": 16
+      "warn_p75": 0.28,
+      "ceiling_p90": 0.41,
+      "n": 37
     },
     {
       "categoria": "domanda",
-      "warn_p75": 2.39,
-      "ceiling_p90": 9.1,
-      "n": 15
+      "warn_p75": 5.12,
+      "ceiling_p90": 9.17,
+      "n": 23
+    },
+    {
+      "categoria": "miglioramento_skill",
+      "warn_p75": 30.92,
+      "ceiling_p90": 110.57,
+      "n": 34
     }
   ]
 }

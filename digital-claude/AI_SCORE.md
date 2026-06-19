@@ -1,4 +1,4 @@
-<!-- SKILL.md aggiornato (76232186) — rivedere score in prossima sessione -->
+<!-- SKILL.md aggiornato (0407acc5) — rivedere score in prossima sessione -->
 # AI_SCORE v1.1 — digital-claude behavioral fingerprint
 # Partitura compatta: copre il 90% delle decisioni in ~40 righe (~300 token).
 # SKILL.md = reference completo per edge case. Questo file non lo sostituisce — lo riassume.

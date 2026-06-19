@@ -1,37 +1,37 @@
 {
-  "score": 38,
-  "grade": "D",
-  "updated_at": "2026-06-13",
-  "n_sessions": 225,
+  "score": 51,
+  "grade": "C",
+  "updated_at": "2026-06-19",
+  "n_sessions": 291,
   "assertions": {
     "cost_compliance": {
       "score": 89,
       "label": "Costo nei limiti",
-      "detail": "201/225 sessioni sotto p90",
+      "detail": "260/291 sessioni sotto p90",
       "weight": 0.3
     },
     "delegation_rate": {
       "score": 0,
       "label": "Deleghe a subagent",
-      "detail": "0/225 sessioni con agenti (fix deployato oggi)",
+      "detail": "0/291 sessioni con agenti (fix deployato oggi)",
       "weight": 0.25
     },
     "category_diversity": {
-      "score": 45,
+      "score": 71,
       "label": "Diversità categorie",
-      "detail": "3 categorie: domanda, modifica, ops",
+      "detail": "4 categorie: domanda, miglioramento_skill, modifica, ops",
       "weight": 0.2
     },
     "model_efficiency": {
-      "score": 0,
+      "score": 1,
       "label": "Utilizzo modelli economici",
-      "detail": "haiku: 0/225 sessioni",
+      "detail": "haiku: 3/291 sessioni",
       "weight": 0.15
     },
     "cost_trend": {
-      "score": 20,
+      "score": 100,
       "label": "Trend costo",
-      "detail": "in aumento (+2827.6%): $1.14→$33.25",
+      "detail": "in calo (-97.7%): $32.42→$0.74",
       "weight": 0.1
     }
   },

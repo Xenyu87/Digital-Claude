@@ -6,11 +6,14 @@
     "new app",
     "skill improvement"
   ],
-  "dead_models": [
-    "haiku"
-  ],
+  "dead_models": [],
   "delegation_not_tracked": true,
-  "updated_at": "2026-06-08",
-  "n_sessions": 152,
+  "tracking_check": {
+    "sessions_last_7d": 66,
+    "with_agents_tracked": 0,
+    "fix_working": false
+  },
+  "updated_at": "2026-06-19",
+  "n_sessions": 291,
   "window_days": 90
 }
