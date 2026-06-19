@@ -33,6 +33,17 @@ _CATEGORY_PATTERNS = [
     ("bug_rescue",          r"\b(non funziona|errore|crash|bug|rotto|fix|risolvi|debug|stack ?trace)\b"),
 ]
 
+# Comandi imperativi brevi: eseguire in un unico blocco tool, niente conferma intermedia, niente riepilogo
+_IMPERATIVE_PATTERNS = [
+    r"^(committa|commit|committa tutto|pusha|push)[\s!.]*$",
+    r"^(installa|install|disinstalla|aggiorna|update|upgrade)[\s\w!.]*$",
+    r"^(fixa|fix|risolvi|correggi)[\s\w!.]*$",
+    r"^(riavvia|restart|reboot|reload|ferma|stop|avvia|start)[\s\w!.]*$",
+    r"^(elimina|cancella|rimuovi|delete|remove)[\s\w!.]*$",
+    r"^(continua|vai|procedi|esegui|fai|apply|applica)[\s\w!.]*$",
+    r"^si[\s!.]*$",
+]
+
 # Pattern per "esplorazione" (haiku-tier) — domande dove serve grep/find/lettura
 # ma non edit. Sono indizi forti che ha senso delegare ad Explore.
 _EXPLORE_PATTERNS = [
@@ -82,8 +93,14 @@ def classify(prompt: str) -> tuple[str, str]:
     return "modifica", "fallback"
 
 
+def _is_imperative(prompt: str) -> bool:
+    t = prompt.strip().lower()
+    return any(re.match(p, t) for p in _IMPERATIVE_PATTERNS)
+
+
 def route(prompt: str) -> dict:
     cat, reason = classify(prompt)
+    batch_mode = _is_imperative(prompt)
     if cat == "explore":
         return {
             "category": "explore",
@@ -103,6 +120,7 @@ def route(prompt: str) -> dict:
         "reason": reason,
         "cost_label": _COST_LABEL.get(model, ""),
         "spawn_hint": f'Agent(subagent_type="{subagent}", prompt="...")',
+        "batch_mode": batch_mode,
     }
 
 
@@ -117,8 +135,10 @@ def main() -> int:
     prompt = data.get("prompt") or data.get("user_message") or ""
     if not isinstance(prompt, str) or not prompt.strip():
         return 0
-    # Salta prompt brevissimi o slash-command (gestiti dal harness)
-    if len(prompt) < 12 or prompt.lstrip().startswith("/"):
+    # Salta slash-command (gestiti dal harness) e prompt non-imperativi troppo corti
+    if prompt.lstrip().startswith("/"):
+        return 0
+    if len(prompt) < 12 and not _is_imperative(prompt):
         return 0
     r = route(prompt)
     # Bridge per Stop hook: il logger leggerà /tmp/claude-route-<sid>.json
@@ -152,6 +172,8 @@ def main() -> int:
         lines.append(f"cost: {r['cost_label']}")
     if r.get("spawn_hint"):
         lines.append(f"spawn: {r['spawn_hint']}")
+    if r.get("batch_mode"):
+        lines.append("batch_mode: true — esegui in un unico blocco tool, niente conferma, niente riepilogo finale")
     lines.append("</routing-hint>")
     print("\n".join(lines))
     return 0
