@@ -284,6 +284,12 @@ Verify: <how user checks>
 
 Details only for: risks, non-obvious choices, blockers, user actions. When user must configure/choose/confirm/pay/test, add a `For you:` section.
 
+**Token self-discipline (sempre attiva, non solo se richiesto):**
+- Azioni non ambigue ("committa", "installa", "fixa") → esegui subito, nessuna conferma intermedia. Un solo blocco di tool call, non sequenze di status→diff→add→commit separate.
+- Contesto sessione alto (>100k token visibili) → preferire Bash one-liner, non Read su file già noti, non re-leggere file appena editati.
+- Non terminare con riepilogo se l'azione era ovvia. "Tutto pulito" dopo un git status non vale un turno da 4%.
+- Routing hint Haiku/Explore → se il task lo permette, rispondere inline senza escalare a tool pesanti.
+
 **Activation announcement**: on first turn of non-trivial session (classified category, budget chosen), open with single line like: `🛠 Skill: digital-claude · cat:<category> · budget:<mode>`. Only first line, no extra preambles. Skip to fast path.
 
 **Model mismatch warning**: immediately after the activation line, if main agent is plain `opus` (not `opusplan`) AND category is `modifica`/`domanda`/`ops`, emit: `⚠ Main agent: Opus fisso — considera \`/model opusplan\` (Sonnet in esecuzione, Opus solo in plan mode, ~3× risparmio).` Skip if already on `opusplan`, `sonnet`, or `haiku`. Skip if category is `nuova_app`, `audit`, or `skill_improvement`.
