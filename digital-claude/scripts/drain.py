@@ -26,6 +26,7 @@ DRAIN_BRANCH_PREFIX = "drain"
 
 sys.path.insert(0, str(SKILL_DIR / "scripts"))
 from budget_guard import run_guarded, notify_breach  # type: ignore
+from blackboard import init_session as _bb_init, write_slot as _bb_write, read_slot as _bb_read, get_value as _bb_get, clear as _bb_clear  # type: ignore
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1991,40 +1992,60 @@ def run_skillopt_lite(project_path: str) -> dict:
         skill_content = skill_path.read_text(encoding="utf-8")
         current_lines = len(skill_content.splitlines())
 
-        # Raccogli contesto: dead rules + anomalie
+        # Raccogli contesto: leggi prima dal blackboard (prodotto da step paralleli),
+        # fallback su file diretti se il blackboard non è disponibile.
         context_parts: list[str] = []
-        dead_cache = SKILL_DIR / "scripts" / "dead-rules-cache.json"
-        if dead_cache.exists():
-            try:
-                dc = json.loads(dead_cache.read_text(encoding="utf-8"))
-                dead_cats = dc.get("dead_categories") or []
-                if dead_cats:
-                    context_parts.append(f"Categorie non usate da 60gg: {', '.join(str(c) for c in dead_cats[:5])}")
-            except Exception:
-                pass
 
-        slug = re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
-        log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
-        if log_path.exists():
-            cutoff = datetime.now(timezone.utc) - timedelta(days=14)
-            errors: list[str] = []
-            for line in log_path.read_text(encoding="utf-8", errors="ignore").splitlines()[-200:]:
+        # 1. Dead rules — dal blackboard (detect_dead_rules) o dal cache file
+        dead_slot = _bb_read("detect_dead_rules")
+        if dead_slot.get("detail"):
+            # Il detail di detect_dead_rules contiene il summary leggibile
+            context_parts.append(f"Dead rules rilevate: {dead_slot['detail']}")
+        else:
+            dead_cache = SKILL_DIR / "scripts" / "dead-rules-cache.json"
+            if dead_cache.exists():
                 try:
-                    e = json.loads(line)
-                    if (e.get("outcome") in ("error", "partial")) and e.get("category"):
-                        ts_str = e.get("timestamp") or e.get("ts") or ""
-                        try:
-                            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-                            if ts >= cutoff:
-                                errors.append(e["category"])
-                        except ValueError:
-                            pass
+                    dc = json.loads(dead_cache.read_text(encoding="utf-8"))
+                    dead_cats = dc.get("dead_categories") or []
+                    if dead_cats:
+                        context_parts.append(f"Categorie non usate da 60gg: {', '.join(str(c) for c in dead_cats[:5])}")
                 except Exception:
                     pass
-            if errors:
-                from collections import Counter
-                top = Counter(errors).most_common(3)
-                context_parts.append(f"Categorie con più errori ultimi 14gg: {', '.join(f'{c}({n})' for c, n in top)}")
+
+        # 2. Anomalie sessioni — dal blackboard (detect_session_anomalies)
+        anomaly_slot = _bb_read("detect_session_anomalies")
+        if anomaly_slot.get("detail") and anomaly_slot["detail"] not in ("", "nessuna anomalia"):
+            context_parts.append(f"Anomalie sessioni: {anomaly_slot['detail']}")
+
+        # 3. EvoSkill patterns — dal blackboard (run_evoskill_lite)
+        evoskill_slot = _bb_read("run_evoskill_lite")
+        if evoskill_slot.get("detail") and "pattern" in evoskill_slot.get("detail", ""):
+            context_parts.append(f"EvoSkill findings: {evoskill_slot['detail']}")
+
+        # 4. Fallback: leggi coordination-log se nessun contesto dal blackboard
+        if not context_parts:
+            slug = re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
+            log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
+            if log_path.exists():
+                cutoff = datetime.now(timezone.utc) - timedelta(days=14)
+                err_cats: list[str] = []
+                for line in log_path.read_text(encoding="utf-8", errors="ignore").splitlines()[-200:]:
+                    try:
+                        e = json.loads(line)
+                        if (e.get("outcome") in ("error", "partial")) and e.get("category"):
+                            ts_str = e.get("timestamp") or e.get("ts") or ""
+                            try:
+                                ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                                if ts >= cutoff:
+                                    err_cats.append(e["category"])
+                            except ValueError:
+                                pass
+                    except Exception:
+                        pass
+                if err_cats:
+                    from collections import Counter
+                    top = Counter(err_cats).most_common(3)
+                    context_parts.append(f"Categorie con più errori ultimi 14gg: {', '.join(f'{c}({n})' for c, n in top)}")
 
         if not context_parts:
             result["detail"] = "nessun contesto disponibile, skip"
@@ -2239,6 +2260,7 @@ def _run_parallel(steps: list[tuple[str, object]]) -> list[dict]:
     """Esegue step indipendenti in parallelo con ThreadPoolExecutor(max_workers=4).
 
     Ogni step è una tupla (nome, callable). Ritorna lista di result dict.
+    Scrive automaticamente ogni risultato sul blackboard per step sequenziali successivi.
     Fail-safe: eccezioni per step non propagano agli altri.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -2256,6 +2278,11 @@ def _run_parallel(steps: list[tuple[str, object]]) -> list[dict]:
             except Exception as e:
                 r = {"name": name, "status": "error", "detail": str(e)}
             results[i] = r
+            # Blackboard: ogni step parallelo scrive il proprio slot
+            try:
+                _bb_write(name, r)
+            except Exception:
+                pass
     return results
 
 
@@ -2301,6 +2328,12 @@ def main() -> int:
     _auto = _autopilot_enabled(dashboard_url)
     _skip = lambda name: {"name": name, "status": "skip", "detail": "autopilot disabilitato"}
 
+    # Blackboard: inizializza per questa sessione drain
+    try:
+        _bb_init(session_id=branch_name)
+    except Exception:
+        pass
+
     # 3A: Fase parallela — step con scritture isolate (reports/, dashboard, cache)
     # Nessuno tocca SKILL.md o file condivisi → ThreadPoolExecutor safe
     parallel_phase: list[tuple[str, object]] = [
@@ -2337,13 +2370,17 @@ def main() -> int:
         sub_results.append(r)
         print(f"drain [{r['name']}]: {r['status']} — {r.get('detail', '')}", file=sys.stderr)
 
-    # Esegui fase sequenziale
+    # Esegui fase sequenziale — scrive ogni risultato sul blackboard
     for step_name, fn in sequential_phase:
         try:
             r = fn()
         except Exception as e:
             r = {"name": step_name, "status": "error", "detail": str(e)}
         sub_results.append(r)
+        try:
+            _bb_write(step_name, r)
+        except Exception:
+            pass
         print(f"drain [{r['name']}]: {r['status']} — {r.get('detail', '')}", file=sys.stderr)
 
     # Skill Exchange check (domenica o flag esplicito)
