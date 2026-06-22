@@ -49,6 +49,87 @@ def _find_latest_session_jsonl(project_path: str) -> Path | None:
     return None
 
 
+def _extract_duration(jsonl_path: Path) -> int:
+    """Calcola durata sessione in secondi dal primo all'ultimo timestamp."""
+    from datetime import datetime, timezone
+    ts_min = ts_max = None
+    try:
+        for line in jsonl_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            ts = obj.get("timestamp")
+            if not isinstance(ts, str):
+                continue
+            if ts_min is None or ts < ts_min:
+                ts_min = ts
+            if ts_max is None or ts > ts_max:
+                ts_max = ts
+    except Exception:
+        pass
+    if not ts_min or not ts_max:
+        return 0
+    try:
+        t0 = datetime.fromisoformat(ts_min.replace("Z", "+00:00"))
+        t1 = datetime.fromisoformat(ts_max.replace("Z", "+00:00"))
+        return max(0, int((t1 - t0).total_seconds()))
+    except ValueError:
+        return 0
+
+
+def _extract_agents(jsonl_path: Path) -> list[str]:
+    """Estrae subagenti usati da tool_use Agent nel jsonl."""
+    agents: list[str] = []
+    try:
+        for line in jsonl_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            content = obj.get("message", {}).get("content") if isinstance(obj.get("message"), dict) else None
+            if not isinstance(content, list):
+                continue
+            for c in content:
+                if not isinstance(c, dict) or c.get("type") != "tool_use" or c.get("name") != "Agent":
+                    continue
+                inp = c.get("input") or {}
+                # subagent_type se presente, altrimenti usa description troncata
+                label = inp.get("subagent_type") or (inp.get("description") or "agent")[:30]
+                if label and label not in agents:
+                    agents.append(label)
+    except Exception:
+        pass
+    return agents
+
+
+def _extract_files_count(jsonl_path: Path) -> int:
+    """Conta file unici toccati da Edit/Write/MultiEdit nel jsonl."""
+    edit_tools = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+    files: set[str] = set()
+    try:
+        for line in jsonl_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            content = obj.get("message", {}).get("content") if isinstance(obj.get("message"), dict) else None
+            if not isinstance(content, list):
+                continue
+            for c in content:
+                if not isinstance(c, dict) or c.get("type") != "tool_use":
+                    continue
+                if c.get("name") not in edit_tools:
+                    continue
+                inp = c.get("input") or {}
+                fp = inp.get("file_path") or inp.get("notebook_path")
+                if isinstance(fp, str) and fp.strip():
+                    files.add(fp)
+    except Exception:
+        pass
+    return len(files)
+
+
 def _extract_tokens_and_models(jsonl_path: Path) -> tuple[dict, list[str], dict[str, dict]]:
     """Aggrega token + lista modelli reali + token-per-modello da una sessione."""
     tokens = {"input": 0, "output": 0, "cache_read": 0, "cache_creation": 0}
@@ -240,6 +321,9 @@ def main() -> int:
 
         cost = _estimate_cost(per_model, tokens)
         category = _detect_category(jsonl_path)
+        duration = _extract_duration(jsonl_path)
+        agents = _extract_agents(jsonl_path)
+        files_count = _extract_files_count(jsonl_path)
         # Famiglie (haiku/sonnet/opus), unicizzate mantenendo ordine.
         families = []
         family_tokens: dict[str, int] = {}
@@ -268,7 +352,11 @@ def main() -> int:
             "--output-tokens", str(tokens["output"]),
             "--cache-read", str(tokens["cache_read"]),
             "--cache-creation", str(tokens["cache_creation"]),
+            "--duration", str(duration),
+            "--files", str(files_count),
         ]
+        if agents:
+            cmd += ["--agents", ",".join(agents)]
         subprocess.run(cmd, check=False, timeout=10)
 
     except Exception as e:
