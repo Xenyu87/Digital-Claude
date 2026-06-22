@@ -9,6 +9,7 @@ reports/*secret*
 
 # Runtime state — rigenerati automaticamente da drain/assay
 AI_SCORE.md
+skill-cache.md
 scripts/.score_checksum
 scripts/dead-rules-cache.json
 scripts/skill-assay-results.json
