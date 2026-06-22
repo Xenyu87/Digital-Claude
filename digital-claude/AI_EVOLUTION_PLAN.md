@@ -27,13 +27,13 @@ Effort: 1 giorno | Impatto: sblocca drain auto-curriculum, reflexion loop, Skill
 
 ### LIVELLO 1 — Quick wins (2-4h ciascuno)
 
-| ID | Upgrade | Effort | Impatto chiave |
-|----|---------|--------|----------------|
-| 1A | Context Mode MCP | S | -63x token context (315KB→5KB) |
-| 1B | context_budget_scan hookato | S | stop context rot silenzioso (>80k avviso) |
-| 1C | cache_bundle_builder SessionStart | S | -15% costo sessioni brevi-medie |
-| 1D | Cloud Routines drain 24/7 | S | drain affidabile anche se LXC giù |
-| 1E | Agent Hook verifier (haiku) | S-M | -50% bug sfuggiti, +35% qualità |
+| ID | Upgrade | Effort | Impatto chiave | Stato |
+|----|---------|--------|----------------|-------|
+| 1A | Context Mode MCP | S | -63x token context (315KB→5KB) | ⏳ skip — package non pubblico |
+| 1B | context_budget_scan hookato | S | stop context rot silenzioso | ⏳ skip — script fa altro (project scan) |
+| 1C | cache_bundle_builder SessionStart | S | -15% costo sessioni brevi-medie | ✅ 2026-06-22 |
+| 1D | Cloud Routines drain 24/7 | S | drain affidabile anche se LXC giù | ⏳ skip — drain ha dipendenze locali DB |
+| 1E | Agent Hook verifier (statico) | S | +35% qualità — avvisa su SKILL/JSON/Python | ✅ 2026-06-22 |
 
 ### LIVELLO 2 — Evoluzioni strutturali (1-3 giorni)
 

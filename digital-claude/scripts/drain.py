@@ -1752,6 +1752,240 @@ def court_review_lesson_promotion(project_path: str) -> dict:
     return result
 
 
+# ── Morning briefing ──────────────────────────────────────────────────────────
+
+def run_morning_briefing(project_path: str) -> dict:
+    """Genera briefing mattutino: stats 7gg da coordination-log → dashboard + file locale."""
+    result: dict = {"name": "morning_briefing", "status": "skip", "detail": ""}
+    try:
+        slug = re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
+        log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
+        if not log_path.exists():
+            result["detail"] = "coordination-log non trovato"
+            return result
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        sessions: list[dict] = []
+        for line in log_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            ts_str = entry.get("timestamp") or entry.get("ts") or ""
+            try:
+                ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                if ts >= cutoff:
+                    sessions.append(entry)
+            except ValueError:
+                pass
+
+        if not sessions:
+            result["detail"] = "nessuna sessione negli ultimi 7gg"
+            return result
+
+        total_cost = sum(float(s.get("cost_usd", 0) or 0) for s in sessions)
+        categories: dict[str, int] = {}
+        outcomes: dict[str, int] = {}
+        for s in sessions:
+            cat = s.get("category") or "unknown"
+            categories[cat] = categories.get(cat, 0) + 1
+            out = s.get("outcome") or "ok"
+            outcomes[out] = outcomes.get(out, 0) + 1
+
+        top_cat = sorted(categories.items(), key=lambda x: x[1], reverse=True)
+        cat_summary = ", ".join(f"{c}:{n}" for c, n in top_cat[:5])
+        errors = outcomes.get("error", 0) + outcomes.get("partial", 0)
+        avg_cost = total_cost / len(sessions) if sessions else 0
+
+        lines = [
+            f"# Morning Briefing — {date.today()}",
+            f"",
+            f"**Sessioni ultimi 7gg**: {len(sessions)} | **Costo totale**: ${total_cost:.3f} | **Avg/sessione**: ${avg_cost:.3f}",
+            f"**Categorie**: {cat_summary}",
+            f"**Esiti**: ok={outcomes.get('ok', 0)}, errori/parziali={errors}",
+        ]
+
+        # Leggi eventuale top-lesson dal drain-log recente
+        drain_log = SKILL_DIR / "reports" / "drain-log.jsonl"
+        if drain_log.exists():
+            recent_lines = drain_log.read_text(encoding="utf-8", errors="ignore").splitlines()
+            for raw in reversed(recent_lines[-50:]):
+                try:
+                    entry = json.loads(raw)
+                    detail = entry.get("detail") or ""
+                    if detail and len(detail) > 20:
+                        lines.append(f"**Ultimo drain**: {detail[:120]}")
+                        break
+                except Exception:
+                    pass
+
+        briefing_md = "\n".join(lines)
+
+        # Scrivi file locale
+        reports_dir = SKILL_DIR / "reports"
+        reports_dir.mkdir(exist_ok=True)
+        (reports_dir / "morning-briefing.md").write_text(briefing_md + "\n", encoding="utf-8")
+
+        # Invia a dashboard
+        try:
+            sys.path.insert(0, str(SKILL_DIR / "scripts"))
+            from buffering_client import post_with_fallback  # type: ignore
+            post_with_fallback("/api/log", {
+                "type": "morning_briefing",
+                "project": Path(project_path).name,
+                "summary": briefing_md,
+                "sessions_7d": len(sessions),
+                "cost_7d_usd": round(total_cost, 4),
+                "errors_7d": errors,
+            })
+        except Exception:
+            pass
+
+        result["status"] = "ok"
+        result["detail"] = f"{len(sessions)} sessioni, ${total_cost:.3f} — briefing scritto"
+    except Exception as e:
+        result["status"] = "error"
+        result["detail"] = str(e)
+    return result
+
+
+# ── SkillOpt-lite ─────────────────────────────────────────────────────────────
+
+def run_skillopt_lite(project_path: str) -> dict:
+    """Propone ed applica UN edit mirato a SKILL.md usando SkillOpt apply_edit.
+
+    Pipeline: leggi contesto (dead rules + anomalie recenti) → chiedi a Haiku
+    UN patch JSON → valida (target esiste, line count ≤ 450) → applica.
+    """
+    result: dict = {"name": "skillopt_lite", "status": "skip", "detail": ""}
+    try:
+        from skillopt.optimizer.skill import apply_edit  # type: ignore
+    except ImportError:
+        result["detail"] = "skillopt non installato (pip install skillopt)"
+        return result
+
+    try:
+        skill_path = SKILL_DIR / "SKILL.md"
+        if not skill_path.exists():
+            result["detail"] = "SKILL.md non trovato"
+            return result
+
+        skill_content = skill_path.read_text(encoding="utf-8")
+        current_lines = len(skill_content.splitlines())
+
+        # Raccogli contesto: dead rules + anomalie
+        context_parts: list[str] = []
+        dead_cache = SKILL_DIR / "scripts" / "dead-rules-cache.json"
+        if dead_cache.exists():
+            try:
+                dc = json.loads(dead_cache.read_text(encoding="utf-8"))
+                dead_cats = dc.get("dead_categories") or []
+                if dead_cats:
+                    context_parts.append(f"Categorie non usate da 60gg: {', '.join(str(c) for c in dead_cats[:5])}")
+            except Exception:
+                pass
+
+        slug = re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
+        log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
+        if log_path.exists():
+            cutoff = datetime.now(timezone.utc) - timedelta(days=14)
+            errors: list[str] = []
+            for line in log_path.read_text(encoding="utf-8", errors="ignore").splitlines()[-200:]:
+                try:
+                    e = json.loads(line)
+                    if (e.get("outcome") in ("error", "partial")) and e.get("category"):
+                        ts_str = e.get("timestamp") or e.get("ts") or ""
+                        try:
+                            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                            if ts >= cutoff:
+                                errors.append(e["category"])
+                        except ValueError:
+                            pass
+                except Exception:
+                    pass
+            if errors:
+                from collections import Counter
+                top = Counter(errors).most_common(3)
+                context_parts.append(f"Categorie con più errori ultimi 14gg: {', '.join(f'{c}({n})' for c, n in top)}")
+
+        if not context_parts:
+            result["detail"] = "nessun contesto disponibile, skip"
+            return result
+
+        context_str = "\n".join(context_parts)
+        line_budget = 450 - current_lines
+
+        prompt = f"""Sei un ottimizzatore di skill per agenti AI. Analizza questo contesto su SKILL.md e proponi UN SOLO miglioramento.
+
+CONTESTO (dati reali dalle sessioni):
+{context_str}
+
+SKILL.md ha attualmente {current_lines} righe (limite: 450, budget disponibile: {line_budget} righe).
+
+Produci SOLO un JSON valido con questa struttura:
+{{"op": "replace"|"append"|"insert_after"|"delete", "target": "testo esatto da trovare in SKILL.md" (ometti per append), "content": "nuovo testo" (ometti per delete)}}
+
+Regole:
+- "target" deve essere una stringa ESATTA che appare in SKILL.md
+- Per "append": aggiunge in fondo, content max 5 righe
+- Per "replace": sostituisce target con content, content deve essere più corto di target
+- Per "delete": rimuove target (solo se è una regola morta o duplicata)
+- NON modificare il frontmatter YAML iniziale (righe con "description:" o "---")
+- NON modificare §0, §1, §3 (core routing e model selection)
+- Output: solo il JSON, niente altro
+
+SKILL.md (prime 80 righe per contesto):
+{chr(10).join(skill_content.splitlines()[:80])}"""
+
+        proc = subprocess.run(
+            ["claude", "--permission-mode", "default", "--model", "haiku", "--print", prompt],
+            capture_output=True, text=True, timeout=60,
+        )
+        if proc.returncode != 0:
+            result["detail"] = f"claude CLI errore: {proc.stderr[:100]}"
+            return result
+
+        raw = (proc.stdout or "").strip()
+        # Estrai JSON dall'output (potrebbe avere testo attorno)
+        import re as _re
+        m = _re.search(r'\{[^{}]*"op"[^{}]*\}', raw, _re.DOTALL)
+        if not m:
+            result["detail"] = f"nessun JSON valido nell'output: {raw[:80]}"
+            return result
+
+        edit_dict = json.loads(m.group())
+        op = edit_dict.get("op")
+        if op not in ("append", "insert_after", "replace", "delete"):
+            result["detail"] = f"op non valido: {op}"
+            return result
+
+        # Valida che target esista in SKILL.md (per op != append)
+        if op != "append":
+            target = edit_dict.get("target", "")
+            if target and target not in skill_content:
+                result["detail"] = f"target non trovato in SKILL.md: {target[:60]}"
+                return result
+
+        # Applica
+        new_content = apply_edit(skill_content, edit_dict)
+        new_lines = len(new_content.splitlines())
+
+        if new_lines > 450:
+            result["detail"] = f"edit rigettato: risulterebbe in {new_lines} righe (max 450)"
+            return result
+
+        skill_path.write_text(new_content, encoding="utf-8")
+        result["status"] = "ok"
+        result["detail"] = f"edit '{op}' applicato: {current_lines}→{new_lines} righe"
+
+    except Exception as e:
+        result["status"] = "error"
+        result["detail"] = str(e)
+    return result
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -1814,6 +2048,8 @@ def main() -> int:
         ("promote_acknowledged_feedback",  lambda: promote_acknowledged_feedback(project_path) if _auto else _skip("promote_acknowledged_feedback")),
         ("run_ideation",                   lambda: run_ideation(project_path) if _auto else _skip("run_ideation")),
         ("court_review_lesson_promotion",  lambda: court_review_lesson_promotion(project_path) if _auto else _skip("court_review_lesson_promotion")),
+        ("run_morning_briefing",           lambda: run_morning_briefing(project_path)),
+        ("run_skillopt_lite",              lambda: run_skillopt_lite(project_path) if _auto else _skip("run_skillopt_lite")),
     ]
 
     for step_name, fn in steps:
