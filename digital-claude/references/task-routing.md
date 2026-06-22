@@ -52,3 +52,11 @@ Se l'utente non risponde alla domanda chiave, fai la scelta più conservativa e 
 - partire a scrivere codice senza classificare
 - trattare un audit come modifica e cambiare file
 - partire da zero quando esiste già un progetto (leggi sempre prima)
+
+## RouteLLM (opzione futura — routing dinamico a soglia)
+
+Pattern da RouteLLM (arXiv): invece di una tabella gate statica, un classificatore leggero stima la complessità del task e sceglie il modello in base a una soglia calibrata sui dati osservati.
+
+**Attiva solo se**: `session-analyst` rileva >15% di sessioni con escalazione Haiku→Sonnet ripetuta nella stessa categoria. Fino ad allora la tabella gate di §3 è sufficiente.
+
+Riferimento: `references/difficulty-routing.md` per l'implementazione `difficulty_estimator.py` già presente (v1.1.0).

@@ -94,3 +94,12 @@ Threshold consigliati:
 - Preserva sempre: path esatti, messaggi di errore verbatim, correzioni utente
 
 Rilevante per il drain notturno (`references/background-drain.md`) e sessioni API lunghe. Per Claude Code interattivo, il runtime gestisce automaticamente.
+
+## Non cachare output di tool dinamici
+
+Gli output di tool dinamici (bash, grep, query DB, Read su file che cambiano) **non vanno** nel blocco `cache_control` dei prompt subagent — aumentano la latenza invece di ridurla perché invalidano il cache hit ad ogni run.
+
+**Cachare solo**: istruzioni statiche, schema, contenuto `AI_*.md`, `SKILL.md`.
+**Non cachare**: output di `Bash`, `Read` su file di stato runtime, risultati di query DB, `grep` output.
+
+Per i subagent: passa le istruzioni statiche come system prompt cacheable; i dati dinamici vanno nel primo turno utente non-cacheable.

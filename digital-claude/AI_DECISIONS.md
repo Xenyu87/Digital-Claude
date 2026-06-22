@@ -40,3 +40,10 @@ Record durable choices only.
   Reason: raw nodes such as toolbar buttons, scripts, and incidental endpoints make the board feel complicated and reduce trust.
   Impact: default board views should prioritize focus, flows, real issues, scanner hypotheses, actions, and evidence; technical nodes move to diagnostics or drill-down.
   Revisit when: users need a developer-only graph mode as the primary workflow.
+
+## 2026-06-22 - Stop Hook Async Collaboration Pattern
+
+- Decision: non implementato.
+  Reason: nessun use case attuale di pipeline multi-agente con sincronizzazione via DB. Effort M senza beneficio misurabile ora.
+  Pattern: Stop hook controlla flag condiviso su DB, blocca o permette stop in base a dipendenze pendenti tra agenti paralleli (fonte: DEV Community agent-room).
+  Revisit when: si avvia una pipeline con 2+ subagenti che devono coordinarsi su output condivisi.
