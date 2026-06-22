@@ -77,7 +77,6 @@ Even without explicit declaration, classify from the main verb and repo state. D
 Se manca anche uno solo → non chiudere il task.
 
 ## 2. Budget mode
-
 <!-- thresholds-auto -->
 ## Auto-Discovered Cost Thresholds (updated 2026-06-18, n=267 sessioni)
 | categoria | warn (p75) | ceiling (p90) | n |
@@ -88,7 +87,6 @@ Se manca anche uno solo → non chiudere il task.
 | domanda | $3.49 | $7.00 | 19 |
 Superare ceiling = sessione in overrun. Chiudi e apri nuovo task.
 <!-- /thresholds-auto -->
-
 Nota: questa tabella ($, auto-aggiornata da dati osservati) copre solo le 3 categorie con dati sufficienti. §18 usa cap in **token** per le 6 categorie di §1 — sono limiti diversi (monitoraggio costo vs hard cap pre-task), non in conflitto.
 
 - **Economical** (default): minimal reads, short output
@@ -428,7 +426,6 @@ Periodic compaction of `AI_*.md` files. See `references/maintenance-compaction.m
 Anti-loop, anti-overwrite, anti-waste rules: `references/coordinator-safety.md`.
 
 **Hard token cap per task**: dashboard (`/api/log`) accepts `tokens_budget_max`. If current session exceeds cap, task marked `budget_exceeded` and Python logger signals event at next Stop. Set cap default in line with category (example: ops 50k, modify 200k, audit 400k, new app 600k, bug rescue 250k); user can force. Runtime sentinel: at half cap (50%) emit line `⚠ budget at 50% (X/Y tok · ~$Y.YY)` in current turn; at 80% ask confirmation before expensive reads.
-
 Cost estimate in-session (Opus 4.x): `input×$15 + output×$75 + cache_read×$1.5 + cache_creation×$18.75` per million tokens. Quick example: 100k input + 20k output ≈ $1.50 + $1.50 = **~$3.00**. Use this formula for sentinel and answering "how much is this session costing?".
 
 ## 19. MCP Integrations
@@ -436,7 +433,6 @@ Cost estimate in-session (Opus 4.x): `input×$15 + output×$75 + cache_read×$1.
 For tasks operating on external SaaS (GitHub, Linear, Slack, Notion, etc.) use MCP server with format `ServerName:tool_name` (e.g., `GitHub:create_issue`, `Linear:update_issue`). **Write** tools are hard gates, **read-only** are safe. Details and recommended server table: `references/mcp-integrations.md`.
 
 **GitHub MCP** is configured globally (`~/.claude/mcp.json`, server `@modelcontextprotocol/server-github`). Use when:
-
 | Trigger | Tool to use | When NOT to use |
 |---|---|---|
 | "search skill/repo on GitHub for X" | `github:search_repositories` | if answer already in `sources.json` |
@@ -444,15 +440,11 @@ For tasks operating on external SaaS (GitHub, Linear, Slack, Notion, etc.) use M
 | "find implementation examples" | `github:search_code` | if task is local, no GitHub |
 | "latest commits/issues on X" | `github:search_commits`, `github:search_issues` | for repos unrelated to task |
 | "read repo structure" | `github:get_repository_tree` | only if necessary to understand layout |
-
 Rules: read-only always safe; write (`create_issue`, `create_pull_request`) only if user explicitly requests. Token goes in `.env.local` as `GITHUB_TOKEN` (classic PAT, scope `public_repo`).
-
 Custom skills now open standard (Claude Code/Codex CLI/Cursor/Gemini CLI). MCP references `Server:tool` work cross-tool.
 
 ## 20. Validator
-
 `scripts/validate_skill.py` checks: frontmatter conformant (name ≤64 char, description ≤1024), reference ↔ SKILL ↔ assets coherent (file and glob `assets/.../*.ext`), progressive loading map complete, duplicate headings, mandatory sections, `SKILL.md` <450 lines (Anthropic best-practice: <500), reference <120 lines, each cited recipe in `recipes/README.md`, each script in `assets/scripts/` and each template in `assets/templates/` referenced in corpus.
-
 ```bash
 python scripts/validate_skill.py
 ```
