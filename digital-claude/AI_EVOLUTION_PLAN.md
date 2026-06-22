@@ -37,12 +37,12 @@ Effort: 1 giorno | Impatto: sblocca drain auto-curriculum, reflexion loop, Skill
 
 ### LIVELLO 2 — Evoluzioni strutturali (1-3 giorni)
 
-| ID | Upgrade | Dipendenza | Impatto chiave |
-|----|---------|------------|----------------|
-| 2A | SkillOpt loop | L0 | +23% qualità skill automatica |
-| 2B | ACE playbook evolving | L0 | CLAUDE.md che si auto-migliora |
-| 2C | Supermemory MCP | — | memoria cross-sessione vera (+conflict res) |
-| 2D | Morning briefing drain | L0 | da reattivo a proattivo (Telegram mattina) |
+| ID | Upgrade | Dipendenza | Impatto chiave | Stato |
+|----|---------|------------|----------------|-------|
+| 2A | SkillOpt loop | L0 | +23% qualità SKILL.md — Haiku genera 1 edit/notte con apply_edit | ✅ 2026-06-22 |
+| 2B | ACE Reflector | L0 | pre-filtra duplicati con SKILL.md completo prima di evaluate_lessons | ✅ 2026-06-22 |
+| 2C | Supermemory MCP | — | memoria cross-sessione | ⏳ skip — richiede cloud account |
+| 2D | Morning briefing | L0 | 7-day stats in reports/morning-briefing.md ogni notte | ✅ 2026-06-22 |
 
 ### LIVELLO 3 — Frontiera (L effort)
 

@@ -2102,6 +2102,163 @@ SKILL.md (prime 80 righe per contesto):
     return result
 
 
+# ── EvoSkill-lite ─────────────────────────────────────────────────────────────
+
+def run_evoskill_lite(project_path: str) -> dict:
+    """EvoSkill pattern: estrae failure-patterns da sessioni errate → frontier per SkillOpt.
+
+    Pipeline (semplificata da sentient-agi/EvoSkill):
+      1. Proposer: legge coordination-log, raggruppa outcome=failed/partial per categoria
+      2. Generator: Haiku analizza pattern fallimento → regola preventiva
+      3. Evaluator: filtra se la regola è già in SKILL.md (sovrapposizione)
+      4. Frontier: salva in reports/failure-patterns.jsonl; top-3 taggati per SkillOpt-lite
+
+    Nessun accesso ai transcript completi — usa solo i metadati di coordination-log.
+    """
+    result: dict = {"name": "evoskill_lite", "status": "skip", "detail": ""}
+    try:
+        slug = re.sub(r"[^a-zA-Z0-9]", "-", project_path).rstrip("-")
+        log_path = Path.home() / ".claude" / "projects" / slug / "memory" / "coordination-log.jsonl"
+        if not log_path.exists():
+            result["detail"] = "coordination-log non trovato"
+            return result
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+        errors: list[dict] = []
+        for line in log_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if entry.get("outcome") not in ("failed", "partial", "error"):
+                continue
+            ts_str = entry.get("ts") or entry.get("timestamp") or ""
+            try:
+                ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                if ts >= cutoff:
+                    errors.append(entry)
+            except ValueError:
+                pass
+
+        if not errors:
+            result["detail"] = "nessuna sessione fallita negli ultimi 30gg"
+            return result
+
+        # Raggruppa per categoria
+        from collections import Counter
+        cat_counts = Counter(e.get("category", "unknown") for e in errors)
+        top_cats = [c for c, _ in cat_counts.most_common(3)]
+
+        # Costruisci sommario per categoria
+        summaries: list[dict] = []
+        for cat in top_cats:
+            cat_errors = [e for e in errors if e.get("category") == cat]
+            avg_cost = sum(float(e.get("cost_usd", 0) or 0) for e in cat_errors) / len(cat_errors)
+            all_agents = []
+            for e in cat_errors:
+                all_agents.extend(e.get("agents_used") or [])
+            top_agents = [a for a, _ in Counter(all_agents).most_common(3)]
+            summaries.append({
+                "category": cat,
+                "failures": len(cat_errors),
+                "avg_cost_usd": round(avg_cost, 3),
+                "top_agents": top_agents,
+                "sample_lessons": [e.get("lesson", "") for e in cat_errors[:3] if e.get("lesson")],
+            })
+
+        # Leggi SKILL.md per l'Evaluator (filtro duplicati)
+        skill_md = SKILL_DIR / "SKILL.md"
+        skill_context = ""
+        if skill_md.exists():
+            skill_context = skill_md.read_text(encoding="utf-8")
+
+        prompt = (
+            "Sei EvoSkill: un sistema che impara dai fallimenti di un AI agent.\n\n"
+            "Ti fornisco statistiche sui task falliti per categoria. "
+            "Per ogni categoria genera UNA regola preventiva che avrebbe ridotto i fallimenti.\n\n"
+            f"Sessioni fallite (ultimi 30gg):\n{json.dumps(summaries, ensure_ascii=False, indent=2)}\n\n"
+            f"SKILL.md attuale (non duplicare regole già presenti):\n{skill_context[:2000]}\n\n"
+            "Per ogni categoria, rispondi SOLO con JSON:\n"
+            '[{"category":"...","pattern":"descrizione del pattern di fallimento","rule":"regola preventiva concreta (max 2 righe)","priority":"high|med|low"}]\n\n'
+            "Regole: concreta e azionabile, non già in SKILL.md, basata sui dati reali. "
+            "Output: solo il JSON array."
+        )
+
+        code, out, err = run(
+            ["claude", "--permission-mode", "default", "--model", "haiku", "--print", prompt],
+            cwd=str(SKILL_DIR),
+        )
+        if code != 0:
+            result["detail"] = f"claude CLI errore: {err[:100]}"
+            return result
+
+        try:
+            m = re.search(r"\[.*?\]", out, re.DOTALL)
+            if not m:
+                result["detail"] = "nessun JSON nell'output"
+                return result
+            patterns = json.loads(m.group())
+        except json.JSONDecodeError:
+            result["detail"] = "JSON parse error"
+            return result
+
+        # Salva in frontier
+        reports_dir = SKILL_DIR / "reports"
+        reports_dir.mkdir(exist_ok=True)
+        frontier_path = reports_dir / "failure-patterns.jsonl"
+        today = date.today().isoformat()
+        new_entries = 0
+        for p in patterns:
+            if not isinstance(p, dict) or not p.get("rule"):
+                continue
+            entry = {
+                "ts": today,
+                "category": p.get("category", ""),
+                "pattern": p.get("pattern", ""),
+                "rule": p.get("rule", ""),
+                "priority": p.get("priority", "med"),
+                "status": "frontier",  # candidato per SkillOpt-lite
+            }
+            with open(frontier_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            new_entries += 1
+
+        result["status"] = "ok"
+        result["detail"] = f"{new_entries} pattern estratti da {len(errors)} fallimenti ({', '.join(top_cats)})"
+    except Exception as e:
+        result["status"] = "error"
+        result["detail"] = str(e)
+    return result
+
+
+# ── Parallel runner helper ────────────────────────────────────────────────────
+
+def _run_parallel(steps: list[tuple[str, object]]) -> list[dict]:
+    """Esegue step indipendenti in parallelo con ThreadPoolExecutor(max_workers=4).
+
+    Ogni step è una tupla (nome, callable). Ritorna lista di result dict.
+    Fail-safe: eccezioni per step non propagano agli altri.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    results: list[dict] = [{}] * len(steps)
+    futures = {}
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        for i, (name, fn) in enumerate(steps):
+            fut = pool.submit(fn)
+            futures[fut] = (i, name)
+        for fut in as_completed(futures):
+            i, name = futures[fut]
+            try:
+                r = fut.result()
+            except Exception as e:
+                r = {"name": name, "status": "error", "detail": str(e)}
+            results[i] = r
+    return results
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -2144,32 +2301,44 @@ def main() -> int:
     _auto = _autopilot_enabled(dashboard_url)
     _skip = lambda name: {"name": name, "status": "skip", "detail": "autopilot disabilitato"}
 
-    # Tuple (nome, callable) — il nome è noto prima dell'esecuzione, così le eccezioni non diventano "unknown"
-    steps: list[tuple[str, object]] = [
-        ("complete_tbd_entries",           lambda: complete_tbd_entries(project_path)),
-        ("analyze_tool_errors",            lambda: analyze_tool_errors(project_path)),
-        ("decay_mistake_register",         lambda: decay_mistake_register(project_path)),
-        ("sediment_handoff",               lambda: sediment_handoff(project_path)),
-        ("regenerate_score",               lambda: regenerate_score(project_path)),
-        ("run_compaction",                 lambda: run_compaction(project_path)),
-        ("validate_skill_drift",           lambda: validate_skill_drift(project_path)),
-        ("run_ace_reflector",              lambda: run_ace_reflector(project_path) if _auto else _skip("run_ace_reflector")),
-        ("evaluate_lessons",               lambda: evaluate_lessons(project_path) if _auto else _skip("evaluate_lessons")),
-        ("create_lessons_from_failed_tasks", lambda: create_lessons_from_failed_tasks(project_path) if _auto else _skip("create_lessons_from_failed_tasks")),
-        ("run_ai_news_intake",             lambda: run_ai_news_intake(project_path) if _auto else _skip("run_ai_news_intake")),
-        ("auto_process_ai_news",           lambda: auto_process_ai_news(project_path) if _auto else _skip("auto_process_ai_news")),
-        ("detect_session_anomalies",       lambda: detect_session_anomalies(project_path)),
-        ("discover_cost_thresholds",       lambda: discover_cost_thresholds(project_path)),
-        ("detect_dead_rules",              lambda: detect_dead_rules(project_path)),
-        ("skill_assay",                    lambda: _run_skill_assay_safe(project_path)),
-        ("promote_acknowledged_feedback",  lambda: promote_acknowledged_feedback(project_path) if _auto else _skip("promote_acknowledged_feedback")),
-        ("run_ideation",                   lambda: run_ideation(project_path) if _auto else _skip("run_ideation")),
-        ("court_review_lesson_promotion",  lambda: court_review_lesson_promotion(project_path) if _auto else _skip("court_review_lesson_promotion")),
-        ("run_morning_briefing",           lambda: run_morning_briefing(project_path)),
-        ("run_skillopt_lite",              lambda: run_skillopt_lite(project_path) if _auto else _skip("run_skillopt_lite")),
+    # 3A: Fase parallela — step con scritture isolate (reports/, dashboard, cache)
+    # Nessuno tocca SKILL.md o file condivisi → ThreadPoolExecutor safe
+    parallel_phase: list[tuple[str, object]] = [
+        ("analyze_tool_errors",      lambda: analyze_tool_errors(project_path)),
+        ("decay_mistake_register",   lambda: decay_mistake_register(project_path)),
+        ("detect_session_anomalies", lambda: detect_session_anomalies(project_path)),
+        ("detect_dead_rules",        lambda: detect_dead_rules(project_path)),
+        ("run_ai_news_intake",       lambda: run_ai_news_intake(project_path) if _auto else _skip("run_ai_news_intake")),
+        ("run_morning_briefing",     lambda: run_morning_briefing(project_path)),
+        ("run_evoskill_lite",        lambda: run_evoskill_lite(project_path) if _auto else _skip("run_evoskill_lite")),
     ]
 
-    for step_name, fn in steps:
+    # Fase sequenziale — SKILL.md writers + lesson pipeline (ordine garantito)
+    sequential_phase: list[tuple[str, object]] = [
+        ("complete_tbd_entries",             lambda: complete_tbd_entries(project_path)),
+        ("sediment_handoff",                 lambda: sediment_handoff(project_path)),
+        ("regenerate_score",                 lambda: regenerate_score(project_path)),
+        ("run_compaction",                   lambda: run_compaction(project_path)),
+        ("validate_skill_drift",             lambda: validate_skill_drift(project_path)),
+        ("discover_cost_thresholds",         lambda: discover_cost_thresholds(project_path)),
+        ("skill_assay",                      lambda: _run_skill_assay_safe(project_path)),
+        ("run_ace_reflector",                lambda: run_ace_reflector(project_path) if _auto else _skip("run_ace_reflector")),
+        ("evaluate_lessons",                 lambda: evaluate_lessons(project_path) if _auto else _skip("evaluate_lessons")),
+        ("create_lessons_from_failed_tasks", lambda: create_lessons_from_failed_tasks(project_path) if _auto else _skip("create_lessons_from_failed_tasks")),
+        ("auto_process_ai_news",             lambda: auto_process_ai_news(project_path) if _auto else _skip("auto_process_ai_news")),
+        ("promote_acknowledged_feedback",    lambda: promote_acknowledged_feedback(project_path) if _auto else _skip("promote_acknowledged_feedback")),
+        ("run_ideation",                     lambda: run_ideation(project_path) if _auto else _skip("run_ideation")),
+        ("court_review_lesson_promotion",    lambda: court_review_lesson_promotion(project_path) if _auto else _skip("court_review_lesson_promotion")),
+        ("run_skillopt_lite",                lambda: run_skillopt_lite(project_path) if _auto else _skip("run_skillopt_lite")),
+    ]
+
+    # Esegui fase parallela
+    for r in _run_parallel(parallel_phase):
+        sub_results.append(r)
+        print(f"drain [{r['name']}]: {r['status']} — {r.get('detail', '')}", file=sys.stderr)
+
+    # Esegui fase sequenziale
+    for step_name, fn in sequential_phase:
         try:
             r = fn()
         except Exception as e:
