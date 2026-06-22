@@ -47,3 +47,24 @@ Record durable choices only.
   Reason: nessun use case attuale di pipeline multi-agente con sincronizzazione via DB. Effort M senza beneficio misurabile ora.
   Pattern: Stop hook controlla flag condiviso su DB, blocca o permette stop in base a dipendenze pendenti tra agenti paralleli (fonte: DEV Community agent-room).
   Revisit when: si avvia una pipeline con 2+ subagenti che devono coordinarsi su output condivisi.
+
+## 2026-06-22 - Drain pipeline: fase parallela prima di sequenziale
+
+- Decision: drain.py esegue prima una fase parallela (ThreadPoolExecutor max_workers=4) per step indipendenti, poi fase sequenziale per step che scrivono SKILL.md o dipendono da output precedenti.
+- Why: i 7 step paralleli (analyze_tool_errors, decay_mistake_register, detect_session_anomalies, detect_dead_rules, run_ai_news_intake, run_morning_briefing, run_evoskill_lite) non condividono stato scrivibile, quindi possono girare in concorrenza sicura. I 15 step sequenziali che toccano SKILL.md restano serializzati per evitare conflitti.
+- Trade-off: max_workers=4 è conservativo per non saturare CPU su LXC con risorse limitate. Alzarlo richiede profiling.
+- Revisit when: si aggiungono step paralleli che scrivono su file condivisi, o si misura contention su SKILL.md.
+
+## 2026-06-22 - verify_edit.py come PostToolUse command hook
+
+- Decision: validazione di SKILL.md (line count ≤450), JSON syntax, Python syntax avviene tramite hook PostToolUse command (non agent), eseguito su ogni Edit/Write/MultiEdit.
+- Why: un agent hook avrebbe latenza maggiore e costo token per ogni edit; un command hook è sincrono, zero-costo, e sufficiente per check strutturali.
+- Trade-off: se verify_edit.py lancia un'eccezione uncaught, exit non-zero può bloccare l'Edit. Il codice deve essere robusto e fare exit 0 in caso di errore interno non critico.
+- Revisit when: le validazioni diventano semantiche (non solo strutturali) e richiedono un LLM.
+
+## 2026-06-22 - evoskill_lite status=frontier
+
+- Decision: evoskill_lite estrae failure pattern da sessioni outcome=failed/partial e li scrive in `reports/failure-patterns.jsonl`, ma non modifica SKILL.md autonomamente.
+- Why: raccogliere dati prima di agire riduce il rischio di degradare SKILL.md con pattern rumorosi. La propagazione richiede una soglia minima da definire manualmente.
+- Trade-off: rallenta il ciclo di miglioramento, ma protegge la stabilità della skill.
+- Revisit when: si accumula un corpus sufficiente di failure pattern validati e si definisce una metrica di confidenza.
