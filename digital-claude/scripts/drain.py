@@ -1752,6 +1752,122 @@ def court_review_lesson_promotion(project_path: str) -> dict:
     return result
 
 
+# ── ACE Reflector ─────────────────────────────────────────────────────────────
+
+def run_ace_reflector(project_path: str) -> dict:
+    """ACE pattern: Reflector — pre-filtra lezioni già coperte da SKILL.md (Haiku, SKILL completo).
+
+    evaluate_lessons usa solo prime 80 righe di SKILL.md.
+    Il Reflector usa il SKILL.md completo (450 righe) per intercettare
+    duplicati nelle sezioni 9-20, riducendo il lavoro di evaluate_lessons.
+
+    Dipendenza: dashboard_url + ADMIN_SECRET.
+    """
+    import urllib.request
+    import urllib.error
+
+    result: dict = {"name": "ace_reflector", "status": "skip", "detail": ""}
+
+    dashboard_url = os.environ.get("SKILL_DASHBOARD_URL", "http://localhost:3001")
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret:
+        result["detail"] = "ADMIN_SECRET non impostato, skip"
+        return result
+
+    # 1. Fetch pending lessons
+    try:
+        req = urllib.request.Request(f"{dashboard_url}/api/lessons?limit=100")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except Exception as e:
+        result["detail"] = f"fetch lessons fallito: {e}"
+        return result
+
+    rows = data.get("rows", [])
+    pending = [r for r in rows if r.get("status") == "pending"]
+    if not pending:
+        result["detail"] = "nessuna lezione pending"
+        return result
+
+    # Max 15 per run — costo contenuto (1 call Haiku da ~150k token)
+    batch = pending[:15]
+
+    # 2. Carica SKILL.md completo
+    skill_md = SKILL_DIR / "SKILL.md"
+    if not skill_md.exists():
+        result["detail"] = "SKILL.md non trovato"
+        return result
+
+    skill_full = skill_md.read_text(encoding="utf-8")
+
+    # 3. Prompt Haiku: solo coverage check (non quality)
+    lessons_json = json.dumps(
+        [{"id": r["id"], "rule": (r.get("rule") or r.get("description") or "")[:300]}
+         for r in batch],
+        ensure_ascii=False,
+    )
+
+    prompt = (
+        "Sei un verificatore di copertura per una skill AI. "
+        "Per ogni lezione, determina se il CONCETTO è già espresso in SKILL.md — "
+        "anche se con parole diverse. Rispondi ONLY con JSON:\n"
+        '[{"id":"...","covered":true|false}]\n\n'
+        f"SKILL.md completo:\n{skill_full}\n\n"
+        f"Lezioni da verificare:\n{lessons_json}\n\n"
+        "Regole: 'covered:true' SOLO se il concetto è chiaramente già in SKILL.md. "
+        "In caso di dubbio → false (lascia decidere a evaluate_lessons). "
+        "Output: solo il JSON array, niente altro."
+    )
+
+    code, out, err = run(
+        ["claude", "--permission-mode", "default", "--model", "haiku", "--print", prompt],
+        cwd=str(SKILL_DIR),
+    )
+    if code != 0:
+        result["detail"] = f"claude CLI errore: {err[:100]}"
+        return result
+
+    try:
+        m = re.search(r"\[.*?\]", out, re.DOTALL)
+        if not m:
+            result["detail"] = "nessun JSON array nell'output"
+            return result
+        verdicts = json.loads(m.group())
+    except json.JSONDecodeError:
+        result["detail"] = "JSON parse error"
+        return result
+
+    # 4. Marca covered=true come ineffective
+    auto_rejected = 0
+    for v in verdicts:
+        if not v.get("covered"):
+            continue
+        lid = v.get("id")
+        if not lid:
+            continue
+        try:
+            body = json.dumps({
+                "id": lid,
+                "status": "ineffective",
+            }).encode()
+            req = urllib.request.Request(
+                f"{dashboard_url}/api/lessons",
+                data=body,
+                headers={"Content-Type": "application/json", "x-admin-secret": admin_secret},
+                method="PATCH",
+            )
+            with urllib.request.urlopen(req, timeout=10):
+                pass
+            auto_rejected += 1
+        except Exception:
+            continue
+
+    remaining = len(batch) - auto_rejected
+    result["status"] = "ok"
+    result["detail"] = f"{auto_rejected}/{len(batch)} già coperte (rimosse), {remaining} passano a evaluate_lessons"
+    return result
+
+
 # ── Morning briefing ──────────────────────────────────────────────────────────
 
 def run_morning_briefing(project_path: str) -> dict:
@@ -2037,6 +2153,7 @@ def main() -> int:
         ("regenerate_score",               lambda: regenerate_score(project_path)),
         ("run_compaction",                 lambda: run_compaction(project_path)),
         ("validate_skill_drift",           lambda: validate_skill_drift(project_path)),
+        ("run_ace_reflector",              lambda: run_ace_reflector(project_path) if _auto else _skip("run_ace_reflector")),
         ("evaluate_lessons",               lambda: evaluate_lessons(project_path) if _auto else _skip("evaluate_lessons")),
         ("create_lessons_from_failed_tasks", lambda: create_lessons_from_failed_tasks(project_path) if _auto else _skip("create_lessons_from_failed_tasks")),
         ("run_ai_news_intake",             lambda: run_ai_news_intake(project_path) if _auto else _skip("run_ai_news_intake")),
